@@ -101,9 +101,9 @@ test('getStudioLiveStatus accurately detects open and closed studio hours', () =
 
   // Thursday Nov 5, 2026 at 08:15 -> Closed before opening
   const earlyDate = new Date(2026, 10, 5, 8, 15);
-  const earlyStatus = getStudioLiveStatus(earlyDate);
+  const earlyStatus = getStudioLiveStatus(earlyDate, 11, 21);
   assert.equal(earlyStatus.isOpen, false);
-  assert.ok(earlyStatus.headline.includes('Abre hoy a las 10:00'));
+  assert.ok(earlyStatus.headline.includes('Abre hoy a las 11:00'));
 });
 
 test('buildAutomatedWhatsAppMessages includes direct Google Review shortlink 2 hours post-appointment', () => {

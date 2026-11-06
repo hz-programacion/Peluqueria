@@ -34,19 +34,40 @@ export interface ValidationResult {
 }
 
 /**
- * Calculates cumulative service duration, mandatory 10-minute hygiene buffer,
- * total block duration, total price, and 30% deposit amount.
+ * Returns YYYY-MM-DD in local time (never shifted to tomorrow or UTC).
+ */
+export function getTodayLocalISO(now: Date = new Date()): string {
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+/**
+ * Returns YYYY-MM-DD offset by `daysOffset` from `now` in local time.
+ */
+export function getOffsetDateISO(daysOffset: number, now: Date = new Date()): string {
+  const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + daysOffset);
+  return getTodayLocalISO(d);
+}
+
+/**
+ * Calculates cumulative service duration, mandatory hygiene buffer,
+ * total block duration, total price, and deposit amount.
  */
 export function calculateBookingSummary(
   selectedServiceIds: string[],
-  catalog: StudioService[]
+  catalog: StudioService[],
+  bufferMin = BUFFER_MINUTES,
+  depositPercentage = 30
 ): BookingSummary {
-  const selectedServices = catalog.filter((s) => selectedServiceIds.includes(s.id));
+  const visibleCatalog = catalog.filter((s) => !s.hidden);
+  const selectedServices = visibleCatalog.filter((s) => selectedServiceIds.includes(s.id));
   const serviceMinutes = selectedServices.reduce((sum, s) => sum + s.durationMinutes, 0);
-  const bufferMinutes = selectedServices.length > 0 ? BUFFER_MINUTES : 0;
+  const bufferMinutes = selectedServices.length > 0 ? bufferMin : 0;
   const totalBlockMinutes = serviceMinutes + bufferMinutes;
   const totalPrice = selectedServices.reduce((sum, s) => sum + s.price, 0);
-  const depositAmount = Math.round(totalPrice * 0.3);
+  const depositAmount = Math.round(totalPrice * (depositPercentage / 100));
 
   return {
     selectedServices,
@@ -60,7 +81,7 @@ export function calculateBookingSummary(
 
 export function timeToMinutes(timeStr: string): number {
   const [hours, minutes] = timeStr.split(':').map(Number);
-  return hours * 60 + minutes;
+  return (hours || 0) * 60 + (minutes || 0);
 }
 
 export function minutesToTime(totalMinutes: number): string {
@@ -85,23 +106,36 @@ export function getAvailableTimeSlots(
   dateStr: string,
   requiredBlockMinutes: number,
   appointments: AppointmentRecord[],
-  openHour = 10,
-  closeHour = 20,
-  blockedSlots: BlockedTimeSlotDef[] = []
+  openHour = 11,
+  closeHour = 21,
+  blockedSlots: BlockedTimeSlotDef[] = [],
+  openDays: number[] = [1, 2, 3, 4, 5, 6]
 ): TimeSlot[] {
+  if (!dateStr) return [];
+
+  // Parse local date safely
+  const parts = dateStr.split('-').map(Number);
+  if (parts.length === 3 && !parts.some(Number.isNaN)) {
+    const localDate = new Date(parts[0], parts[1] - 1, parts[2]);
+    const dayOfWeek = localDate.getDay(); // 0 = Sun ... 6 = Sat
+    if (Array.isArray(openDays) && openDays.length > 0 && !openDays.includes(dayOfWeek)) {
+      return [];
+    }
+  }
+
   const openMin = openHour * 60;
   const closeMin = closeHour * 60;
   const dayAppointments = appointments.filter((app) => app.date === dateStr);
   const dayBlocked = blockedSlots.filter((b) => b.date === dateStr);
   const slots: TimeSlot[] = [];
 
-  const effectiveDuration = requiredBlockMinutes > 0 ? requiredBlockMinutes : 55;
+  const effectiveDuration = requiredBlockMinutes > 0 ? requiredBlockMinutes : 50;
 
   for (let startMin = openMin; startMin + effectiveDuration <= closeMin; startMin += 30) {
     const endMin = startMin + effectiveDuration;
     let conflictReason: string | undefined;
 
-    // Check against appointments
+    // Check against active appointments
     for (const app of dayAppointments) {
       const appStart = timeToMinutes(app.startTime);
       const appEnd = appStart + app.serviceMinutes + app.bufferMinutes;
@@ -118,7 +152,9 @@ export function getAvailableTimeSlots(
         const bStart = timeToMinutes(block.startTime);
         const bEnd = bStart + block.durationMinutes;
         if (startMin < bEnd && endMin > bStart) {
-          conflictReason = block.reason ? `Bloqueado: ${block.reason}` : 'Horario bloqueado por el estudio';
+          conflictReason = block.reason
+            ? `Bloqueado: ${block.reason}`
+            : 'Horario bloqueado por el estudio';
           break;
         }
       }
@@ -172,62 +208,54 @@ export function validateBookingForm(input: BookingFormInput): ValidationResult {
 }
 
 /**
- * Computes real-time studio open/closed status based on Buenos Aires studio hours:
- * Tuesday (2) through Saturday (6), 10:00 to 20:00.
+ * Computes real-time studio open/closed status based on studio hours.
  */
-export function getStudioLiveStatus(now: Date): {
+export function getStudioLiveStatus(
+  now: Date,
+  openHour = 11,
+  closeHour = 21,
+  openDays: number[] = [1, 2, 3, 4, 5, 6]
+): {
   isOpen: boolean;
   headline: string;
   subline: string;
   availabilityLabel: string;
 } {
-  const day = now.getDay(); // 0 = Sun, 1 = Mon, 2 = Tue ... 6 = Sat
+  const day = now.getDay();
   const hour = now.getHours();
   const minutes = now.getMinutes();
   const currentTotalMin = hour * 60 + minutes;
 
-  const isWorkDay = day >= 2 && day <= 6;
-  const openMin = 10 * 60;
-  const closeMin = 20 * 60;
+  const isWorkDay = openDays.includes(day);
+  const openMin = openHour * 60;
+  const closeMin = closeHour * 60;
 
   if (isWorkDay && currentTotalMin >= openMin && currentTotalMin < closeMin) {
     return {
       isOpen: true,
-      headline: 'Abierto ahora · Cierra hoy a las 20:00',
+      headline: `Abierto ahora · Cierra hoy a las ${String(closeHour).padStart(2, '0')}:00`,
       subline: 'Atención en curso 1 a 1 · Gestión 100% online sin interrupciones telefónicas',
-      availabilityLabel: 'Disponible hoy · Últimos 2 bloques libres',
+      availabilityLabel: 'Disponible hoy · Turnos en vivo actualizados',
     };
   }
 
   if (isWorkDay && currentTotalMin < openMin) {
     return {
       isOpen: false,
-      headline: 'Cerrado ahora · Abre hoy a las 10:00',
+      headline: `Cerrado ahora · Abre hoy a las ${String(openHour).padStart(2, '0')}:00`,
       subline: 'Agenda online activa las 24 hs con confirmación inmediata por WhatsApp',
-      availabilityLabel: 'Disponible hoy · Apertura 10:00 hs',
-    };
-  }
-
-  if (day === 0 || day === 1) {
-    return {
-      isOpen: false,
-      headline: 'Cerrado ahora · Abre el martes a las 10:00',
-      subline: 'Domingos y lunes dedicados a descanso y curaduría del estudio',
-      availabilityLabel: 'Últimos cupos esta semana · Mar a Sáb',
+      availabilityLabel: `Disponible hoy · Apertura ${String(openHour).padStart(2, '0')}:00 hs`,
     };
   }
 
   return {
     isOpen: false,
-    headline: day === 6 ? 'Cerrado ahora · Abre el martes a las 10:00' : 'Cerrado ahora · Abre mañana a las 10:00',
-    subline: 'Reserva directa habilitada para asegurar tu próxima franja exclusiva',
-    availabilityLabel: 'Últimos cupos esta semana',
+    headline: `Agenda Online 24 hs · Apertura ${String(openHour).padStart(2, '0')}:00 hs`,
+    subline: 'Reservá tu franja horaria en vivo para hoy o los próximos días',
+    availabilityLabel: 'Turnos disponibles en tiempo real',
   };
 }
 
-/**
- * Generates the automated WhatsApp confirmation and 2-hour post-visit Google Review loop payload.
- */
 export function buildAutomatedWhatsAppMessages(params: {
   clientFirstName: string;
   date: string;
@@ -251,3 +279,46 @@ export function buildAutomatedWhatsAppMessages(params: {
 export function formatPriceARS(amount: number): string {
   return `$${amount.toLocaleString('es-AR')}`;
 }
+
+/**
+ * Accepts either a full Instagram URL ("https://instagram.com/rodrigo.cutsss")
+ * or a handle ("@rodrigo.cutsss" / "rodrigo.cutsss") and returns a valid URL and display handle.
+ */
+export function resolveInstagramInfo(input: string): { url: string; handle: string } {
+  const trimmed = (input || '@rodrigo.cutsss').trim();
+  if (/^https?:\/\//i.test(trimmed)) {
+    const match = trimmed.match(/instagram\.com\/([^/?#]+)/i);
+    const extracted = match && match[1] ? match[1].replace(/^@/, '') : 'rodrigo.cutsss';
+    return {
+      url: trimmed,
+      handle: `@${extracted}`,
+    };
+  }
+  const cleanHandle = trimmed.replace(/^@/, '').replace(/\/+$/, '') || 'rodrigo.cutsss';
+  return {
+    url: `https://instagram.com/${cleanHandle}`,
+    handle: `@${cleanHandle}`,
+  };
+}
+
+/**
+ * Accepts either a full WhatsApp URL ("https://wa.me/5493462554421") or phone number
+ * and returns a clean digits string, base URL, and display text.
+ */
+export function resolveWhatsAppInfo(
+  phoneDisplayInput: string,
+  whatsappRawInput?: string
+): { url: string; digits: string; display: string } {
+  const rawSource = (whatsappRawInput || phoneDisplayInput || '5493462554421').trim();
+  const digits = rawSource.replace(/\D/g, '') || '5493462554421';
+  const display =
+    phoneDisplayInput && !/^https?:\/\//i.test(phoneDisplayInput.trim())
+      ? phoneDisplayInput.trim()
+      : `+${digits}`;
+  return {
+    url: `https://wa.me/${digits}`,
+    digits,
+    display,
+  };
+}
+

@@ -1,191 +1,46 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Volume2, VolumeX, Play, Pause, SkipForward, Radio, Disc3, Mic } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Volume2, VolumeX, Play, Pause, RotateCcw, Headphones, ChevronUp } from 'lucide-react';
+import { welcomeAudio, WelcomeAudioState } from '../utils/welcomeAudioController';
+import { PRESENTATION_AUDIO_TRANSCRIPT } from '../data/studioData';
 import { playMechanicalHover, playMechanicalClick } from '../utils/audioFeedback';
+import { useStudio } from '../context/StudioContext';
 
-interface AudioTrack {
-  id: string;
-  title: string;
-  sub: string;
-  bpm: number;
-  type: 'drill' | 'lofi' | 'vinyl';
-}
-
-const TRACKS: AudioTrack[] = [
-  {
-    id: 't1',
-    title: 'Drill 140 · Venado Tuerto Session',
-    sub: 'Sub-bass 808 + Rimshot metálico',
-    bpm: 140,
-    type: 'drill',
-  },
-  {
-    id: 't2',
-    title: 'Lluvia & Vinilo en Vuelta de Obligado',
-    sub: 'Cálido tape hiss + Acordes Rhodes',
-    bpm: 85,
-    type: 'lofi',
-  },
-  {
-    id: 't3',
-    title: 'Streetline · Midnight Groove VT',
-    sub: 'Hi-hats rápidos & Kick acústico',
-    bpm: 128,
-    type: 'vinyl',
-  },
-];
+const MINI_WAVEFORM = [38, 65, 82, 50, 92, 74, 46, 86, 95, 60, 78, 52, 88, 70, 44, 62];
 
 export const UrbanBoombox: React.FC = () => {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
-  const [volume, setVolume] = useState(0.5);
-  const [isMuted, setIsMuted] = useState(false);
+  const { config } = useStudio();
+  const [audioState, setAudioState] = useState<WelcomeAudioState>(() => welcomeAudio.getState());
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const audioCtxRef = useRef<AudioContext | null>(null);
-  const gainNodeRef = useRef<GainNode | null>(null);
-  const intervalRef = useRef<number | null>(null);
-
-  const currentTrack = TRACKS[currentTrackIndex];
-
-  // Pause background beats automatically when Rodrigo's voice presentation starts playing
   useEffect(() => {
-    const handleVoiceState = (e: Event) => {
-      const customEvent = e as CustomEvent<{ playing: boolean }>;
-      if (customEvent.detail?.playing) {
-        setIsPlaying(false);
-      }
-    };
-    window.addEventListener('rodrigo-voice-state', handleVoiceState);
-    return () => window.removeEventListener('rodrigo-voice-state', handleVoiceState);
+    return welcomeAudio.subscribe(setAudioState);
   }, []);
 
-  // Initialize or resume audio context and play soundscapes
-  const startAudioLoop = () => {
-    if (!audioCtxRef.current) {
-      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      audioCtxRef.current = new AudioCtx();
-      const gain = audioCtxRef.current.createGain();
-      gain.gain.value = isMuted ? 0 : volume * 0.25;
-      gain.connect(audioCtxRef.current.destination);
-      gainNodeRef.current = gain;
-    }
-
-    if (audioCtxRef.current.state === 'suspended') {
-      audioCtxRef.current.resume();
-    }
-
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-    }
-
-    const ctx = audioCtxRef.current;
-    const gain = gainNodeRef.current;
-    if (!ctx || !gain) return;
-
-    let step = 0;
-    const tempoMs = (60 / currentTrack.bpm) * 1000;
-
-    intervalRef.current = window.setInterval(() => {
-      if (!ctx || ctx.state !== 'running') return;
-
-      const now = ctx.currentTime;
-
-      // Kick drum on beats 0 and 2
-      if (step % 4 === 0 || (currentTrack.type === 'drill' && step % 8 === 6)) {
-        const osc = ctx.createOscillator();
-        const kickGain = ctx.createGain();
-        osc.frequency.setValueAtTime(120, now);
-        osc.frequency.exponentialRampToValueAtTime(32, now + 0.15);
-        kickGain.gain.setValueAtTime(0.7, now);
-        kickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
-        osc.connect(kickGain);
-        kickGain.connect(gain);
-        osc.start(now);
-        osc.stop(now + 0.2);
-      }
-
-      // Snare / Rimshot on beat 2 & 4
-      if (step % 4 === 2) {
-        const snareOsc = ctx.createOscillator();
-        const snareGain = ctx.createGain();
-        snareOsc.type = 'triangle';
-        snareOsc.frequency.setValueAtTime(220, now);
-        snareOsc.frequency.exponentialRampToValueAtTime(80, now + 0.1);
-        snareGain.gain.setValueAtTime(0.4, now);
-        snareGain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
-        snareOsc.connect(snareGain);
-        snareGain.connect(gain);
-        snareOsc.start(now);
-        snareOsc.stop(now + 0.12);
-      }
-
-      // Hi-hat tick
-      const bufferSize = ctx.sampleRate * 0.03;
-      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-      const data = buffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) {
-        data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.3));
-      }
-      const noise = ctx.createBufferSource();
-      noise.buffer = buffer;
-      const noiseFilter = ctx.createBiquadFilter();
-      noiseFilter.type = 'highpass';
-      noiseFilter.frequency.value = 6000;
-      const hatGain = ctx.createGain();
-      hatGain.gain.value = 0.18;
-      noise.connect(noiseFilter);
-      noiseFilter.connect(hatGain);
-      hatGain.connect(gain);
-      noise.start(now);
-
-      step++;
-    }, tempoMs / 2);
+  const formatSeconds = (sec: number) => {
+    const s = Math.floor(sec);
+    const mins = Math.floor(s / 60);
+    const rem = s % 60;
+    return `${mins}:${rem < 10 ? '0' : ''}${rem}`;
   };
 
-  const stopAudioLoop = () => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-  };
+  const progressRatio =
+    audioState.duration > 0 ? Math.min(1, audioState.currentTime / audioState.duration) : 0;
 
-  useEffect(() => {
-    if (isPlaying) {
-      startAudioLoop();
-    } else {
-      stopAudioLoop();
-    }
-    return () => stopAudioLoop();
-  }, [isPlaying, currentTrackIndex]);
-
-  useEffect(() => {
-    if (gainNodeRef.current && audioCtxRef.current) {
-      gainNodeRef.current.gain.setTargetAtTime(
-        isMuted ? 0 : volume * 0.25,
-        audioCtxRef.current.currentTime,
-        0.05
-      );
-    }
-  }, [volume, isMuted]);
-
-  const togglePlay = () => {
-    setIsPlaying(!isPlaying);
-  };
-
-  const nextTrack = () => {
-    setCurrentTrackIndex((prev) => (prev + 1) % TRACKS.length);
-  };
+  const activeSegment =
+    PRESENTATION_AUDIO_TRANSCRIPT.find(
+      (seg) => audioState.currentTime >= seg.startTime && audioState.currentTime < seg.endTime
+    ) || PRESENTATION_AUDIO_TRANSCRIPT[0];
 
   return (
     <div className="fixed bottom-20 right-4 lg:bottom-6 lg:right-6 z-40">
-      {/* Expanded Control Station */}
+      {/* Expanded Welcome Audio Control Card */}
       {isExpanded && (
-        <div className="mb-3 w-80 bg-[#121420] border border-[#272B40] rounded-2xl p-4 shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-bottom-2 duration-200">
-          <div className="flex items-center justify-between border-b border-[#222538] pb-3 mb-3">
+        <div className="mb-3 w-80 sm:w-88 bg-[#12141A]/95 border border-[#282C37] rounded-2xl p-4 shadow-2xl backdrop-blur-xl">
+          <div className="flex items-center justify-between border-b border-[#20242E] pb-2.5 mb-3">
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#FF4655] inline-block animate-pulse shadow-[0_0_8px_#FF4655]" />
-              <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-400 font-bold">
-                Studio Radio // Venado Tuerto
+              <Headphones className="w-4 h-4 text-[#D4A373]" />
+              <span className="text-xs font-mono font-bold text-zinc-100">
+                Bienvenido · {config.authorName}
               </span>
             </div>
             <button
@@ -195,152 +50,176 @@ export const UrbanBoombox: React.FC = () => {
                 setIsExpanded(false);
               }}
               onMouseEnter={playMechanicalHover}
-              className="text-zinc-500 hover:text-white text-xs font-mono cursor-pointer"
+              className="text-zinc-400 hover:text-white text-xs font-mono cursor-pointer px-1.5 py-0.5 rounded hover:bg-white/5"
             >
-              [Cerrar]
+              Cerrar
             </button>
           </div>
 
-          {/* Quick Trigger for Rodrigo's Voice Presentation */}
-          <button
-            type="button"
-            onClick={() => {
-              playMechanicalClick();
-              setIsPlaying(false);
-              window.dispatchEvent(new CustomEvent('play-rodrigo-presentation'));
+          {/* Live Transcript Phrase Box */}
+          <div className="p-3 rounded-xl bg-[#0B0C10] border border-[#1E222B] mb-3">
+            <div className="flex items-center justify-between text-[11px] font-mono text-zinc-400 mb-1">
+              <span>Presentación de {config.studioTitle}</span>
+              <span className="tabular-nums text-zinc-300 font-semibold">
+                {formatSeconds(audioState.currentTime)} / {formatSeconds(audioState.duration)}
+              </span>
+            </div>
+            <p className="text-xs text-zinc-100 font-medium leading-relaxed">
+              “{activeSegment.text}”
+            </p>
+          </div>
+
+          {/* Interactive Scrubbable Waveform */}
+          <div
+            className="flex items-end justify-between h-9 px-2.5 py-1.5 bg-[#0B0C10] border border-[#1E222B] rounded-xl mb-3 gap-1 cursor-pointer"
+            onClick={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              const ratio = (e.clientX - rect.left) / rect.width;
+              welcomeAudio.seekToRatio(ratio);
             }}
-            onMouseEnter={playMechanicalHover}
-            className="w-full mb-3 py-2 px-3 rounded-xl bg-gradient-to-r from-[#A855F7]/20 to-[#FF4655]/20 border border-[#A855F7]/50 hover:border-[#A855F7] text-white font-mono text-[11px] font-bold flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-95"
+            title="Adelantar o retroceder audio de bienvenida"
           >
-            <Mic className="w-3.5 h-3.5 text-[#FF4655]" />
-            <span>Escuchar Voz de Presentación de Rodrigo</span>
-          </button>
-
-          <div className="flex items-center gap-3 mb-3">
-            <div className={`w-12 h-12 rounded-xl bg-[#1A1D2C] border border-[#2D334C] flex items-center justify-center shrink-0 ${isPlaying ? 'text-[#A855F7] border-[#A855F7]/40 shadow-[0_0_12px_rgba(168,85,247,0.2)]' : 'text-zinc-500'}`}>
-              <Disc3 className={`w-6 h-6 ${isPlaying ? 'animate-spin' : ''}`} style={{ animationDuration: '3s' }} />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="text-sm font-bold text-white truncate font-display">
-                {currentTrack.title}
-              </div>
-              <div className="text-[11px] text-zinc-400 truncate font-mono">
-                {currentTrack.sub}
-              </div>
-            </div>
+            {MINI_WAVEFORM.map((h, i) => {
+              const barRatio = i / MINI_WAVEFORM.length;
+              const isPassed = barRatio <= progressRatio;
+              const barHeight = audioState.isPlaying
+                ? Math.max(20, Math.min(100, h + ((i * 13 + Math.floor(audioState.currentTime * 8)) % 20) - 10))
+                : h;
+              return (
+                <span
+                  key={i}
+                  className={`flex-1 rounded-full transition-all duration-150 ${
+                    isPassed ? 'bg-[#D4A373]' : 'bg-[#252934]'
+                  }`}
+                  style={{ height: `${barHeight}%` }}
+                />
+              );
+            })}
           </div>
 
-          {/* Equalizer Visualizer Bars */}
-          <div className="flex items-end justify-between h-7 px-2 bg-[#090A0E] rounded-lg mb-3 gap-1">
-            {[45, 80, 60, 95, 40, 70, 85, 50, 90, 65, 75, 40].map((h, i) => (
-              <span
-                key={i}
-                className="w-1 rounded-full bg-gradient-to-t from-[#A855F7] to-[#FF4655] transition-all"
-                style={{
-                  height: isPlaying ? `${Math.max(15, (h * ((i % 3) + 1)) % 100)}%` : '15%',
-                  opacity: isPlaying ? 0.9 : 0.3,
-                  transitionDuration: '150ms',
-                }}
-              />
-            ))}
-          </div>
-
-          {/* Controls */}
+          {/* Playback & Volume Controls */}
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={() => {
                   playMechanicalClick();
-                  togglePlay();
+                  welcomeAudio.togglePlay();
                 }}
                 onMouseEnter={playMechanicalHover}
-                className="w-10 h-10 rounded-xl bg-gradient-to-r from-[#A855F7] to-[#D946EF] text-white flex items-center justify-center hover:from-[#9333EA] hover:to-[#C026D3] transition-colors cursor-pointer active:scale-95 shadow-[0_0_15px_rgba(168,85,247,0.3)]"
-                title={isPlaying ? 'Pausar Beats' : 'Reproducir Beats'}
+                className="h-9 px-3.5 rounded-xl bg-[#D4A373] hover:bg-[#E0B083] text-zinc-950 text-xs font-mono font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm"
               >
-                {isPlaying ? <Pause className="w-4 h-4 fill-white" /> : <Play className="w-4 h-4 fill-white ml-0.5" />}
+                {audioState.isPlaying ? (
+                  <>
+                    <Pause className="w-3.5 h-3.5 fill-zinc-950" />
+                    <span>Pausar</span>
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-3.5 h-3.5 fill-zinc-950" />
+                    <span>Escuchar</span>
+                  </>
+                )}
               </button>
+
               <button
                 type="button"
                 onClick={() => {
                   playMechanicalClick();
-                  nextTrack();
+                  welcomeAudio.playFromStart();
                 }}
                 onMouseEnter={playMechanicalHover}
-                className="w-10 h-10 rounded-xl bg-[#1C1F30] border border-[#272B40] text-white flex items-center justify-center hover:border-[#A855F7]/50 transition-colors cursor-pointer active:scale-95"
-                title="Siguiente Pista"
+                className="w-9 h-9 rounded-xl bg-[#181B22] border border-[#272B36] text-zinc-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+                title="Reiniciar audio"
+                aria-label="Reiniciar audio"
               >
-                <SkipForward className="w-4 h-4" />
+                <RotateCcw className="w-3.5 h-3.5" />
               </button>
             </div>
 
-            <div className="flex items-center gap-2 flex-1 max-w-[120px]">
+            <div className="flex items-center gap-2 flex-1 max-w-[115px]">
               <button
                 type="button"
                 onClick={() => {
                   playMechanicalClick();
-                  setIsMuted(!isMuted);
+                  welcomeAudio.toggleMute();
                 }}
                 onMouseEnter={playMechanicalHover}
                 className="text-zinc-400 hover:text-white cursor-pointer"
+                aria-label={audioState.isMuted ? 'Activar sonido' : 'Silenciar'}
               >
-                {isMuted ? <VolumeX className="w-4 h-4 text-[#FF4655]" /> : <Volume2 className="w-4 h-4" />}
+                {audioState.isMuted ? (
+                  <VolumeX className="w-4 h-4 text-amber-400" />
+                ) : (
+                  <Volume2 className="w-4 h-4 text-[#D4A373]" />
+                )}
               </button>
               <input
                 type="range"
                 min="0"
                 max="1"
                 step="0.05"
-                value={isMuted ? 0 : volume}
-                onChange={(e) => {
-                  setVolume(parseFloat(e.target.value));
-                  if (isMuted) setIsMuted(false);
-                }}
-                className="w-full accent-[#A855F7] h-1.5 bg-[#272B40] rounded-lg cursor-pointer"
+                aria-label="Volumen de bienvenida"
+                value={audioState.isMuted ? 0 : audioState.volume}
+                onChange={(e) => welcomeAudio.setVolume(parseFloat(e.target.value))}
+                className="w-full accent-[#D4A373] h-1.5 bg-[#252934] rounded-lg cursor-pointer"
               />
             </div>
           </div>
         </div>
       )}
 
-      {/* Street Pill Launcher Button */}
-      <div className="flex items-center gap-2 bg-[#141624]/95 border border-[#272B40] backdrop-blur-md px-3.5 py-2 rounded-full shadow-2xl hover:border-[#A855F7] transition-colors">
+      {/* Floating Launcher Pill: Exact label "Bienvenido" */}
+      <div className="flex items-center gap-2 bg-[#12141A]/95 border border-[#2A2E39] backdrop-blur-md px-3.5 py-2 rounded-full shadow-2xl hover:border-[#D4A373]/70 transition-colors">
         <button
           type="button"
           onClick={() => {
             playMechanicalClick();
-            if (!isPlaying) togglePlay();
             setIsExpanded(!isExpanded);
           }}
           onMouseEnter={playMechanicalHover}
           className="flex items-center gap-2 cursor-pointer text-left"
         >
-          <div className="relative">
-            <Radio className={`w-4 h-4 ${isPlaying ? 'text-[#FF4655]' : 'text-zinc-400'}`} />
-            {isPlaying && (
-              <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-[#FF4655] animate-ping" />
-            )}
-          </div>
-          <div className="text-xs font-mono font-bold text-zinc-200">
-            {isPlaying ? (
-              <span className="text-[#A855F7]">{currentTrack.bpm} BPM // ON AIR</span>
+          <Headphones
+            className={`w-4 h-4 ${
+              audioState.isPlaying ? 'text-[#D4A373]' : 'text-zinc-300'
+            }`}
+          />
+          <div className="text-xs font-mono font-bold text-zinc-100 whitespace-nowrap">
+            {audioState.isPlaying ? (
+              <span className="text-[#D4A373] tabular-nums">
+                Bienvenido · {formatSeconds(audioState.currentTime)}
+              </span>
             ) : (
-              <span>STUDIO BEATS</span>
+              <span>Bienvenido</span>
             )}
           </div>
+          <ChevronUp
+            className={`w-3.5 h-3.5 text-zinc-400 transition-transform ${
+              isExpanded ? 'rotate-180' : ''
+            }`}
+          />
         </button>
 
         <button
           type="button"
           onClick={() => {
             playMechanicalClick();
-            togglePlay();
+            welcomeAudio.togglePlay();
           }}
           onMouseEnter={playMechanicalHover}
-          className="w-6 h-6 rounded-full bg-gradient-to-r from-[#A855F7] to-[#FF4655] text-white flex items-center justify-center hover:scale-105 active:scale-95 transition-transform cursor-pointer shadow-md"
-          aria-label={isPlaying ? 'Pausar' : 'Reproducir'}
+          className="w-7 h-7 rounded-full bg-[#D4A373] hover:bg-[#E0B083] text-zinc-950 flex items-center justify-center hover:scale-105 active:scale-95 transition-transform cursor-pointer shadow-sm"
+          aria-label={
+            audioState.isPlaying
+              ? 'Pausar bienvenida'
+              : 'Reproducir bienvenida'
+          }
         >
-          {isPlaying ? <Pause className="w-3 h-3 fill-white" /> : <Play className="w-3 h-3 fill-white ml-0.5" />}
+          {audioState.isPlaying ? (
+            <Pause className="w-3.5 h-3.5 fill-zinc-950" />
+          ) : (
+            <Play className="w-3.5 h-3.5 fill-zinc-950 ml-0.5" />
+          )}
         </button>
       </div>
     </div>

@@ -1,8 +1,24 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Star, ChevronLeft, ChevronRight, ShieldCheck, Quote, MessageSquare, Check, Sparkles } from 'lucide-react';
+import {
+  Star,
+  ChevronLeft,
+  ChevronRight,
+  ShieldCheck,
+  Quote,
+  MessageSquare,
+  Check,
+} from 'lucide-react';
 import { db } from '../lib/firebase';
-import { collection, getDocs, addDoc, serverTimestamp, query, orderBy, limit } from 'firebase/firestore';
+import {
+  collection,
+  getDocs,
+  addDoc,
+  serverTimestamp,
+  query,
+  orderBy,
+  limit,
+} from 'firebase/firestore';
 import { playMechanicalHover, playMechanicalClick } from '../utils/audioFeedback';
 
 export interface Testimonial {
@@ -27,7 +43,8 @@ const DEFAULT_TESTIMONIALS: Testimonial[] = [
     date: 'Hace 2 días',
     city: 'Venado Tuerto',
     verified: true,
-    comment: 'La posta es que encontrar un barbero que entienda de fades urbanos y textura real en Venado Tuerto es oro puro. Rodri es un crack, puntual al milisegundo y el local en Vuelta de Obligado 931 tiene tremenda vibra. Reservás el turno por la web, te sentás a la hora exacta y salís impecable.',
+    comment:
+      'La posta es que encontrar un barbero que entienda de fades urbanos y textura real en Venado Tuerto es oro puro. Rodri es un crack, puntual al milisegundo y el local en Vuelta de Obligado 931 tiene tremenda vibra. Reservás el turno por la web, te sentás a la hora exacta y salís impecable.',
   },
   {
     id: 'test-2',
@@ -38,7 +55,8 @@ const DEFAULT_TESTIMONIALS: Testimonial[] = [
     date: 'Hace 4 días',
     city: 'Venado Tuerto',
     verified: true,
-    comment: 'Tengo rulos y siempre me arruinaban los cortes en peluquerías tradicionales. El taper que me hace Rodrigo es perfecto, respeta la caída natural y me dura prolijo casi un mes. Además la música de fondo y la atención 1 a 1 sin gente amontonada marcan toda la diferencia.',
+    comment:
+      'Tengo rulos y siempre me arruinaban los cortes en peluquerías tradicionales. El taper que me hace Rodrigo es perfecto, respeta la caída natural y me dura prolijo casi un mes. Además la música de fondo y la atención 1 a 1 sin gente amontonada marcan toda la diferencia.',
   },
   {
     id: 'test-3',
@@ -49,7 +67,8 @@ const DEFAULT_TESTIMONIALS: Testimonial[] = [
     date: 'Hace 1 semana',
     city: 'Venado Tuerto',
     verified: true,
-    comment: 'Me hice el platinado con Rodri y me dejó el pelo blanco ceniza sin quemarme nada. El trato 1 a 1 sin que nadie te esté mirando mientras esperás te da una comodidad tremenda. La técnica de pulido con shaver y el acabado con polvo mate son de otro nivel.',
+    comment:
+      'Me hice el platinado con Rodri y me dejó el pelo blanco ceniza sin quemarme nada. El trato 1 a 1 sin que nadie te esté mirando mientras esperás te da una comodidad tremenda. La técnica de pulido con shaver y el acabado con polvo mate son de otro nivel.',
   },
   {
     id: 'test-4',
@@ -60,7 +79,8 @@ const DEFAULT_TESTIMONIALS: Testimonial[] = [
     date: 'Hace 2 semanas',
     city: 'Venado Tuerto',
     verified: true,
-    comment: 'El perfilado de barba con trimmer de precisión, shaver de titanio y toalla caliente te deja impecable y con cero irritación. Cero espera, te sentás al minuto exacto que reservaste en Vuelta de Obligado 931. El mejor de Venado Tuerto sin dudas.',
+    comment:
+      'El perfilado de barba con trimmer de precisión, shaver de titanio y toalla caliente te deja impecable y con cero irritación. Cero espera, te sentás al minuto exacto que reservaste en Vuelta de Obligado 931. El mejor de Venado Tuerto sin dudas.',
   },
   {
     id: 'test-5',
@@ -71,7 +91,8 @@ const DEFAULT_TESTIMONIALS: Testimonial[] = [
     date: 'Hace 3 semanas',
     city: 'Venado Tuerto',
     verified: true,
-    comment: 'Llegué con el pelo hecho un desastre y me recomendó el low fade con frontal a escuadra. Increíble cómo cambia la presencia. Transparencia total con el precio ($12.000), nada de sorpresas y confirmación inmediata al WhatsApp.',
+    comment:
+      'Llegué con el pelo hecho un desastre y me recomendó el low fade con frontal a escuadra. Increíble cómo cambia la presencia. Transparencia total con el precio ($12.000), nada de sorpresas y confirmación inmediata al WhatsApp.',
   },
 ];
 
@@ -87,7 +108,6 @@ export const ClientVoices: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [feedbackSuccess, setFeedbackSuccess] = useState<boolean>(false);
 
-  // Sync testimonials from Firebase Firestore
   useEffect(() => {
     let isMounted = true;
     const fetchFromFirebase = async () => {
@@ -115,7 +135,7 @@ export const ClientVoices: React.FC = () => {
           }
         }
       } catch {
-        // Fallback gracefully to high-trust default testimonials
+        // Fallback gracefully to default testimonials
       }
     };
 
@@ -125,7 +145,6 @@ export const ClientVoices: React.FC = () => {
     };
   }, []);
 
-  // Sliding Carousel Autoplay with hover pause
   useEffect(() => {
     if (isPaused || testimonials.length <= 1) return;
     const timer = setInterval(() => {
@@ -201,20 +220,19 @@ export const ClientVoices: React.FC = () => {
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      <div className="rounded-3xl bg-[#0C0E16]/90 border-2 border-[#202334] p-6 sm:p-10 lg:p-12 overflow-hidden shadow-2xl relative bg-halftone-grid concrete-overlay distressed-surface">
-        
+      <div className="rounded-3xl bg-[#111318] border border-[#232730] p-6 sm:p-10 lg:p-12 overflow-hidden shadow-2xl relative">
         {/* Top Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-8 border-b border-[#1E2130]">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-8 border-b border-[#1E222B]">
           <div>
             <div className="flex items-center gap-2 mb-2 font-mono text-xs">
-              <span className="w-2.5 h-2.5 bg-[#FF4655] rounded-sm shadow-[0_0_8px_#FF4655]" />
-              <span className="text-[#FF4655] font-black uppercase tracking-widest">
+              <span className="w-2 h-2 bg-[#D4A373] rounded-full" />
+              <span className="text-[#D4A373] font-bold uppercase tracking-widest">
                 VOCES DE LA COMUNIDAD // 100% REALES
               </span>
               <span className="text-zinc-600">·</span>
               <span className="text-zinc-400 font-bold">Venado Tuerto · Santa Fe</span>
             </div>
-            <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-black text-white uppercase tracking-tight">
+            <h2 className="font-display text-3xl sm:text-4xl font-black text-white uppercase tracking-tight">
               Client Voices &amp; Reseñas
             </h2>
           </div>
@@ -227,20 +245,20 @@ export const ClientVoices: React.FC = () => {
                 playMechanicalClick();
                 setIsModalOpen(true);
               }}
-              className="px-4 py-2.5 rounded-xl bg-[#141624] border border-[#A855F7]/40 hover:border-[#A855F7] text-xs font-mono font-bold text-[#A855F7] hover:bg-[#A855F7]/15 transition-all flex items-center gap-2 active:scale-95 shadow-[0_0_15px_rgba(168,85,247,0.15)] cursor-pointer"
+              className="px-4 py-2.5 rounded-xl bg-[#161920] border border-[#D4A373]/40 hover:border-[#D4A373] text-xs font-mono font-bold text-[#D4A373] hover:bg-[#D4A373] hover:text-zinc-950 transition-all flex items-center gap-2 active:scale-95 cursor-pointer"
             >
               <MessageSquare className="w-3.5 h-3.5" />
               <span>Dejar Reseña</span>
             </button>
 
             {/* Navigation Carousel Arrows */}
-            <div className="flex items-center gap-1.5 bg-black/60 p-1 rounded-xl border border-[#202436]">
+            <div className="flex items-center gap-1.5 bg-[#0C0E12] p-1 rounded-xl border border-[#232730]">
               <button
                 type="button"
                 onMouseEnter={playMechanicalHover}
                 onClick={handlePrev}
                 aria-label="Testimonio anterior"
-                className="w-9 h-9 rounded-lg bg-[#141624] hover:bg-[#A855F7] text-zinc-300 hover:text-white flex items-center justify-center transition-all cursor-pointer active:scale-90"
+                className="w-9 h-9 rounded-lg bg-[#161920] hover:bg-[#D4A373] text-zinc-300 hover:text-zinc-950 flex items-center justify-center transition-all cursor-pointer active:scale-90"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
@@ -249,7 +267,7 @@ export const ClientVoices: React.FC = () => {
                 onMouseEnter={playMechanicalHover}
                 onClick={handleNext}
                 aria-label="Siguiente testimonio"
-                className="w-9 h-9 rounded-lg bg-[#141624] hover:bg-[#A855F7] text-zinc-300 hover:text-white flex items-center justify-center transition-all cursor-pointer active:scale-90"
+                className="w-9 h-9 rounded-lg bg-[#161920] hover:bg-[#D4A373] text-zinc-300 hover:text-zinc-950 flex items-center justify-center transition-all cursor-pointer active:scale-90"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
@@ -258,20 +276,20 @@ export const ClientVoices: React.FC = () => {
         </div>
 
         {/* Sliding Carousel Display Card */}
-        <div className="py-8 sm:py-10 min-h-[290px] flex items-center">
+        <div className="py-8 sm:py-10 min-h-[270px] flex items-center">
           <AnimatePresence mode="wait">
             <motion.div
               key={current.id}
-              initial={{ opacity: 0, x: 28 }}
+              initial={{ opacity: 0, x: 24 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -28 }}
-              transition={{ duration: 0.35, ease: 'easeOut' }}
+              exit={{ opacity: 0, x: -24 }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
               className="w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-center"
             >
               {/* Left Column: Client Profile & Badge */}
               <div className="lg:col-span-4 space-y-4">
                 <div className="flex items-center gap-3.5">
-                  <div className="w-13 h-13 rounded-2xl bg-[#A855F7]/15 border-2 border-[#A855F7] text-[#A855F7] font-black text-lg flex items-center justify-center font-mono shadow-[0_0_20px_rgba(168,85,247,0.25)]">
+                  <div className="w-12 h-12 rounded-2xl bg-[#D4A373]/15 border border-[#D4A373] text-[#D4A373] font-black text-base flex items-center justify-center font-mono">
                     {current.clientName.slice(0, 2).toUpperCase()}
                   </div>
                   <div>
@@ -279,9 +297,7 @@ export const ClientVoices: React.FC = () => {
                       <h3 className="font-display font-black text-lg text-white uppercase tracking-wide">
                         {current.clientName}
                       </h3>
-                      {current.verified && (
-                        <ShieldCheck className="w-4 h-4 text-[#FF4655] drop-shadow-[0_0_6px_#FF4655]" />
-                      )}
+                      {current.verified && <ShieldCheck className="w-4 h-4 text-[#D4A373]" />}
                     </div>
                     <span className="text-xs font-mono text-zinc-400 block">
                       {current.city} · {current.date}
@@ -291,23 +307,20 @@ export const ClientVoices: React.FC = () => {
 
                 {/* Service Tag & Verification */}
                 <div className="space-y-1.5 pt-1">
-                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#141624] border border-[#2A2E44] text-xs font-mono font-bold text-zinc-200">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#FF4655]" />
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#161920] border border-[#282D37] text-xs font-mono font-bold text-zinc-200">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#D4A373]" />
                     <span>{current.serviceName}</span>
                   </div>
-                  <div className="text-[11px] font-mono text-[#A855F7] font-semibold flex items-center gap-1.5">
-                    <Check className="w-3.5 h-3.5 text-[#FF4655]" />
+                  <div className="text-[11px] font-mono text-zinc-400 font-semibold flex items-center gap-1.5">
+                    <Check className="w-3.5 h-3.5 text-[#D4A373]" />
                     <span>Turno Real en Vuelta de Obligado 931</span>
                   </div>
                 </div>
 
-                {/* 5 Stars Rating in Flame Coral */}
+                {/* 5 Stars Rating */}
                 <div className="flex items-center gap-1 pt-1">
                   {[...Array(current.rating)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className="w-4 h-4 fill-[#FF4655] text-[#FF4655] drop-shadow-[0_0_6px_rgba(255,70,85,0.5)]"
-                    />
+                    <Star key={i} className="w-4 h-4 fill-[#D4A373] text-[#D4A373]" />
                   ))}
                   <span className="font-mono text-xs font-black text-white ml-2">5.0 / 5.0</span>
                 </div>
@@ -315,13 +328,13 @@ export const ClientVoices: React.FC = () => {
 
               {/* Right Column: Large Quote Testimonial */}
               <div className="lg:col-span-8 relative">
-                <Quote className="absolute -top-6 -left-4 w-12 h-12 text-[#A855F7]/15 pointer-events-none" />
-                <blockquote className="text-base sm:text-xl md:text-2xl font-sans font-medium text-zinc-100 leading-relaxed italic relative z-10 pl-2">
+                <Quote className="absolute -top-6 -left-4 w-12 h-12 text-[#D4A373]/15 pointer-events-none" />
+                <blockquote className="text-base sm:text-xl font-sans font-normal text-zinc-100 leading-relaxed italic relative z-10 pl-2">
                   “{current.comment}”
                 </blockquote>
-                <div className="mt-4 pt-3 border-t border-[#1F2236] flex items-center justify-between text-xs font-mono text-zinc-500">
+                <div className="mt-4 pt-3 border-t border-[#1E222B] flex items-center justify-between text-xs font-mono text-zinc-500">
                   <span>ESTUDIO RODRIGO CUTSSS // ATENCIÓN 1 A 1</span>
-                  <span className="text-[#FF4655] font-bold">FADE MILIMÉTRICO 0.0 MM</span>
+                  <span className="text-[#D4A373] font-bold">FADE MILIMÉTRICO 0.0 MM</span>
                 </div>
               </div>
             </motion.div>
@@ -329,7 +342,7 @@ export const ClientVoices: React.FC = () => {
         </div>
 
         {/* Carousel Pagination Dots */}
-        <div className="pt-4 border-t border-[#1C1F30] flex items-center justify-between">
+        <div className="pt-4 border-t border-[#1E222B] flex items-center justify-between">
           <div className="flex items-center gap-2">
             {testimonials.map((_, idx) => (
               <button
@@ -343,15 +356,15 @@ export const ClientVoices: React.FC = () => {
                 aria-label={`Ir al testimonio ${idx + 1}`}
                 className={`h-2 rounded-full transition-all cursor-pointer ${
                   currentIndex === idx
-                    ? 'w-8 bg-[#A855F7] shadow-[0_0_10px_#A855F7]'
-                    : 'w-2 bg-[#262A3E] hover:bg-zinc-500'
+                    ? 'w-8 bg-[#D4A373]'
+                    : 'w-2 bg-[#252934] hover:bg-zinc-500'
                 }`}
               />
             ))}
           </div>
 
           <div className="font-mono text-xs text-zinc-400">
-            <span className="text-[#A855F7] font-bold">{currentIndex + 1}</span>
+            <span className="text-[#D4A373] font-bold">{currentIndex + 1}</span>
             <span className="text-zinc-600"> / </span>
             <span>{testimonials.length} opiniones verificadas</span>
           </div>
@@ -366,9 +379,9 @@ export const ClientVoices: React.FC = () => {
               initial={{ opacity: 0, scale: 0.95, y: 16 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 16 }}
-              className="w-full max-w-lg bg-[#0F111A] border-2 border-[#A855F7]/40 rounded-3xl p-6 sm:p-8 shadow-[0_0_40px_rgba(168,85,247,0.25)] text-white font-mono space-y-6"
+              className="w-full max-w-lg bg-[#111318] border border-[#282D37] rounded-3xl p-6 sm:p-8 shadow-2xl text-white font-mono space-y-6"
             >
-              <div className="flex items-center justify-between border-b border-[#202434] pb-4">
+              <div className="flex items-center justify-between border-b border-[#1E222B] pb-4">
                 <div>
                   <h3 className="font-display font-black text-xl uppercase tracking-wider text-white">
                     Compartí tu Experiencia
@@ -381,7 +394,7 @@ export const ClientVoices: React.FC = () => {
                   type="button"
                   onMouseEnter={playMechanicalHover}
                   onClick={() => setIsModalOpen(false)}
-                  className="w-8 h-8 rounded-lg bg-[#181A26] border border-[#2D3144] hover:border-[#A855F7] text-zinc-300 hover:text-white flex items-center justify-center text-sm cursor-pointer"
+                  className="w-8 h-8 rounded-lg bg-[#161920] border border-[#282D37] hover:border-[#D4A373] text-zinc-300 hover:text-white flex items-center justify-center text-sm cursor-pointer"
                 >
                   ✕
                 </button>
@@ -389,15 +402,13 @@ export const ClientVoices: React.FC = () => {
 
               {feedbackSuccess ? (
                 <div className="py-10 text-center space-y-3">
-                  <div className="w-12 h-12 rounded-full bg-[#A855F7]/20 border border-[#A855F7] text-[#A855F7] mx-auto flex items-center justify-center shadow-[0_0_20px_#A855F7]">
+                  <div className="w-12 h-12 rounded-full bg-[#D4A373]/20 border border-[#D4A373] text-[#D4A373] mx-auto flex items-center justify-center">
                     <Check className="w-6 h-6 stroke-[3]" />
                   </div>
                   <h4 className="font-display text-lg font-black uppercase text-white">
                     ¡Reseña Guardada con Éxito!
                   </h4>
-                  <p className="text-xs text-zinc-400">
-                    Gracias por confiar en Rodrigo Cutsss.
-                  </p>
+                  <p className="text-xs text-zinc-400">Gracias por confiar en Rodrigo Cutsss.</p>
                 </div>
               ) : (
                 <form onSubmit={handleSubmitReview} className="space-y-4 text-xs">
@@ -411,7 +422,7 @@ export const ClientVoices: React.FC = () => {
                       placeholder="Ej. Martín Rivas"
                       value={newAuthor}
                       onChange={(e) => setNewAuthor(e.target.value)}
-                      className="w-full h-11 px-3.5 rounded-xl bg-[#151722] border border-[#2A2E42] text-white focus:outline-none focus:border-[#A855F7] focus:ring-1 focus:ring-[#A855F7]"
+                      className="w-full h-11 px-3.5 rounded-xl bg-[#0C0E12] border border-[#282D37] text-white focus:outline-none focus:border-[#D4A373]"
                     />
                   </div>
 
@@ -422,19 +433,23 @@ export const ClientVoices: React.FC = () => {
                     <select
                       value={newService}
                       onChange={(e) => setNewService(e.target.value)}
-                      className="w-full h-11 px-3.5 rounded-xl bg-[#151722] border border-[#2A2E42] text-white focus:outline-none focus:border-[#A855F7]"
+                      className="w-full h-11 px-3.5 rounded-xl bg-[#0C0E12] border border-[#282D37] text-white focus:outline-none focus:border-[#D4A373]"
                     >
                       <option value="Corte de Pelo (Corte de Autor & Fade)">
                         Corte de Pelo ($12.000 ARS)
                       </option>
-                      <option value="Taper Fade & Line Up">Taper Fade &amp; Line Up ($12.000 ARS)</option>
+                      <option value="Taper Fade & Line Up">
+                        Taper Fade &amp; Line Up ($12.000 ARS)
+                      </option>
                       <option value="Corte de Pelo + Ritual de Barba Completa">
                         Corte + Barba Completa ($17.000 ARS)
                       </option>
                       <option value="Corte de Pelo + Platinado Global / Color">
                         Corte + Platinado ($28.000 ARS)
                       </option>
-                      <option value="Arreglo & Perfilado de Barba con Vapor">Perfilado de Barba ($7.000 ARS)</option>
+                      <option value="Arreglo & Perfilado de Barba con Vapor">
+                        Perfilado de Barba ($7.000 ARS)
+                      </option>
                     </select>
                   </div>
 
@@ -453,7 +468,7 @@ export const ClientVoices: React.FC = () => {
                           <Star
                             className={`w-6 h-6 ${
                               star <= newRating
-                                ? 'fill-[#FF4655] text-[#FF4655] drop-shadow-[0_0_8px_#FF4655]'
+                                ? 'fill-[#D4A373] text-[#D4A373]'
                                 : 'text-zinc-600'
                             }`}
                           />
@@ -472,7 +487,7 @@ export const ClientVoices: React.FC = () => {
                       placeholder="Contá cómo fue tu turno, la puntualidad y el resultado..."
                       value={newComment}
                       onChange={(e) => setNewComment(e.target.value)}
-                      className="w-full p-3.5 rounded-xl bg-[#151722] border border-[#2A2E42] text-white focus:outline-none focus:border-[#A855F7] focus:ring-1 focus:ring-[#A855F7]"
+                      className="w-full p-3.5 rounded-xl bg-[#0C0E12] border border-[#282D37] text-white focus:outline-none focus:border-[#D4A373]"
                     />
                   </div>
 
@@ -480,14 +495,14 @@ export const ClientVoices: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setIsModalOpen(false)}
-                      className="px-4 py-2.5 rounded-xl border border-[#2B2E42] text-zinc-400 hover:text-white"
+                      className="px-4 py-2.5 rounded-xl border border-[#282D37] text-zinc-400 hover:text-white"
                     >
                       Cancelar
                     </button>
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#A855F7] to-[#D946EF] hover:from-[#9333EA] hover:to-[#C026D3] text-white font-black uppercase tracking-wider shadow-[0_0_15px_rgba(168,85,247,0.3)] active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+                      className="px-6 py-2.5 rounded-xl bg-[#D4A373] hover:bg-[#C89562] text-zinc-950 font-black uppercase tracking-wider shadow-sm active:scale-95 transition-all cursor-pointer disabled:opacity-50"
                     >
                       {isSubmitting ? 'Guardando...' : 'Publicar Reseña'}
                     </button>

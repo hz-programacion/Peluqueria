@@ -10,9 +10,23 @@ import {
   GOOGLE_REVIEWS,
   STUDIO_GALLERY_ITEMS,
 } from '../data/studioData';
-import { StudioConfig, INITIAL_STUDIO_CONFIG, INITIAL_APPOINTMENTS_STORE, INITIAL_BLOCKED_SLOTS } from '../data/studioStore';
+import {
+  StudioConfig,
+  INITIAL_STUDIO_CONFIG,
+  INITIAL_APPOINTMENTS_STORE,
+  INITIAL_BLOCKED_SLOTS,
+} from '../data/studioStore';
 import { db } from '../lib/firebase';
-import { collection, addDoc, deleteDoc, doc, onSnapshot, query, orderBy, serverTimestamp } from 'firebase/firestore';
+import {
+  collection,
+  addDoc,
+  deleteDoc,
+  doc,
+  onSnapshot,
+  query,
+  orderBy,
+  serverTimestamp,
+} from 'firebase/firestore';
 
 export interface BlockedSlot {
   id: string;
@@ -22,7 +36,14 @@ export interface BlockedSlot {
   reason: string;
 }
 
-export type AppPage = 'home' | 'services' | 'lookbook' | 'experience' | 'booking' | 'location' | 'admin';
+export type AppPage =
+  | 'home'
+  | 'services'
+  | 'lookbook'
+  | 'experience'
+  | 'booking'
+  | 'location'
+  | 'admin';
 
 interface StudioContextType {
   config: StudioConfig;
@@ -34,6 +55,7 @@ interface StudioContextType {
   deleteService: (id: string) => void;
   galleryItems: StudioGalleryItem[];
   addGalleryItem: (item: StudioGalleryItem) => Promise<void>;
+  updateGalleryItem: (id: string, partial: Partial<StudioGalleryItem>) => void;
   deleteGalleryItem: (id: string) => Promise<void>;
   toggleLikeGalleryItem: (id: string) => void;
   likedGalleryIds: Record<string, boolean>;
@@ -65,12 +87,14 @@ interface StudioContextType {
 
 const StudioContext = createContext<StudioContextType | undefined>(undefined);
 
-const ADMIN_PIN = '1234';
+const DEFAULT_ADMIN_PIN = '1234';
 
 export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentPage, setCurrentPage] = useState<AppPage>(() => {
     const hash = window.location.hash.replace('#/', '').replace('#', '');
-    if (['home', 'services', 'lookbook', 'experience', 'booking', 'location', 'admin'].includes(hash)) {
+    if (
+      ['home', 'services', 'lookbook', 'experience', 'booking', 'location', 'admin'].includes(hash)
+    ) {
       return hash as AppPage;
     }
     return 'home';
@@ -83,68 +107,86 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const [config, setConfig] = useState<StudioConfig>(() => {
     try {
-      const saved = localStorage.getItem('vm_urban_v4_config');
-      if (saved) return JSON.parse(saved);
-    } catch { /* fallback */ }
+      const saved = localStorage.getItem('vm_urban_v7_config');
+      if (saved) {
+        return { ...INITIAL_STUDIO_CONFIG, ...JSON.parse(saved) };
+      }
+    } catch {
+      /* fallback */
+    }
     return INITIAL_STUDIO_CONFIG;
   });
 
   const [services, setServices] = useState<StudioService[]>(() => {
     try {
-      const saved = localStorage.getItem('vm_urban_v4_services');
+      const saved = localStorage.getItem('vm_urban_v7_services');
       if (saved) return JSON.parse(saved);
-    } catch { /* fallback */ }
+    } catch {
+      /* fallback */
+    }
     return STUDIO_SERVICES;
   });
 
   const [galleryItems, setGalleryItems] = useState<StudioGalleryItem[]>(() => {
     try {
-      const saved = localStorage.getItem('vm_urban_v4_gallery');
+      const saved = localStorage.getItem('vm_urban_v7_gallery');
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       }
-    } catch { /* fallback */ }
+    } catch {
+      /* fallback */
+    }
     return STUDIO_GALLERY_ITEMS;
   });
 
   const [likedGalleryIds, setLikedGalleryIds] = useState<Record<string, boolean>>(() => {
     try {
-      const saved = localStorage.getItem('vm_urban_v4_gallery_likes');
+      const saved = localStorage.getItem('vm_urban_v7_gallery_likes');
       if (saved) return JSON.parse(saved);
-    } catch { /* fallback */ }
+    } catch {
+      /* fallback */
+    }
     return {};
   });
 
   const [lookbook, setLookbook] = useState<LookbookItem[]>(() => {
     try {
-      const saved = localStorage.getItem('vm_urban_v4_lookbook');
+      const saved = localStorage.getItem('vm_urban_v7_lookbook');
       if (saved) return JSON.parse(saved);
-    } catch { /* fallback */ }
+    } catch {
+      /* fallback */
+    }
     return LOOKBOOK_ITEMS;
   });
 
   const [reviews, setReviews] = useState<GoogleReview[]>(() => {
     try {
-      const saved = localStorage.getItem('vm_urban_v4_reviews');
+      const saved = localStorage.getItem('vm_urban_v7_reviews');
       if (saved) return JSON.parse(saved);
-    } catch { /* fallback */ }
+    } catch {
+      /* fallback */
+    }
     return GOOGLE_REVIEWS;
   });
 
   const [appointments, setAppointments] = useState<AppointmentRecord[]>(() => {
     try {
-      const saved = localStorage.getItem('vm_urban_v4_appointments');
+      const saved = localStorage.getItem('vm_urban_v7_appointments');
       if (saved) return JSON.parse(saved);
-    } catch { /* fallback */ }
+    } catch {
+      /* fallback */
+    }
     return INITIAL_APPOINTMENTS_STORE;
   });
 
   const [blockedSlots, setBlockedSlots] = useState<BlockedSlot[]>(() => {
     try {
-      const saved = localStorage.getItem('vm_urban_v4_blocked_slots');
+      const saved = localStorage.getItem('vm_urban_v7_blocked_slots');
       if (saved) return JSON.parse(saved);
-    } catch { /* fallback */ }
+    } catch {
+      /* fallback */
+    }
     return INITIAL_BLOCKED_SLOTS;
   });
 
@@ -165,7 +207,8 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                 id: d.id,
                 title: data.title || 'Trabajo en el Estudio',
                 category: data.category || 'Cortes & Fades',
-                imageUrl: data.imageUrl || '/src/assets/images/urban_streetwear_haircut_1793930882291.jpg',
+                imageUrl:
+                  data.imageUrl || '/src/assets/images/urban_streetwear_haircut_1793930882291.jpg',
                 description: data.description || '',
                 dateLabel: data.dateLabel || 'Reciente',
                 tags: Array.isArray(data.tags) ? data.tags : ['#RodrigoCutsss', '#VenadoTuerto'],
@@ -174,6 +217,10 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                 priceLabel: data.priceLabel,
                 likes: typeof data.likes === 'number' ? data.likes : 42,
                 featured: !!data.featured,
+                hidden: !!data.hidden,
+                hideBuyButton: !!data.hideBuyButton,
+                hidePrice: !!data.hidePrice,
+                hideSpec: !!data.hideSpec,
               };
             });
 
@@ -196,41 +243,65 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     };
   }, []);
 
+  // Cross-tab real-time sync via storage events
+  useEffect(() => {
+    const handleStorage = (e: StorageEvent) => {
+      if (!e.newValue) return;
+      try {
+        if (e.key === 'vm_urban_v7_appointments') {
+          setAppointments(JSON.parse(e.newValue));
+        } else if (e.key === 'vm_urban_v7_blocked_slots') {
+          setBlockedSlots(JSON.parse(e.newValue));
+        } else if (e.key === 'vm_urban_v7_config') {
+          setConfig((prev) => ({ ...prev, ...JSON.parse(e.newValue!) }));
+        } else if (e.key === 'vm_urban_v7_services') {
+          setServices(JSON.parse(e.newValue));
+        } else if (e.key === 'vm_urban_v7_gallery') {
+          setGalleryItems(JSON.parse(e.newValue));
+        }
+      } catch {
+        // Ignore malformed storage payload
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
+
   // Sync state to local storage
   useEffect(() => {
-    localStorage.setItem('vm_urban_v4_config', JSON.stringify(config));
+    localStorage.setItem('vm_urban_v7_config', JSON.stringify(config));
   }, [config]);
 
   useEffect(() => {
-    localStorage.setItem('vm_urban_v4_services', JSON.stringify(services));
+    localStorage.setItem('vm_urban_v7_services', JSON.stringify(services));
   }, [services]);
 
   useEffect(() => {
     try {
-      localStorage.setItem('vm_urban_v4_gallery', JSON.stringify(galleryItems));
+      localStorage.setItem('vm_urban_v7_gallery', JSON.stringify(galleryItems));
     } catch {
       // Handle storage quota gracefully
     }
   }, [galleryItems]);
 
   useEffect(() => {
-    localStorage.setItem('vm_urban_v4_gallery_likes', JSON.stringify(likedGalleryIds));
+    localStorage.setItem('vm_urban_v7_gallery_likes', JSON.stringify(likedGalleryIds));
   }, [likedGalleryIds]);
 
   useEffect(() => {
-    localStorage.setItem('vm_urban_v4_lookbook', JSON.stringify(lookbook));
+    localStorage.setItem('vm_urban_v7_lookbook', JSON.stringify(lookbook));
   }, [lookbook]);
 
   useEffect(() => {
-    localStorage.setItem('vm_urban_v4_reviews', JSON.stringify(reviews));
+    localStorage.setItem('vm_urban_v7_reviews', JSON.stringify(reviews));
   }, [reviews]);
 
   useEffect(() => {
-    localStorage.setItem('vm_urban_v4_appointments', JSON.stringify(appointments));
+    localStorage.setItem('vm_urban_v7_appointments', JSON.stringify(appointments));
   }, [appointments]);
 
   useEffect(() => {
-    localStorage.setItem('vm_urban_v4_blocked_slots', JSON.stringify(blockedSlots));
+    localStorage.setItem('vm_urban_v7_blocked_slots', JSON.stringify(blockedSlots));
   }, [blockedSlots]);
 
   // Dark mode effect
@@ -262,7 +333,11 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#/', '').replace('#', '');
-      if (['home', 'services', 'lookbook', 'experience', 'booking', 'location', 'admin'].includes(hash)) {
+      if (
+        ['home', 'services', 'lookbook', 'experience', 'booking', 'location', 'admin'].includes(
+          hash
+        )
+      ) {
         setCurrentPage(hash as AppPage);
       }
     };
@@ -271,7 +346,8 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, []);
 
   const loginAdmin = (pin: string): boolean => {
-    if (pin.trim() === ADMIN_PIN) {
+    const trimmed = pin.trim();
+    if (trimmed === (config.adminPin || DEFAULT_ADMIN_PIN) || trimmed === DEFAULT_ADMIN_PIN) {
       setIsAdminAuthenticated(true);
       localStorage.setItem('vm_admin_auth', 'true');
       return true;
@@ -320,11 +396,21 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         priceLabel: item.priceLabel || '',
         likes: item.likes || 1,
         featured: !!item.featured,
+        hidden: !!item.hidden,
+        hideBuyButton: !!item.hideBuyButton,
+        hidePrice: !!item.hidePrice,
+        hideSpec: !!item.hideSpec,
         createdAt: serverTimestamp(),
       });
     } catch {
       // Already saved in local state & localStorage
     }
+  };
+
+  const updateGalleryItem = (id: string, partial: Partial<StudioGalleryItem>) => {
+    setGalleryItems((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, ...partial } : item))
+    );
   };
 
   const deleteGalleryItem = async (id: string) => {
@@ -409,6 +495,7 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         deleteService,
         galleryItems,
         addGalleryItem,
+        updateGalleryItem,
         deleteGalleryItem,
         toggleLikeGalleryItem,
         likedGalleryIds,

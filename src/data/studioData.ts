@@ -11,6 +11,10 @@ export interface StudioService {
   aftercare: string;
   productsUsed: string;
   popularTag?: string;
+  hidden?: boolean;
+  hideBuyButton?: boolean;
+  hidePrice?: boolean;
+  hideProducts?: boolean;
 }
 
 export type GalleryItemCategory =
@@ -18,7 +22,8 @@ export type GalleryItemCategory =
   | 'El Estudio & Local'
   | 'Máquinas & Setup'
   | 'Color & Diseños'
-  | 'Cultura & Streetwear';
+  | 'Cultura & Streetwear'
+  | 'General';
 
 export interface StudioGalleryItem {
   id: string;
@@ -33,6 +38,10 @@ export interface StudioGalleryItem {
   priceLabel?: string;
   likes: number;
   featured?: boolean;
+  hidden?: boolean;
+  hideBuyButton?: boolean;
+  hidePrice?: boolean;
+  hideSpec?: boolean;
 }
 
 export interface LookbookItem {
@@ -103,8 +112,8 @@ export const PRESENTATION_AUDIO_TRANSCRIPT: TranscriptSegment[] = [
     id: 'seg-3',
     startTime: 8.2,
     endTime: 11.2,
-    text: 'Estilo propio, cero plantillas.',
-    highlight: 'Estilo propio, cero plantillas',
+    text: 'Arte urbano y precisión a medida en cada corte.',
+    highlight: 'precisión a medida',
   },
   {
     id: 'seg-4',
@@ -125,8 +134,8 @@ export const PRESENTATION_AUDIO_TRANSCRIPT: TranscriptSegment[] = [
 export const STUDIO_INFO = {
   authorName: 'Rodrigo',
   studioTitle: 'RODRIGO CUTSSS',
-  brandKicker: 'ESTUDIO DE CORTES MASCULINOS // VENADO TUERTO',
-  tagline: 'Estilo propio, cero plantillas. Cortes, fades, color y barba.',
+  brandKicker: 'ESTUDIO DE CORTES MASCULINOS · VENADO TUERTO',
+  tagline: 'Arte urbano y precisión a medida. Cortes, fades, color y barba.',
   bio: 'Atención exclusiva 1 a 1 en Venado Tuerto, Santa Fe. Si venís con una idea, la sacamos; si no, la armamos juntos. Sin filas de espera ni demoras.',
   address: 'Vuelta de Obligado 931',
   neighborhood: 'Venado Tuerto, Santa Fe',
@@ -156,7 +165,7 @@ export const STUDIO_SERVICES: StudioService[] = [
     price: 12000,
     popularTag: 'Servicio Principal',
     shortDescription:
-      'Corte de pelo completo y personalizado (Estilo propio, cero plantillas): degradé milimétrico (Low, Mid, High o Skin Fade) con shaver de titanio 0.0mm, trabajo de tijera en cúspide y peinado con polvo texturizante mate.',
+      'Corte de pelo completo y personalizado a tu medida: degradé milimétrico (Low, Mid, High o Skin Fade) con shaver de titanio 0.0mm, trabajo de tijera en cúspide y peinado con polvo texturizante mate.',
     preparation: [
       'Venir con el cabello lavado dentro de las 24 horas previas para apreciar la caída natural.',
       'Si venís con una idea o foto de referencia, la sacamos; si no, la armamos juntos en el sillón.',
@@ -293,7 +302,7 @@ export const STUDIO_GALLERY_ITEMS: StudioGalleryItem[] = [
     category: 'Cortes & Fades',
     imageUrl: '/src/assets/images/urban_streetwear_haircut_1793930882291.jpg',
     description:
-      'Degradé alto pulido a 0.0 mm con shaver de titanio y cúspide trabajada a tijera con polvo texturizante mate. Estilo propio, cero plantillas.',
+      'Degradé alto pulido a 0.0 mm con shaver de titanio y cúspide trabajada a tijera con polvo texturizante mate. Precisión y diseño en cada detalle.',
     dateLabel: 'Destacado del Estudio',
     tags: ['#SkinFade', '#TexturedCrop', '#RodrigoCutsss', '#VenadoTuerto'],
     technicalSpec: 'Shaver Titanio 0.0mm + Tijera de Esculpir + Polvo Mate',
@@ -389,7 +398,7 @@ export const STUDIO_GALLERY_ITEMS: StudioGalleryItem[] = [
     description:
       'Si no venís con una idea cerrada, analizamos tu tipo de pelo y la armamos juntos para que te sea fácil peinarte todos los días.',
     dateLabel: 'Visagismo & Corte',
-    tags: ['#MidFade', '#TexturaATijera', '#CeroPlantillas', '#RodrigoCutsss'],
+    tags: ['#MidFade', '#TexturaATijera', '#CorteDeAutor', '#RodrigoCutsss'],
     technicalSpec: 'Guía 0.5 a 2mm lateral · Capas texturizadas a tijera',
     serviceId: 'srv-mid-fade-crop',
     priceLabel: '$12.000 ARS',
@@ -610,3 +619,28 @@ export const GOOGLE_REVIEWS: GoogleReview[] = [
     ],
   },
 ];
+
+export function resolveInstagramHref(config: { instagram: string; instagramUrl?: string }): string {
+  const rawUrl = (config.instagramUrl || '').trim();
+  if (rawUrl && /^https?:\/\//i.test(rawUrl)) {
+    return rawUrl;
+  }
+  const cleanHandle = (config.instagram || '').replace(/^@/, '').trim();
+  return `https://instagram.com/${cleanHandle || 'rodrigo.cutsss'}`;
+}
+
+export function resolveWhatsAppHref(
+  config: { whatsappRaw: string; whatsappUrl?: string },
+  messageText?: string
+): string {
+  const rawUrl = (config.whatsappUrl || '').trim();
+  if (rawUrl && /^https?:\/\//i.test(rawUrl)) {
+    if (!messageText) return rawUrl;
+    const sep = rawUrl.includes('?') ? '&' : '?';
+    return `${rawUrl}${sep}text=${encodeURIComponent(messageText)}`;
+  }
+  const digits = (config.whatsappRaw || '').replace(/\D/g, '') || '5493462589104';
+  if (!messageText) return `https://wa.me/${digits}`;
+  return `https://wa.me/${digits}?text=${encodeURIComponent(messageText)}`;
+}
+
