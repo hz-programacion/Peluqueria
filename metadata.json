@@ -1,0 +1,6 @@
+{
+  "name": "Valentín Moretti — Estudio Privado de Peluquería & Colorimetría",
+  "description": "Estudio privado de peluquería de autor y diseño capilar 1 a 1 en Palermo, Buenos Aires. Cortes de precisión, colorimetría a medida y agenda automatizada en tiempo real.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
