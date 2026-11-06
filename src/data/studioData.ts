@@ -13,6 +13,28 @@ export interface StudioService {
   popularTag?: string;
 }
 
+export type GalleryItemCategory =
+  | 'Cortes & Fades'
+  | 'El Estudio & Local'
+  | 'Máquinas & Setup'
+  | 'Color & Diseños'
+  | 'Cultura & Streetwear';
+
+export interface StudioGalleryItem {
+  id: string;
+  title: string;
+  category: GalleryItemCategory;
+  imageUrl: string;
+  description: string;
+  dateLabel: string;
+  tags: string[];
+  technicalSpec?: string;
+  serviceId?: string;
+  priceLabel?: string;
+  likes: number;
+  featured?: boolean;
+}
+
 export interface LookbookItem {
   id: string;
   title: string;
@@ -23,7 +45,7 @@ export interface LookbookItem {
   productApplied: string;
   toolsUsed: string;
   authorNote: string;
-  guardSpec: string; // e.g. "0 a 1.5mm shaver"
+  guardSpec: string;
   featuredSpan?: boolean;
 }
 
@@ -51,24 +73,77 @@ export interface AppointmentRecord {
   reviewLoopScheduledAt: string;
 }
 
+export const PRESENTATION_AUDIO_URL =
+  '/assets/aistudio/ElevenLabs_2026-11-06T09_51_29_Carlos_pro_pvc_s50_sim75_v4_d6b60f32.mp3';
+
+export interface TranscriptSegment {
+  id: string;
+  startTime: number;
+  endTime: number;
+  text: string;
+  highlight?: string;
+}
+
+export const PRESENTATION_AUDIO_TRANSCRIPT: TranscriptSegment[] = [
+  {
+    id: 'seg-1',
+    startTime: 0,
+    endTime: 3.8,
+    text: '¡Hey! Bienvenido a Rodrigo Cutsss. Soy Rodrigo.',
+    highlight: 'Rodrigo Cutsss',
+  },
+  {
+    id: 'seg-2',
+    startTime: 3.8,
+    endTime: 8.2,
+    text: 'Acá hacemos cortes, fades, color, barba y otros servicios.',
+    highlight: 'cortes, fades, color, barba',
+  },
+  {
+    id: 'seg-3',
+    startTime: 8.2,
+    endTime: 11.2,
+    text: 'Estilo propio, cero plantillas.',
+    highlight: 'Estilo propio, cero plantillas',
+  },
+  {
+    id: 'seg-4',
+    startTime: 11.2,
+    endTime: 15.1,
+    text: 'Si venís con una idea, la sacamos. Si no, la armamos juntos.',
+    highlight: 'la armamos juntos',
+  },
+  {
+    id: 'seg-5',
+    startTime: 15.1,
+    endTime: 19.5,
+    text: 'Sacá tu turno desde la página o por WhatsApp. Te esperamos.',
+    highlight: 'Sacá tu turno',
+  },
+];
+
 export const STUDIO_INFO = {
   authorName: 'Rodrigo',
   studioTitle: 'RODRIGO CUTSSS',
   brandKicker: 'ESTUDIO DE CORTES MASCULINOS // VENADO TUERTO',
-  tagline: 'Cortes urbanos, tapers quirúrgicos y estilo de autor para hombres.',
-  bio: 'Atención exclusiva de 1 solo cliente por turno en Venado Tuerto, Santa Fe. Sin filas de espera, sin ruido caótico ni interrupciones telefónicas mientras estás en el sillón.',
+  tagline: 'Estilo propio, cero plantillas. Cortes, fades, color y barba.',
+  bio: 'Atención exclusiva 1 a 1 en Venado Tuerto, Santa Fe. Si venís con una idea, la sacamos; si no, la armamos juntos. Sin filas de espera ni demoras.',
   address: 'Vuelta de Obligado 931',
   neighborhood: 'Venado Tuerto, Santa Fe',
   phoneDisplay: '+54 9 3462 55-4421',
   whatsappRaw: '5493462554421',
-  instagram: '@rodrigocutsss',
+  instagram: '@rodrigo.cutsss',
+  instagramUrl: 'https://instagram.com/rodrigo.cutsss',
+  instagramDirectUrl: 'https://ig.me/m/rodrigo.cutsss',
+  tiktokUrl: 'https://tiktok.com/@rodrigo.cutsss_vt',
   spotifyPlaylistUrl: 'https://open.spotify.com',
-  currentVibeTrack: 'Trap & Drill Sessions 2026',
+  currentVibeTrack: 'Presentación Rodrigo Cutsss + Trap & Drill Sessions',
   googleMapsUrl: 'https://www.google.com/maps/search/?api=1&query=Vuelta+de+Obligado+931+Venado+Tuerto+Santa+Fe',
   wazeUrl: 'https://waze.com/ul?q=Vuelta+de+Obligado+931+Venado+Tuerto+Santa+Fe',
   googleReviewShortlink: 'https://g.page/r/RodrigoCutsss/review',
   heroImage: '/src/assets/images/urban_barber_hero_1793929257447.jpg',
-  spaceImage: '/src/assets/images/urban_barber_hero_1793929257447.jpg',
+  spaceImage: '/src/assets/images/space_private_atelier_1793889688437.jpg',
+  presentationAudioUrl: PRESENTATION_AUDIO_URL,
 };
 
 export const STUDIO_SERVICES: StudioService[] = [
@@ -81,133 +156,256 @@ export const STUDIO_SERVICES: StudioService[] = [
     price: 12000,
     popularTag: 'Servicio Principal',
     shortDescription:
-      'Corte de pelo completo y personalizado: degradé milimétrico (Low, Mid, High o Skin Fade) o corte clásico con tijera, navaja de precisión y peinado con polvo texturizante mate.',
+      'Corte de pelo completo y personalizado (Estilo propio, cero plantillas): degradé milimétrico (Low, Mid, High o Skin Fade) con shaver de titanio 0.0mm, trabajo de tijera en cúspide y peinado con polvo texturizante mate.',
     preparation: [
-      'Venir con el cabello lavado dentro de las 24 horas previas para ver la caída natural.',
-      'Si tenés fotos o referencias del estilo que buscás, mostralas al sentarte para adaptar el visagismo.',
+      'Venir con el cabello lavado dentro de las 24 horas previas para apreciar la caída natural.',
+      'Si venís con una idea o foto de referencia, la sacamos; si no, la armamos juntos en el sillón.',
     ],
     executionSteps: [
-      '05 min · Diagnóstico visagista de facciones, remolinos y forma craneal.',
-      '15 min · Apertura de guías milimétricas con clipper y afeitado en cero con shaver.',
-      '15 min · Trabajo de cúspide con tijera japonesa entresacada para textura descontracturada.',
-      '05 min · Limpieza a contrapelo con shavette y sellado con polvo voluminizador mate.',
+      '05 min · Asesoramiento personalizado según tus facciones, remolinos y estructura craneal.',
+      '15 min · Apertura de guías milimétricas con clipper y pulido al ras 0.0 mm con shaver de lámina de titanio.',
+      '15 min · Trabajo superior con tijera de diseño y entresacado para lograr textura orgánica.',
+      '05 min · Definición limpia de contornos con trimmer Skeleton y acabado con polvo voluminizador mate.',
     ],
     aftercare:
-      'El fade mantiene su nitidez óptima durante 10 a 14 días. Para peinarlo a diario, usá 2 toques de polvo mate en seco.',
-    productsUsed: 'Babyliss Pro FX Shaver · Polvo Texturizante Slick Gorilla · Tijera Japonesa',
+      'El fade mantiene su nitidez óptima durante 10 a 14 días. Para peinarlo a diario, aplicá 2 toques de polvo mate en seco.',
+    productsUsed: 'Babyliss Pro FX Shaver Titanio · Clipper Wahl Cordless · Polvo Slick Gorilla · Tijera de Esculpir',
   },
   {
     id: 'srv-taper-lineup',
     index: '02',
     category: 'Fades & Cortes',
-    name: 'Taper Fade & Line Up',
+    name: 'Taper Fade & Contornos a Trimmer',
     durationMinutes: 40,
     price: 12000,
     shortDescription:
-      'Desvanecido focalizado exclusivamente en patillas y nuca baja, conservando la masa lateral y marcando contornos frontales a navaja.',
+      'Desvanecido focalizado en patillas y nuca baja, conservando el volumen lateral y marcando contornos limpios con trimmer de alta precisión sin irritar la piel.',
     preparation: [
       'Ideal si te gusta llevar el cabello con ondas, rulos o caída natural sin vaciar los laterales.',
-      'No afeitarse las patillas ni la línea del cuello 3 días antes para dejar bordes limpios.',
+      'No recortarse las patillas ni la línea del cuello 3 días antes para lograr bordes bien definidos.',
     ],
     executionSteps: [
       '05 min · Seccionamiento anatómico del parietal y control de densidad.',
-      '15 min · Taper fade comprimido de 0 a 1.5mm en nuca y patillas con trimmer.',
-      '15 min · Ajuste de largo superior respetando rulos u ondas naturales.',
-      '05 min · Perfilado de contornos a navaja con gel transparente de afeitado.',
+      '15 min · Taper fade comprimido de 0.0 mm (shaver) a 1.5 mm en nuca y patillas.',
+      '15 min · Ajuste de largo superior a tijera respetando rulos, ondas o caída hacia adelante.',
+      '05 min · Marcado de arcos y contornos frontales con trimmer Skeleton calibrada al detalle.',
     ],
     aftercare:
-      'Estilo muy versátil que envejece de forma orgánica hasta por 4 semanas sin desarmarse.',
-    productsUsed: 'Wahl Cordless Senior · Trimmer Skeleton · Pomada Base Agua Mate',
+      'Estilo versátil que crece de forma pareja hasta por 3 a 4 semanas manteniendo la estructura.',
+    productsUsed: 'Wahl Cordless Senior · Trimmer Skeleton FX · Pomada Base Agua Mate',
   },
   {
     id: 'srv-full-experience',
     index: '03',
     category: 'Corte & Barba',
-    name: 'Corte de Pelo + Ritual de Barba Completa',
+    name: 'Corte de Pelo + Perfilado de Barba Completo',
     durationMinutes: 60,
     price: 17000,
     popularTag: 'Combo Completo',
     shortDescription:
-      'Corte de pelo urbano completo, degradé de barba conectado a las patillas, toalla caliente al vapor con aceites esenciales, afeitado a navaja y café de bienvenida.',
+      'Corte de pelo urbano completo + degradé de barba conectado a las patillas, rebaje simétrico con máquina y tijera, toalla caliente al vapor y limpieza al ras con shaver hipoalergénica.',
     preparation: [
-      'Dejar crecer la barba al menos 5 a 7 días para poder definir los ángulos y el degradé de mejilla.',
-      'Si tenés piel reactiva o foliculitis, se aplica aceite calmante de árbol de té previo a la toalla.',
+      'Dejar crecer la barba de 5 a 7 días para definir bien los ángulos mandibulares y el degradé.',
+      'Cero irritación: trabajamos con trimmers de alta precisión y shaver de lámina de titanio hipoalergénica.',
     ],
     executionSteps: [
-      '30 min · Corte de pelo y degradé personalizado según tu estilo craneal.',
-      '15 min · Esculpido de barba, rebajado progresivo y toalla caliente vaporizada con aceites esenciales.',
-      '10 min · Afeitado de contornos a navaja libre con gel refrigerante y toalla fría tonificante.',
-      '05 min · Bálsamo hidratante de barba, aftershave sin ardor y styling final.',
+      '30 min · Corte de pelo y fade personalizado según tu estilo.',
+      '15 min · Esculpido geométrico de barba con máquina sobre peine y degradé progresivo en patillas.',
+      '10 min · Toalla tibia aromática y definición de líneas de cuello y pómulos con trimmer y shaver 0.0 mm.',
+      '05 min · Aplicación de bálsamo hidratante de barba, tónico refrescante y peinado final.',
     ],
     aftercare:
-      'Hidratar la barba 1 vez al día con bálsamo en seco para mantener la suavidad de las cerdas.',
-    productsUsed: 'Navaja Feather Japonesa · Proraso Eucalyptus · Bálsamo Reuzel Wood',
+      'Hidratar la barba una vez al día con aceite o bálsamo para mantener la suavidad y prolijidad.',
+    productsUsed: 'Trimmer Babyliss FX · Shaver Titanio · Bálsamo Reuzel Wood & Spice',
   },
   {
     id: 'srv-bleach-buzz',
     index: '04',
     category: 'Color & Platinados',
-    name: 'Corte de Pelo + Platinado Global / Color',
+    name: 'Corte de Pelo + Color / Platinado Global',
     durationMinutes: 90,
     price: 28000,
     shortDescription:
-      'Corte buzz uniforme o con fade + doble decoloración técnica con plex protector y matizador ceniza / plata frío sin amarillo residual.',
+      'Corte personalizado o buzz cut con fade + decoloración cuidada con aditivo protector de fibra y matizado ceniza, plata frío o fantasía.',
     preparation: [
-      'No lavar el cabello las 48 horas previas para proteger el cuero cabelludo con los aceites naturales.',
-      'Informar si tenés tintura previa o aplicaciones caseras de henna.',
+      'No lavar el cabello las 48 horas previas para resguardar el cuero cabelludo con su barrera lipídica natural.',
+      'Avisar por Instagram o WhatsApp si tenés restos de tintura oscura previa.',
     ],
     executionSteps: [
-      '15 min · Corte rapado o fade a medida con limpieza de nuca a trimmer.',
-      '45 min · Decoloración técnica en 2 tiempos con aditivo reconstructor de enlaces.',
-      '20 min · Matiz tonal frío (Platino Ártico, Blanco Hielo o Gris Plata).',
-      '10 min · Mascarilla ácida selladora de cutícula y styling con cera mate.',
+      '15 min · Estructura base del corte y limpieza de contornos a trimmer.',
+      '45 min · Decoloración controlada con protector plex para cuidar la fibra capilar.',
+      '20 min · Aplicación de matiz tonal frío (Blanco Ceniza, Plata Hielo o tono a elección).',
+      '10 min · Cierre técnico ácido, hidratación profunda y peinado.',
     ],
     aftercare:
-      'Usar shampoo matizador violeta cada 5 días y mascarilla hidratante 1 vez por semana.',
-    productsUsed: 'Schwarzkopf Blondme 9+ · Olaplex · Matizador Fanola No Yellow',
+      'Usar shampoo matizador violeta cada 5 días y crema nutritiva una vez por semana.',
+    productsUsed: 'Schwarzkopf Blondme 9+ · Protector Plex · Matizador Fanola No Yellow',
   },
   {
     id: 'srv-beard-sculpt',
     index: '05',
     category: 'Detalles & Barba',
-    name: 'Perfilado de Barba a Navaja & Toalla Térmica',
+    name: 'Arreglo & Perfilado de Barba con Vapor',
     durationMinutes: 25,
     price: 7000,
     shortDescription:
-      'Rebaje parejo, degradado en pómulos, ritual de toalla caliente para abrir poros, perfilado milimétrico de líneas y bálsamo hidratante.',
+      'Rebaje parejo de volumen, degradado en pómulos, toalla caliente al vapor, marcado milimétrico de contornos con trimmer y limpieza de cuello con shaver.',
     preparation: [
-      'No tocar las líneas de cuello antes de venir para corregir cualquier asimetría previa.',
+      'Venir con la barba seca y desenredada para evaluar la simetría natural.',
     ],
     executionSteps: [
-      '10 min · Reducción volumétrica con máquina sobre peine según forma mandibular.',
-      '05 min · Toalla caliente y aplicación de aceite pre-shave.',
-      '05 min · Navajazo preciso en pómulos y cuello.',
-      '05 min · Compresa fría de cierre y bálsamo perfumado.',
+      '10 min · Reducción volumétrica con máquina sobre peine siguiendo el ángulo del mentón.',
+      '05 min · Toalla tibia aromatizada para suavizar el vello.',
+      '05 min · Marcado nítido de pómulos y cuello con trimmer Skeleton y shaver de lámina de titanio.',
+      '05 min · Cierre con tónico frío y bálsamo nutritivo.',
     ],
     aftercare:
-      'Cepillar con cerda de jabalí para orientar el crecimiento y distribuir los aceites.',
-    productsUsed: 'Aceite de Argán Prensado · Shavette Parker · Tónico Refrescante',
+      'Peinar hacia abajo a diario para educar la dirección del vello facial.',
+    productsUsed: 'Trimmer Skeleton FX · Shaver Titanio · Aceite de Argán & Tónico',
   },
   {
     id: 'srv-freestyle-lines',
     index: '06',
     category: 'Detalles & Barba',
-    name: 'Líneas Freestyle a Navaja & Detalle de Ceja',
+    name: 'Diseño Freestyle a Trimmer & Perfilado de Ceja',
     durationMinutes: 15,
     price: 5000,
     shortDescription:
-      'Diseño geométrico a navaja en lateral/nuca o corte de ceja con navaja descartable para un acabado urbano de alto impacto.',
+      'Líneas geométricas o diseño urbano con trimmer de precisión en lateral/nuca y limpieza prolija de cejas.',
     preparation: [
-      'Puede agregarse a cualquier corte o realizarse como retoque exprés.',
+      'Podés sumarlo como complemento a tu corte o agendarlo para mantener los detalles entre turnos.',
     ],
     executionSteps: [
-      '05 min · Marcado simétrico con lápiz dermográfico según tus facciones.',
-      '05 min · Trazo quirúrgico a navaja con gel translúcido.',
-      '05 min · Limpieza antiséptica y sellador calmante.',
+      '05 min · Boceto simétrico adaptado a la forma de tu corte.',
+      '05 min · Definición con cuchilla en T de alta precisión (0.0 mm) sin lastimar la piel.',
+      '05 min · Pulido con shaver y loción calmante.',
     ],
     aftercare:
-      'Dura 7-10 días antes de que vuelva a brotar el vello.',
-    productsUsed: 'Trimmer Skeleton FX · Alcohol Isopropílico · Gel Hipolergénico',
+      'Mantiene su definición máxima durante 7 a 10 días.',
+    productsUsed: 'Trimmer Babyliss Gold FX · Shaver de Precisión · Gel Calmante',
+  },
+];
+
+export const STUDIO_GALLERY_ITEMS: StudioGalleryItem[] = [
+  {
+    id: 'gal-1',
+    title: 'Skin Fade Alto & Crop Texturizado',
+    category: 'Cortes & Fades',
+    imageUrl: '/src/assets/images/urban_streetwear_haircut_1793930882291.jpg',
+    description:
+      'Degradé alto pulido a 0.0 mm con shaver de titanio y cúspide trabajada a tijera con polvo texturizante mate. Estilo propio, cero plantillas.',
+    dateLabel: 'Destacado del Estudio',
+    tags: ['#SkinFade', '#TexturedCrop', '#RodrigoCutsss', '#VenadoTuerto'],
+    technicalSpec: 'Shaver Titanio 0.0mm + Tijera de Esculpir + Polvo Mate',
+    serviceId: 'srv-mid-fade-crop',
+    priceLabel: '$12.000 ARS',
+    likes: 194,
+    featured: true,
+  },
+  {
+    id: 'gal-2',
+    title: 'El Estudio por Dentro · Vuelta de Obligado 931',
+    category: 'El Estudio & Local',
+    imageUrl: '/src/assets/images/urban_graffiti_mirror_1793930882309.jpg',
+    description:
+      'Nuestro espacio privado 1 a 1 en Venado Tuerto. Espejo iluminado, estética urbana callejera, buena música y toda la comodidad para que vengas a cortarte tranquilo.',
+    dateLabel: 'El Local',
+    tags: ['#ElEstudio', '#VueltaDeObligado931', '#Atencion1a1', '#VibeUrbano'],
+    technicalSpec: 'Puesto exclusivo 1 a 1 · Iluminación de estudio · Sonido Hi-Fi',
+    likes: 238,
+    featured: true,
+  },
+  {
+    id: 'gal-3',
+    title: 'Low Taper Fade en Rulos Naturales',
+    category: 'Cortes & Fades',
+    imageUrl: '/src/assets/images/urban_taper_curls_1793929259459.jpg',
+    description:
+      'Respetando el movimiento y volumen de los rulos arriba, limpiando patillas y nuca baja con trimmer de precisión y shaver.',
+    dateLabel: 'Trabajo en Cliente',
+    tags: ['#LowTaper', '#Rulos', '#FadeLimpio', '#VenadoTuerto'],
+    technicalSpec: 'Guía 0.0 a 1.5mm en sienes y nuca · Crema definidora',
+    serviceId: 'srv-taper-lineup',
+    priceLabel: '$12.000 ARS',
+    likes: 251,
+  },
+  {
+    id: 'gal-4',
+    title: 'Precisión en Contornos & Máquinas Calibradas',
+    category: 'Máquinas & Setup',
+    imageUrl: '/src/assets/images/urban_barber_hands_detail_1793930883253.jpg',
+    description:
+      'Equipamiento profesional calibrado al milímetro: trimmers Skeleton de cuchilla T y shavers de lámina de titanio hipoalergénica para lograr bordes perfectos cuidando tu piel.',
+    dateLabel: 'Equipamiento Pro',
+    tags: ['#TrimmerSkeleton', '#ShaverTitanio', '#ClippersPro', '#Precision'],
+    technicalSpec: 'Clippers Cordless + Trimmers Cuchilla T + Esterilización UV',
+    likes: 176,
+  },
+  {
+    id: 'gal-5',
+    title: 'Platinado Global Ceniza + High Fade',
+    category: 'Color & Diseños',
+    imageUrl: '/src/assets/images/urban_platinum_buzz_1793929260240.jpg',
+    description:
+      'Decoloración cuidada con aditivo protector y matizado blanco ceniza frío sin reflejos amarillos, acompañado de un fade bien limpio.',
+    dateLabel: 'Colorimetría',
+    tags: ['#Platinado', '#ColorMasculino', '#BuzzCut', '#EstiloPropio'],
+    technicalSpec: 'Blondme 9+ con Plex · Matiz Plata Frío · Fade 0.0mm',
+    serviceId: 'srv-bleach-buzz',
+    priceLabel: '$28.000 ARS',
+    likes: 215,
+  },
+  {
+    id: 'gal-6',
+    title: 'Sillón Principal & Atmósfera Privada',
+    category: 'El Estudio & Local',
+    imageUrl: '/src/assets/images/space_private_atelier_1793889688437.jpg',
+    description:
+      'Sin gente amontonada esperando ni ruidos molestos. Durante tu turno el estudio es 100% para vos.',
+    dateLabel: 'Espacio 1 a 1',
+    tags: ['#EstudioPrivado', '#Confort', '#VenadoTuerto', '#RodrigoCutsss'],
+    technicalSpec: 'Sillón hidráulico reclinable · Climatización · Café de cortesía',
+    likes: 164,
+  },
+  {
+    id: 'gal-7',
+    title: 'Combo: Mid Fade Conectado a Barba',
+    category: 'Cortes & Fades',
+    imageUrl: '/src/assets/images/urban_beard_fade_1793929260672.jpg',
+    description:
+      'Transición suave desde el corte hacia la barba, perfilada íntegramente con trimmer de precisión, toalla tibia al vapor y bálsamo hidratante.',
+    dateLabel: 'Corte + Barba',
+    tags: ['#BeardFade', '#BarbaProlija', '#MidFade', '#ComboCompleto'],
+    technicalSpec: 'Conexión patilla-barba + Shaver en cuello y pómulos',
+    serviceId: 'srv-full-experience',
+    priceLabel: '$17.000 ARS',
+    likes: 289,
+  },
+  {
+    id: 'gal-8',
+    title: 'Mid Fade Clásico & Textura Superior a Tijera',
+    category: 'Cortes & Fades',
+    imageUrl: '/src/assets/images/urban_textured_crop_1793929259231.jpg',
+    description:
+      'Si no venís con una idea cerrada, analizamos tu tipo de pelo y la armamos juntos para que te sea fácil peinarte todos los días.',
+    dateLabel: 'Visagismo & Corte',
+    tags: ['#MidFade', '#TexturaATijera', '#CeroPlantillas', '#RodrigoCutsss'],
+    technicalSpec: 'Guía 0.5 a 2mm lateral · Capas texturizadas a tijera',
+    serviceId: 'srv-mid-fade-crop',
+    priceLabel: '$12.000 ARS',
+    likes: 172,
+  },
+  {
+    id: 'gal-9',
+    title: 'Cultura Urbana & Detrás de Escena en VT',
+    category: 'Cultura & Streetwear',
+    imageUrl: '/src/assets/images/urban_barber_hero_1793929257447.jpg',
+    description:
+      'Rodrigo en plena sesión en Vuelta de Obligado 931. Dedicación total a cada detalle del corte.',
+    dateLabel: 'Sesión en Vivo',
+    tags: ['#RodrigoCutsss', '#CulturaUrbana', '#VenadoTuerto', '#BarberLife'],
+    technicalSpec: 'Sesiones de 40 a 60 min · Turnos puntuales',
+    likes: 310,
   },
 ];
 
@@ -237,122 +435,122 @@ export const STUDIO_DROPS: StreetwearDrop[] = [
     category: 'Grooming',
     price: 18000,
     badge: 'Máxima Fijación',
-    description: 'Fórmula al agua de fijación indestructible para texturas marcadas. Se retira fácilmente con agua bajo la ducha.',
-    spec: '113g · Base Agua · Aroma Manzana/Azúcar',
+    description: 'Fórmula al agua de fijación firme para texturas marcadas. Se retira fácilmente con agua bajo la ducha.',
+    spec: '113g · Base Agua · Acabado Mate',
   },
   {
     id: 'drop-tee',
-    name: 'RODRIGO CUTSSS // Heavy Tee',
+    name: 'RODRIGO CUTSSS // Heavy Boxy Tee',
     category: 'Apparel',
     price: 24000,
     badge: 'Drop Limitado',
-    description: 'Remera pesada corte boxy fit en algodón peinado 280 GSM. Serigrafía con tipografía stencil y coordenadas de Venado Tuerto.',
-    spec: '280 GSM French Terry · Talles 1 al 4 · Negro Grafito',
+    description: 'Remera pesada corte boxy fit en algodón peinado 280 GSM. Estampa urbana con coordenadas de Venado Tuerto.',
+    spec: '280 GSM Algodón · Talles S al XL · Negro Asfalto',
   },
   {
-    id: 'drop-razor',
-    name: 'Shavette Japonesa Edición Carbono',
+    id: 'drop-comb',
+    name: 'Kit Peine Texturizador Carbono + Bruma Sea Salt',
     category: 'Herramientas',
-    price: 26000,
-    badge: 'Pieza de Autor',
-    description: 'Porta-navajas equilibrado en acero quirúrgico con pavonado negro mate y grabado láser RODRIGO CUTSSS.',
-    spec: 'Acero Quirúrgico · Cierre magnético · Incluye funda de cuero',
+    price: 16000,
+    badge: 'Styling en Casa',
+    description: 'Peine de fibra de carbono antiestático de dientes anchos junto con spray de sal marina para lograr textura urbana en 30 segundos.',
+    spec: 'Fibra de Carbono + Spray 150ml · Uso Diario',
   },
 ];
 
 export const LOOKBOOK_ITEMS: LookbookItem[] = [
   {
     id: 'lb-urban-streetwear-poster',
-    title: 'Textured Crop Urbano & Temple Line-Up',
+    title: 'Textured Crop Urbano & Fade Pulido',
     category: 'Texturizados',
     imageUrl: '/src/assets/images/urban_streetwear_haircut_1793930882291.jpg',
-    servicePerformed: '01. Mid / Low Fade & Crop Texturizado',
-    executionTime: '45 min',
-    guardSpec: 'Guía 0.5 a navaja · Frontal recto a escuadra',
+    servicePerformed: '01. Corte de Pelo (Corte de Autor & Fade)',
+    executionTime: '40 min',
+    guardSpec: 'Shaver 0.0mm a Trimmer · Frontal recto a escuadra',
     productApplied: 'Slick Gorilla Powder + Fijador mate',
-    toolsUsed: 'Babyliss Gold FX Shaver · Tijera Kasho 5.5"',
+    toolsUsed: 'Babyliss Gold FX Shaver · Tijera de Esculpir 5.5"',
     authorNote:
-      'Estética urbana cruda inspirada en el streetwear londinense. Transición a navaja pura desde la patilla y línea frontal milimétricamente escuadrada.',
+      'Estética urbana limpia con transición milimétrica desde la patilla usando shaver de titanio y línea frontal definida a trimmer.',
     featuredSpan: true,
   },
   {
-    id: 'lb-urban-razor-detail',
-    title: 'Precisión Quirúrgica: Perfilado a Navaja Libre',
+    id: 'lb-urban-trimmer-detail',
+    title: 'Precisión en Contornos: Trimmer & Shaver 0.0mm',
     category: 'Barba & Perfilado',
     imageUrl: '/src/assets/images/urban_barber_hands_detail_1793930883253.jpg',
-    servicePerformed: '05. Perfilado de Barba a Navaja & Toalla Térmica',
-    executionTime: '30 min',
-    guardSpec: 'Ángulo de 30° con navaja japonesa · Toalla a vapor',
-    productApplied: 'Aceite botánico pre-shave + Bálsamo amaderado',
-    toolsUsed: 'Shavette Feather de acero · Navaja japonesa descartable',
+    servicePerformed: '05. Arreglo & Perfilado de Barba con Vapor',
+    executionTime: '25 min',
+    guardSpec: 'Cuchilla T en 0.0 mm · Toalla tibia al vapor',
+    productApplied: 'Aceite botánico hidratante + Bálsamo amaderado',
+    toolsUsed: 'Trimmer Skeleton FX · Shaver de lámina de titanio',
     authorNote:
-      'Detalle del pulso y tensión de piel necesarios para lograr líneas de mejilla y sien que se ven como trazadas con regla.',
+      'Definición ultra limpia de contornos y líneas de barba utilizando exclusivamente trimmers de precisión y shaver hipoalergénica, sin irritación.',
   },
   {
     id: 'lb-urban-station-vibe',
-    title: 'El Puesto del Estudio: Estación Subte Buenos Aires',
+    title: 'El Estudio en Vuelta de Obligado 931',
     category: 'Skin Fades',
     imageUrl: '/src/assets/images/urban_graffiti_mirror_1793930882309.jpg',
-    servicePerformed: '03. Full Experience: Corte Urbano + Barba Esculpida',
+    servicePerformed: '03. Corte de Pelo + Perfilado de Barba Completo',
     executionTime: '60 min',
-    guardSpec: 'Espacio de trabajo 1 a 1 · Espejo con stickers urbanos',
-    productApplied: 'Café de especialidad tostado & Cerveza fría',
-    toolsUsed: 'Manta de cuero · Desinfección UV · Audio lo-fi envolvente',
+    guardSpec: 'Espacio de trabajo 1 a 1 · Ambientación urbana',
+    productApplied: 'Café de cortesía & Bebida fría',
+    toolsUsed: 'Sillón hidráulico · Desinfección UV · Audio curado',
     authorNote:
-      'Paredes de hormigón expuesto, stickers de streetwear coleccionados y luz de neón. El ambiente donde la técnica se junta con el arte callejero.',
+      'Hormigón expuesto, arte urbano y atención personalizada sin apuros en Venado Tuerto.',
     featuredSpan: true,
   },
   {
     id: 'lb-urban-crop',
-    title: 'Mid Fade & Crop Texturizado Clásico',
+    title: 'Mid Fade & Crop Texturizado a Tijera',
     category: 'Texturizados',
     imageUrl: '/src/assets/images/urban_textured_crop_1793929259231.jpg',
-    servicePerformed: '01. Mid / Low Fade & Crop Texturizado',
-    executionTime: '45 min',
-    guardSpec: 'Guía 0.5 a navaja · Tijera de entresacar',
+    servicePerformed: '01. Corte de Pelo (Corte de Autor & Fade)',
+    executionTime: '40 min',
+    guardSpec: 'Guía 0.0 a 1.5mm · Tijera de entresacar',
     productApplied: 'Polvo voluminizador mate + Cera al agua',
-    toolsUsed: 'Babyliss Pro Gold FX · Tijera Kasho 5.5"',
+    toolsUsed: 'Babyliss Pro Gold FX · Tijera Japonesa 5.5"',
     authorNote:
-      'Desvanecido comprimido que arranca en 0 mm en la patilla y sube en diagonal. Cúspide picada en seco a tijera para caída con volumen natural.',
+      'Desvanecido comprimido que arranca en 0.0 mm con shaver y sube en diagonal. Cúspide trabajada en seco a tijera para caída natural.',
   },
   {
     id: 'lb-urban-taper',
     title: 'Low Taper Fade con Rulos Orgánicos',
     category: 'Tapers & Caída',
     imageUrl: '/src/assets/images/urban_taper_curls_1793929259459.jpg',
-    servicePerformed: '02. Taper Fade & Line Up Quirúrgico',
-    executionTime: '45 min',
-    guardSpec: '0 mm nuca baja y patilla · Laterales con peso',
+    servicePerformed: '02. Taper Fade & Contornos a Trimmer',
+    executionTime: '40 min',
+    guardSpec: '0.0 mm nuca baja y patilla · Laterales con volumen',
     productApplied: 'Crema definidora de rulos & Activador de ondas',
-    toolsUsed: 'Wahl Cordless Senior · Peine Afro de Metal',
+    toolsUsed: 'Wahl Cordless Senior · Trimmer Skeleton',
     authorNote:
-      'El corte ideal para el que no quiere raparse los costados pero busca bordes ultra limpios. La masa de rulos arriba mantiene su identidad urbana.',
+      'El corte ideal para el que no quiere raparse los costados pero busca bordes ultra limpios en patillas y nuca.',
   },
   {
     id: 'lb-urban-platinum',
-    title: 'Platinado Hielo & Buzz Cut Minimalista',
+    title: 'Platinado Hielo & Buzz Cut con Fade',
     category: 'Platinados & Buzz',
     imageUrl: '/src/assets/images/urban_platinum_buzz_1793929260240.jpg',
-    servicePerformed: '04. Bleach & Buzz: Platinado Global Urbano',
+    servicePerformed: '04. Corte de Pelo + Color / Platinado Global',
     executionTime: '90 min',
-    guardSpec: 'Rapado homogéneo al 2.5 + Detalle de ceja',
-    productApplied: 'Matizador plata frío + Sérum de brillo anti-frizz',
-    toolsUsed: 'Wahl Magic Clip · Pincel Framar · Navaja Feather',
+    guardSpec: 'Superior guía #2 + Skin Fade lateral',
+    productApplied: 'Matizador plata frío + Protector Plex',
+    toolsUsed: 'Wahl Magic Clip · Trimmer de Precisión',
     authorNote:
-      'Doble proceso de decoloración sin castigar el cuero cabelludo. Tono blanco puro sin tonos mantecosos y detalle de ceja marcado al milímetro.',
+      'Decoloración cuidada protegiendo el cuero cabelludo. Tono blanco ceniza parejo y contornos marcados a trimmer.',
   },
   {
     id: 'lb-urban-beard',
-    title: 'Mid Fade con Barba Esculpida al Ras',
+    title: 'Mid Fade con Barba Esculpida a Máquina y Shaver',
     category: 'Barba & Perfilado',
     imageUrl: '/src/assets/images/urban_beard_fade_1793929260672.jpg',
-    servicePerformed: '03. Full Experience: Corte Urbano + Barba Esculpida',
+    servicePerformed: '03. Corte de Pelo + Perfilado de Barba Completo',
     executionTime: '60 min',
     guardSpec: 'Desvanecido 0 a 2mm con conexión de patilla',
     productApplied: 'Bálsamo para barba Reuzel + Polvo Mate',
-    toolsUsed: 'Babyliss FX Trimmer · Shavette de precisión · Shaver de titanio',
+    toolsUsed: 'Babyliss FX Trimmer · Shaver de lámina de titanio',
     authorNote:
-      'La desconexión suave entre el fade del pelo y el degradé invertido de la barba estiliza la línea mandibular y da un look sobrio e impecable.',
+      'Transición gradual entre el fade del pelo y el degradé de la barba para estilizar las facciones con máxima prolijidad.',
   },
 ];
 
@@ -378,7 +576,7 @@ export const GOOGLE_REVIEWS: GoogleReview[] = [
     authorInitials: 'LS',
     relativeDate: 'Hace 4 días',
     rating: 5,
-    serviceTag: 'Taper Fade & Line Up',
+    serviceTag: 'Taper Fade & Contornos a Trimmer',
     textParts: [
       { text: 'Tengo rulos y siempre me arruinaban los cortes en peluquerías tradicionales. El ' },
       { text: 'taper que me hace Rodrigo es perfecto', highlight: true },
@@ -404,11 +602,11 @@ export const GOOGLE_REVIEWS: GoogleReview[] = [
     authorInitials: 'FM',
     relativeDate: 'Hace 2 semanas',
     rating: 5,
-    serviceTag: 'Corte de Pelo + Ritual de Barba',
+    serviceTag: 'Corte de Pelo + Perfilado de Barba',
     textParts: [
-      { text: 'La ' },
-      { text: 'toalla caliente y el afeitado a navaja libre', highlight: true },
-      { text: ' te reinician el día. Cero espera, te sentás al minuto que reservaste en Vuelta de Obligado 931. El mejor de Venado Tuerto sin dudas.' },
+      { text: 'El ' },
+      { text: 'perfilado con trimmer y shaver de titanio más la toalla al vapor', highlight: true },
+      { text: ' te dejan la barba impecable y sin nada de irritación. Cero espera, te sentás al minuto que reservaste en Vuelta de Obligado 931.' },
     ],
   },
 ];

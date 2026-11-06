@@ -235,7 +235,7 @@ export const ThermalReceiptBooking: React.FC = () => {
         <div className="bg-[#12131A] border border-[#232532] rounded-2xl p-6 sm:p-7 shadow-xl">
           <div className="flex items-center justify-between border-b border-[#1E202B] pb-4 mb-5">
             <div className="flex items-center gap-2.5">
-              <span className="w-6 h-6 rounded-full bg-[#00F0FF] text-black flex items-center justify-center font-mono text-xs font-black shadow-[0_0_10px_rgba(0,240,255,0.4)]">
+              <span className="w-6 h-6 rounded-full bg-gradient-to-r from-[#A855F7] to-[#FF4655] text-white flex items-center justify-center font-mono text-xs font-black shadow-[0_0_10px_rgba(168,85,247,0.4)]">
                 01
               </span>
               <h3 className="font-display text-lg font-bold text-white uppercase tracking-tight">
@@ -260,8 +260,8 @@ export const ThermalReceiptBooking: React.FC = () => {
                   onMouseEnter={playMechanicalHover}
                   className={`p-4 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-4 active:scale-[0.99] ${
                     isSelected
-                      ? 'bg-[#181A24] border-[#00F0FF] shadow-[0_0_15px_rgba(0,240,255,0.15)]'
-                      : 'bg-[#0E0F16] border-[#222432] hover:border-[#00F0FF]/40'
+                      ? 'bg-[#181A28] border-[#A855F7] shadow-[0_0_15px_rgba(168,85,247,0.2)]'
+                      : 'bg-[#0E0F16] border-[#222432] hover:border-[#A855F7]/40'
                   }`}
                 >
                   <div className="min-w-0 flex-1">
@@ -270,7 +270,7 @@ export const ThermalReceiptBooking: React.FC = () => {
                         {srv.name}
                       </h4>
                       {srv.popularTag && (
-                        <span className="px-1.5 py-0.2 rounded text-[10px] font-mono font-bold bg-[#00F0FF]/20 text-[#00F0FF]">
+                        <span className="px-1.5 py-0.2 rounded text-[10px] font-mono font-bold bg-[#FF4655]/20 text-[#FF4655]">
                           {srv.popularTag}
                         </span>
                       )}
@@ -284,7 +284,7 @@ export const ThermalReceiptBooking: React.FC = () => {
                     <span className="text-base font-mono font-black text-white block">
                       {formatPriceARS(srv.price)}
                     </span>
-                    <span className={`text-[11px] font-mono font-bold ${isSelected ? 'text-[#00F0FF]' : 'text-zinc-500'}`}>
+                    <span className={`text-[11px] font-mono font-bold ${isSelected ? 'text-[#A855F7]' : 'text-zinc-500'}`}>
                       {isSelected ? '[Listo]' : '[Sumar]'}
                     </span>
                   </div>
@@ -298,7 +298,7 @@ export const ThermalReceiptBooking: React.FC = () => {
         <div className="bg-[#12131A] border border-[#232532] rounded-2xl p-6 sm:p-7 shadow-xl">
           <div className="flex items-center justify-between border-b border-[#1E202B] pb-4 mb-5">
             <div className="flex items-center gap-2.5">
-              <span className="w-6 h-6 rounded-full bg-[#00F0FF] text-black flex items-center justify-center font-mono text-xs font-black shadow-[0_0_10px_rgba(0,240,255,0.4)]">
+              <span className="w-6 h-6 rounded-full bg-gradient-to-r from-[#A855F7] to-[#FF4655] text-white flex items-center justify-center font-mono text-xs font-black shadow-[0_0_10px_rgba(168,85,247,0.4)]">
                 02
               </span>
               <h3 className="font-display text-lg font-bold text-white uppercase tracking-tight">
@@ -323,7 +323,7 @@ export const ThermalReceiptBooking: React.FC = () => {
                   setSelectedDate(e.target.value);
                   setSelectedTime('');
                 }}
-                className="w-full bg-[#0E0F16] border border-[#2B2D3D] rounded-xl px-4 py-3 text-white font-mono text-sm focus:outline-hidden focus:border-[#00F0FF]"
+                className="w-full bg-[#0E0F16] border border-[#2B2D3D] rounded-xl px-4 py-3 text-white font-mono text-sm focus:outline-hidden focus:border-[#A855F7]"
               />
             </div>
 
@@ -353,8 +353,8 @@ export const ThermalReceiptBooking: React.FC = () => {
                           !slot.available
                             ? 'bg-[#0E0F16] border border-[#1A1C24] text-zinc-600 line-through cursor-not-allowed'
                             : isSelected
-                            ? 'bg-[#00F0FF] text-black shadow-md font-black'
-                            : 'bg-[#0E0F16] border border-[#232532] text-zinc-300 hover:border-[#00F0FF]/50 hover:text-white'
+                            ? 'bg-gradient-to-r from-[#A855F7] to-[#D946EF] text-white shadow-md font-black'
+                            : 'bg-[#0E0F16] border border-[#232532] text-zinc-300 hover:border-[#A855F7]/50 hover:text-white'
                         }`}
                       >
                         {slot.time} hs
@@ -370,7 +370,7 @@ export const ThermalReceiptBooking: React.FC = () => {
         {/* Step 3: Client Details */}
         <div className="bg-[#12131A] border border-[#232532] rounded-2xl p-6 sm:p-7 shadow-xl">
           <div className="flex items-center gap-2.5 border-b border-[#1E202B] pb-4 mb-5">
-            <span className="w-6 h-6 rounded-full bg-[#00F0FF] text-black flex items-center justify-center font-mono text-xs font-black shadow-[0_0_10px_rgba(0,240,255,0.4)]">
+            <span className="w-6 h-6 rounded-full bg-gradient-to-r from-[#A855F7] to-[#FF4655] text-white flex items-center justify-center font-mono text-xs font-black shadow-[0_0_10px_rgba(168,85,247,0.4)]">
               03
             </span>
             <h3 className="font-display text-lg font-bold text-white uppercase tracking-tight">
@@ -388,7 +388,7 @@ export const ThermalReceiptBooking: React.FC = () => {
                 placeholder="Ej. Lucas Santoro"
                 value={clientName}
                 onChange={(e) => setClientName(e.target.value)}
-                className="w-full bg-[#0E0F16] border border-[#2B2D3D] rounded-xl px-4 py-3 text-white font-mono text-sm focus:outline-hidden focus:border-[#00F0FF]"
+                className="w-full bg-[#0E0F16] border border-[#2B2D3D] rounded-xl px-4 py-3 text-white font-mono text-sm focus:outline-hidden focus:border-[#A855F7]"
               />
             </div>
 
@@ -398,10 +398,10 @@ export const ThermalReceiptBooking: React.FC = () => {
               </label>
               <input
                 type="tel"
-                placeholder="Ej. 11 5842 9104"
+                placeholder="Ej. 3462 554421"
                 value={whatsapp}
                 onChange={(e) => setWhatsapp(e.target.value)}
-                className="w-full bg-[#0E0F16] border border-[#2B2D3D] rounded-xl px-4 py-3 text-white font-mono text-sm focus:outline-hidden focus:border-[#00F0FF]"
+                className="w-full bg-[#0E0F16] border border-[#2B2D3D] rounded-xl px-4 py-3 text-white font-mono text-sm focus:outline-hidden focus:border-[#A855F7]"
               />
             </div>
           </div>
@@ -415,7 +415,7 @@ export const ThermalReceiptBooking: React.FC = () => {
                 onMouseEnter={playMechanicalHover}
                 className={`p-3.5 rounded-xl border cursor-pointer flex items-start gap-3 transition-colors ${
                   paymentOption === 'deposit'
-                    ? 'bg-[#181A24] border-[#00F0FF]'
+                    ? 'bg-[#181A28] border-[#A855F7]'
                     : 'bg-[#0E0F16] border-[#232532]'
                 }`}
               >
@@ -427,7 +427,7 @@ export const ThermalReceiptBooking: React.FC = () => {
                     playMechanicalClick();
                     setPaymentOption('deposit');
                   }}
-                  className="mt-1 accent-[#00F0FF]"
+                  className="mt-1 accent-[#A855F7]"
                 />
                 <div className="text-xs">
                   <span className="font-bold text-white block">Seña del 30%</span>
@@ -441,7 +441,7 @@ export const ThermalReceiptBooking: React.FC = () => {
                 onMouseEnter={playMechanicalHover}
                 className={`p-3.5 rounded-xl border cursor-pointer flex items-start gap-3 transition-colors ${
                   paymentOption === 'commitment'
-                    ? 'bg-[#181A24] border-[#00F0FF]'
+                    ? 'bg-[#181A28] border-[#A855F7]'
                     : 'bg-[#0E0F16] border-[#232532]'
                 }`}
               >
@@ -453,12 +453,12 @@ export const ThermalReceiptBooking: React.FC = () => {
                     playMechanicalClick();
                     setPaymentOption('commitment');
                   }}
-                  className="mt-1 accent-[#00F0FF]"
+                  className="mt-1 accent-[#A855F7]"
                 />
                 <div className="text-xs">
                   <span className="font-bold text-white block">Compromiso de Honor</span>
                   <span className="text-zinc-400 text-[11px]">
-                    Sin seña previa. Pagás 100% en el sillón. Tolerancia estricta de 10 min.
+                    Sin seña previa. Pagás 100% en el sillón ($12.000). Tolerancia estricta de 10 min.
                   </span>
                 </div>
               </label>
@@ -534,7 +534,7 @@ export const ThermalReceiptBooking: React.FC = () => {
             onMouseEnter={isFormValid ? playMechanicalHover : undefined}
             className={`w-full py-4 text-xs font-mono font-black uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xl active:scale-95 ${
               isFormValid
-                ? 'bg-[#08090D] text-[#00F0FF] hover:bg-black hover:scale-[1.01]'
+                ? 'bg-[#0A0B10] text-[#A855F7] hover:bg-black hover:text-[#D946EF] hover:scale-[1.01]'
                 : 'bg-zinc-300 text-zinc-500 cursor-not-allowed'
             }`}
           >

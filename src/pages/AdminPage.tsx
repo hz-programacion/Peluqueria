@@ -52,8 +52,8 @@ export const AdminPage: React.FC = () => {
     category: 'Skin Fades',
     imageUrl: '/src/assets/images/urban_barber_hero_1793929257447.jpg',
     servicePerformed: '01. Mid / Low Fade & Crop Texturizado',
-    executionTime: '45 min',
-    guardSpec: 'Guía 0.5 a navaja · Tijera de entresacar',
+    executionTime: '40 min',
+    guardSpec: 'Shaver 0.0mm · Tijera de entresacar',
     productApplied: 'Polvo voluminizador mate',
     toolsUsed: 'Babyliss Pro Gold FX · Tijera Kasho 5.5"',
     authorNote: 'Desvanecido comprimido y textura natural superior.',
@@ -87,11 +87,11 @@ export const AdminPage: React.FC = () => {
     return (
       <div className="py-16 md:py-28 px-4 flex items-center justify-center min-h-[70vh]">
         <div className="w-full max-w-md p-6 md:p-8 rounded-2xl border border-[#272938] bg-[#111219] text-white shadow-2xl">
-          <div className="w-12 h-12 rounded-xl bg-[#00F0FF] text-black flex items-center justify-center font-bold text-xl mb-5 shadow-[0_0_15px_rgba(0,240,255,0.4)]">
+          <div className="w-12 h-12 rounded-xl bg-[#A855F7] text-black flex items-center justify-center font-bold text-xl mb-5 shadow-[0_0_15px_rgba(0,240,255,0.4)]">
             <Lock className="w-6 h-6 stroke-[2.5]" />
           </div>
 
-          <span className="font-mono text-xs uppercase text-[#00F0FF] font-bold block mb-1">
+          <span className="font-mono text-xs uppercase text-[#A855F7] font-bold block mb-1">
             PORTAL DEL BARBERO · CONTROL TOTAL
           </span>
           <h1 className="font-display text-2xl md:text-3xl font-extrabold mb-2">
@@ -116,7 +116,7 @@ export const AdminPage: React.FC = () => {
                   setPinError('');
                 }}
                 placeholder="1234"
-                className="w-full h-12 px-3.5 text-center tracking-[0.4em] text-xl font-mono font-bold rounded-xl border border-[#2B2D3D] bg-[#161722] text-white focus:border-[#00F0FF] focus:outline-none"
+                className="w-full h-12 px-3.5 text-center tracking-[0.4em] text-xl font-mono font-bold rounded-xl border border-[#2B2D3D] bg-[#161722] text-white focus:border-[#A855F7] focus:outline-none"
                 autoFocus
               />
               {pinError && (
@@ -130,7 +130,7 @@ export const AdminPage: React.FC = () => {
               type="submit"
               onClick={playMechanicalClick}
               onMouseEnter={playMechanicalHover}
-              className="w-full h-12 uppercase font-black text-xs tracking-wider bg-[#00F0FF] text-black rounded-xl hover:bg-[#00D5E5] transition-all cursor-pointer shadow-lg active:scale-95"
+              className="w-full h-12 uppercase font-black text-xs tracking-wider bg-[#A855F7] text-black rounded-xl hover:bg-[#9333EA] transition-all cursor-pointer shadow-lg active:scale-95"
             >
               Entrar al Panel de Control
             </button>
@@ -138,7 +138,7 @@ export const AdminPage: React.FC = () => {
 
           <div className="mt-6 pt-5 border-t border-[#20222D] text-center">
             <p className="text-xs font-mono text-zinc-500">
-              PIN maestro por defecto: <strong className="text-[#00F0FF]">1234</strong>
+              PIN maestro por defecto: <strong className="text-[#A855F7]">1234</strong>
             </p>
             <button
               onClick={() => {
@@ -166,7 +166,7 @@ export const AdminPage: React.FC = () => {
       
       {/* Toast Notification */}
       {saveToast && (
-        <div className="fixed bottom-6 right-6 z-50 px-4 py-3 bg-[#00F0FF] text-black font-bold rounded-xl shadow-2xl text-xs font-mono flex items-center gap-2 animate-bounce">
+        <div className="fixed bottom-6 right-6 z-50 px-4 py-3 bg-[#A855F7] text-black font-bold rounded-xl shadow-2xl text-xs font-mono flex items-center gap-2 animate-bounce">
           <CheckCircle2 className="w-4 h-4 stroke-[3]" />
           <span>{saveToast}</span>
         </div>
@@ -175,7 +175,7 @@ export const AdminPage: React.FC = () => {
       {/* Top Bar for Admin */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-[#222432]">
         <div>
-          <div className="flex items-center gap-2 text-xs font-mono text-[#00F0FF] font-bold mb-1">
+          <div className="flex items-center gap-2 text-xs font-mono text-[#A855F7] font-bold mb-1">
             <Shield className="w-3.5 h-3.5" />
             <span>SESIÓN ADMINISTRATIVA INICIADA · {config.authorName.toUpperCase()}</span>
           </div>
@@ -187,7 +187,7 @@ export const AdminPage: React.FC = () => {
         <div className="flex items-center gap-2.5">
           <button
             onClick={() => navigateTo('home')}
-            className="px-4 py-2 text-xs font-mono font-bold rounded-xl border border-[#2B2D3D] bg-[#161722] hover:border-[#00F0FF] transition-colors cursor-pointer"
+            className="px-4 py-2 text-xs font-mono font-bold rounded-xl border border-[#2B2D3D] bg-[#161722] hover:border-[#A855F7] transition-colors cursor-pointer"
           >
             Ver Sitio Público
           </button>
@@ -206,12 +206,12 @@ export const AdminPage: React.FC = () => {
         <div className="p-4 rounded-xl border border-[#232532] bg-[#111218]">
           <span className="text-[10px] font-mono font-bold uppercase text-zinc-500 block">Citas Agendadas</span>
           <p className="font-display text-2xl font-black text-white mt-0.5">{appointments.length} Turnos</p>
-          <p className="text-[11px] font-mono text-[#00F0FF] mt-0.5">{todayAppointments.length} para el día de hoy</p>
+          <p className="text-[11px] font-mono text-[#A855F7] mt-0.5">{todayAppointments.length} para el día de hoy</p>
         </div>
 
         <div className="p-4 rounded-xl border border-[#232532] bg-[#111218]">
           <span className="text-[10px] font-mono font-bold uppercase text-zinc-500 block">Facturación Proyectada</span>
-          <p className="font-display text-2xl font-black text-[#00F0FF] mt-0.5">{formatPriceARS(totalRevenueEst)}</p>
+          <p className="font-display text-2xl font-black text-[#A855F7] mt-0.5">{formatPriceARS(totalRevenueEst)}</p>
           <p className="text-[11px] font-mono text-zinc-400 mt-0.5">Basado en citas confirmadas</p>
         </div>
 
@@ -232,7 +232,7 @@ export const AdminPage: React.FC = () => {
               updateConfig({ walkInStatus: newStatus });
               triggerToast(`Estado actualizado: ${newStatus === 'available' ? 'Huecos abiertos hoy' : 'Agenda Completa'}`);
             }}
-            className="text-[11px] font-mono text-[#00F0FF] hover:underline mt-0.5 cursor-pointer"
+            className="text-[11px] font-mono text-[#A855F7] hover:underline mt-0.5 cursor-pointer"
           >
             Cambiar estado &rarr;
           </button>
@@ -256,7 +256,7 @@ export const AdminPage: React.FC = () => {
               onClick={() => setActiveTab(tab.id as typeof activeTab)}
               className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs uppercase tracking-wider font-mono font-bold transition-colors cursor-pointer ${
                 isActive
-                  ? 'bg-[#00F0FF] text-black shadow-md'
+                  ? 'bg-[#A855F7] text-black shadow-md'
                   : 'bg-[#14151E] border border-[#232532] text-zinc-400 hover:text-white hover:border-zinc-500'
               }`}
             >
@@ -285,7 +285,7 @@ export const AdminPage: React.FC = () => {
                 onClick={() => setAppointmentFilter('all')}
                 className={`px-3 py-1.5 text-xs font-mono font-bold rounded-lg border transition-colors cursor-pointer ${
                   appointmentFilter === 'all'
-                    ? 'border-[#00F0FF] bg-[#00F0FF] text-black'
+                    ? 'border-[#A855F7] bg-[#A855F7] text-black'
                     : 'border-[#272938] bg-[#14151E] text-zinc-400 hover:text-white'
                 }`}
               >
@@ -295,7 +295,7 @@ export const AdminPage: React.FC = () => {
                 onClick={() => setAppointmentFilter('today')}
                 className={`px-3 py-1.5 text-xs font-mono font-bold rounded-lg border transition-colors cursor-pointer ${
                   appointmentFilter === 'today'
-                    ? 'border-[#00F0FF] bg-[#00F0FF] text-black'
+                    ? 'border-[#A855F7] bg-[#A855F7] text-black'
                     : 'border-[#272938] bg-[#14151E] text-zinc-400 hover:text-white'
                 }`}
               >
@@ -321,7 +321,7 @@ export const AdminPage: React.FC = () => {
                 >
                   <div className="space-y-1.5">
                     <div className="flex flex-wrap items-center gap-2 text-xs font-mono">
-                      <span className="px-2.5 py-0.5 rounded bg-[#00F0FF] text-black font-extrabold">
+                      <span className="px-2.5 py-0.5 rounded bg-[#A855F7] text-black font-extrabold">
                         {app.date}
                       </span>
                       <span className="font-bold text-white">
@@ -428,7 +428,7 @@ export const AdminPage: React.FC = () => {
                 });
                 setIsNewServiceModalOpen(true);
               }}
-              className="inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-mono font-black uppercase tracking-wider bg-[#00F0FF] text-black rounded-xl hover:bg-[#00D5E5] cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-mono font-black uppercase tracking-wider bg-[#A855F7] text-black rounded-xl hover:bg-[#9333EA] cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5 stroke-[3]" />
               <span>Añadir Corte</span>
@@ -443,7 +443,7 @@ export const AdminPage: React.FC = () => {
               >
                 <div>
                   <div className="flex items-center justify-between gap-4 font-mono text-xs text-zinc-400 mb-2">
-                    <span className="text-[#00F0FF] font-bold">{srv.index}. {srv.category}</span>
+                    <span className="text-[#A855F7] font-bold">{srv.index}. {srv.category}</span>
                     <span className="text-lg font-black text-white">{formatPriceARS(srv.price)}</span>
                   </div>
 
@@ -470,7 +470,7 @@ export const AdminPage: React.FC = () => {
                         setServiceFormData(srv);
                         setIsNewServiceModalOpen(true);
                       }}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-mono font-bold border border-[#2B2D3D] rounded-lg hover:border-[#00F0FF] cursor-pointer"
+                      className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-mono font-bold border border-[#2B2D3D] rounded-lg hover:border-[#A855F7] cursor-pointer"
                     >
                       <Edit3 className="w-3.5 h-3.5" />
                       <span>Editar</span>
@@ -508,7 +508,7 @@ export const AdminPage: React.FC = () => {
 
           {/* Form to create block */}
           <div className="p-6 rounded-xl border border-[#232532] bg-[#111218]">
-            <h3 className="font-mono text-xs uppercase text-[#00F0FF] font-bold mb-4">
+            <h3 className="font-mono text-xs uppercase text-[#A855F7] font-bold mb-4">
               Bloquear Horario Específico
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -568,7 +568,7 @@ export const AdminPage: React.FC = () => {
                   });
                   triggerToast('Franja bloqueada exitosamente');
                 }}
-                className="px-5 py-2.5 text-xs font-mono font-bold uppercase tracking-wider bg-[#00F0FF] text-black rounded-lg hover:bg-[#00D5E5] cursor-pointer"
+                className="px-5 py-2.5 text-xs font-mono font-bold uppercase tracking-wider bg-[#A855F7] text-black rounded-lg hover:bg-[#9333EA] cursor-pointer"
               >
                 Bloquear Horario
               </button>
@@ -586,7 +586,7 @@ export const AdminPage: React.FC = () => {
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-white">{b.date} · {b.startTime} hs</span>
-                    <span className="text-[#00F0FF]">({b.durationMinutes} minutos)</span>
+                    <span className="text-[#A855F7]">({b.durationMinutes} minutos)</span>
                   </div>
                   <p className="text-zinc-400 mt-0.5">{b.reason || 'Sin motivo especificado'}</p>
                 </div>
@@ -618,7 +618,7 @@ export const AdminPage: React.FC = () => {
             </div>
             <button
               onClick={() => setIsNewLookbookOpen(true)}
-              className="inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-mono font-black uppercase tracking-wider bg-[#00F0FF] text-black rounded-xl hover:bg-[#00D5E5] cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-mono font-black uppercase tracking-wider bg-[#A855F7] text-black rounded-xl hover:bg-[#9333EA] cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5 stroke-[3]" />
               <span>Nuevo Trabajo</span>
@@ -638,7 +638,7 @@ export const AdminPage: React.FC = () => {
                     referrerPolicy="no-referrer"
                     className="w-full h-full object-cover"
                   />
-                  <span className="absolute top-3 left-3 px-2 py-0.5 bg-black/80 text-[#00F0FF] font-mono text-[10px] font-bold rounded">
+                  <span className="absolute top-3 left-3 px-2 py-0.5 bg-black/80 text-[#A855F7] font-mono text-[10px] font-bold rounded">
                     {item.category}
                   </span>
                 </div>
@@ -647,7 +647,7 @@ export const AdminPage: React.FC = () => {
                   <div>
                     <h3 className="font-display text-lg font-bold text-white mb-1">{item.title}</h3>
                     <p className="text-xs text-zinc-400 mb-2">{item.servicePerformed}</p>
-                    <p className="text-xs font-mono text-[#00F0FF]">Guía: {item.guardSpec}</p>
+                    <p className="text-xs font-mono text-[#A855F7]">Guía: {item.guardSpec}</p>
                     <p className="text-xs font-mono text-zinc-400">Producto: {item.productApplied}</p>
                   </div>
 
@@ -781,7 +781,7 @@ export const AdminPage: React.FC = () => {
             <div className="pt-2 flex justify-end">
               <button
                 onClick={() => triggerToast('Ajustes guardados correctamente')}
-                className="inline-flex items-center gap-1.5 px-6 py-2.5 text-xs font-mono font-bold uppercase tracking-wider bg-[#00F0FF] text-black rounded-lg hover:bg-[#00D5E5] cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-6 py-2.5 text-xs font-mono font-bold uppercase tracking-wider bg-[#A855F7] text-black rounded-lg hover:bg-[#9333EA] cursor-pointer"
               >
                 <Save className="w-3.5 h-3.5" />
                 <span>Guardar Ajustes</span>
@@ -912,7 +912,7 @@ export const AdminPage: React.FC = () => {
                   }
                   setIsNewServiceModalOpen(false);
                 }}
-                className="px-5 py-2 text-xs font-mono font-bold uppercase tracking-wider bg-[#00F0FF] text-black rounded-lg hover:bg-[#00D5E5] cursor-pointer"
+                className="px-5 py-2 text-xs font-mono font-bold uppercase tracking-wider bg-[#A855F7] text-black rounded-lg hover:bg-[#9333EA] cursor-pointer"
               >
                 Guardar Corte
               </button>
@@ -1032,7 +1032,7 @@ export const AdminPage: React.FC = () => {
                   triggerToast('Corte añadido al lookbook');
                   setIsNewLookbookOpen(false);
                 }}
-                className="px-5 py-2 text-xs font-mono font-bold uppercase tracking-wider bg-[#00F0FF] text-black rounded-lg hover:bg-[#00D5E5] cursor-pointer"
+                className="px-5 py-2 text-xs font-mono font-bold uppercase tracking-wider bg-[#A855F7] text-black rounded-lg hover:bg-[#9333EA] cursor-pointer"
               >
                 Guardar al Lookbook
               </button>

@@ -1,6 +1,18 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { StudioService, LookbookItem, GoogleReview, AppointmentRecord, STUDIO_SERVICES, LOOKBOOK_ITEMS, GOOGLE_REVIEWS } from '../data/studioData';
+import {
+  StudioService,
+  LookbookItem,
+  GoogleReview,
+  AppointmentRecord,
+  StudioGalleryItem,
+  STUDIO_SERVICES,
+  LOOKBOOK_ITEMS,
+  GOOGLE_REVIEWS,
+  STUDIO_GALLERY_ITEMS,
+} from '../data/studioData';
 import { StudioConfig, INITIAL_STUDIO_CONFIG, INITIAL_APPOINTMENTS_STORE, INITIAL_BLOCKED_SLOTS } from '../data/studioStore';
+import { db } from '../lib/firebase';
+import { collection, addDoc, deleteDoc, doc, onSnapshot, query, orderBy, serverTimestamp } from 'firebase/firestore';
 
 export interface BlockedSlot {
   id: string;
@@ -20,6 +32,11 @@ interface StudioContextType {
   addService: (service: StudioService) => void;
   updateService: (id: string, service: Partial<StudioService>) => void;
   deleteService: (id: string) => void;
+  galleryItems: StudioGalleryItem[];
+  addGalleryItem: (item: StudioGalleryItem) => Promise<void>;
+  deleteGalleryItem: (id: string) => Promise<void>;
+  toggleLikeGalleryItem: (id: string) => void;
+  likedGalleryIds: Record<string, boolean>;
   lookbook: LookbookItem[];
   addLookbookItem: (item: LookbookItem) => void;
   updateLookbookItem: (id: string, item: Partial<LookbookItem>) => void;
@@ -38,12 +55,10 @@ interface StudioContextType {
   loginAdmin: (pin: string) => boolean;
   logoutAdmin: () => void;
   currentPage: AppPage;
-  navigateTo: (page: AppPage) => void;
+  navigateTo: (page: AppPage, sectionId?: string) => void;
   selectedServiceIds: string[];
   toggleSelectService: (id: string) => void;
   setSelectedServiceIds: React.Dispatch<React.SetStateAction<string[]>>;
-  isStyleFinderOpen: boolean;
-  setIsStyleFinderOpen: (open: boolean) => void;
   isDark: boolean;
   setIsDark: React.Dispatch<React.SetStateAction<boolean>>;
 }
@@ -66,11 +81,9 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return localStorage.getItem('vm_admin_auth') === 'true';
   });
 
-  const [isStyleFinderOpen, setIsStyleFinderOpen] = useState<boolean>(false);
-
   const [config, setConfig] = useState<StudioConfig>(() => {
     try {
-      const saved = localStorage.getItem('vm_urban_v3_config');
+      const saved = localStorage.getItem('vm_urban_v4_config');
       if (saved) return JSON.parse(saved);
     } catch { /* fallback */ }
     return INITIAL_STUDIO_CONFIG;
@@ -78,15 +91,34 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const [services, setServices] = useState<StudioService[]>(() => {
     try {
-      const saved = localStorage.getItem('vm_urban_v3_services');
+      const saved = localStorage.getItem('vm_urban_v4_services');
       if (saved) return JSON.parse(saved);
     } catch { /* fallback */ }
     return STUDIO_SERVICES;
   });
 
+  const [galleryItems, setGalleryItems] = useState<StudioGalleryItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('vm_urban_v4_gallery');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch { /* fallback */ }
+    return STUDIO_GALLERY_ITEMS;
+  });
+
+  const [likedGalleryIds, setLikedGalleryIds] = useState<Record<string, boolean>>(() => {
+    try {
+      const saved = localStorage.getItem('vm_urban_v4_gallery_likes');
+      if (saved) return JSON.parse(saved);
+    } catch { /* fallback */ }
+    return {};
+  });
+
   const [lookbook, setLookbook] = useState<LookbookItem[]>(() => {
     try {
-      const saved = localStorage.getItem('vm_urban_v3_lookbook');
+      const saved = localStorage.getItem('vm_urban_v4_lookbook');
       if (saved) return JSON.parse(saved);
     } catch { /* fallback */ }
     return LOOKBOOK_ITEMS;
@@ -94,7 +126,7 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const [reviews, setReviews] = useState<GoogleReview[]>(() => {
     try {
-      const saved = localStorage.getItem('vm_urban_v3_reviews');
+      const saved = localStorage.getItem('vm_urban_v4_reviews');
       if (saved) return JSON.parse(saved);
     } catch { /* fallback */ }
     return GOOGLE_REVIEWS;
@@ -102,7 +134,7 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const [appointments, setAppointments] = useState<AppointmentRecord[]>(() => {
     try {
-      const saved = localStorage.getItem('vm_urban_v3_appointments');
+      const saved = localStorage.getItem('vm_urban_v4_appointments');
       if (saved) return JSON.parse(saved);
     } catch { /* fallback */ }
     return INITIAL_APPOINTMENTS_STORE;
@@ -110,7 +142,7 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const [blockedSlots, setBlockedSlots] = useState<BlockedSlot[]>(() => {
     try {
-      const saved = localStorage.getItem('vm_urban_v3_blocked_slots');
+      const saved = localStorage.getItem('vm_urban_v4_blocked_slots');
       if (saved) return JSON.parse(saved);
     } catch { /* fallback */ }
     return INITIAL_BLOCKED_SLOTS;
@@ -118,29 +150,87 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>(['srv-mid-fade-crop']);
 
+  // Sync with Firestore studio_gallery collection if available
+  useEffect(() => {
+    let unsubscribe: (() => void) | undefined;
+    try {
+      const q = query(collection(db, 'studio_gallery'), orderBy('createdAt', 'desc'));
+      unsubscribe = onSnapshot(
+        q,
+        (snapshot) => {
+          if (!snapshot.empty) {
+            const remoteItems: StudioGalleryItem[] = snapshot.docs.map((d) => {
+              const data = d.data();
+              return {
+                id: d.id,
+                title: data.title || 'Trabajo en el Estudio',
+                category: data.category || 'Cortes & Fades',
+                imageUrl: data.imageUrl || '/src/assets/images/urban_streetwear_haircut_1793930882291.jpg',
+                description: data.description || '',
+                dateLabel: data.dateLabel || 'Reciente',
+                tags: Array.isArray(data.tags) ? data.tags : ['#RodrigoCutsss', '#VenadoTuerto'],
+                technicalSpec: data.technicalSpec,
+                serviceId: data.serviceId,
+                priceLabel: data.priceLabel,
+                likes: typeof data.likes === 'number' ? data.likes : 42,
+                featured: !!data.featured,
+              };
+            });
+
+            setGalleryItems((prev) => {
+              const remoteIds = new Set(remoteItems.map((r) => r.id));
+              const localSeed = prev.filter((item) => !remoteIds.has(item.id));
+              return [...remoteItems, ...localSeed];
+            });
+          }
+        },
+        () => {
+          // Graceful fallback to local storage if Firestore rules restrict read
+        }
+      );
+    } catch {
+      // Offline / local fallback
+    }
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, []);
+
   // Sync state to local storage
   useEffect(() => {
-    localStorage.setItem('vm_urban_v3_config', JSON.stringify(config));
+    localStorage.setItem('vm_urban_v4_config', JSON.stringify(config));
   }, [config]);
 
   useEffect(() => {
-    localStorage.setItem('vm_urban_v3_services', JSON.stringify(services));
+    localStorage.setItem('vm_urban_v4_services', JSON.stringify(services));
   }, [services]);
 
   useEffect(() => {
-    localStorage.setItem('vm_urban_v3_lookbook', JSON.stringify(lookbook));
+    try {
+      localStorage.setItem('vm_urban_v4_gallery', JSON.stringify(galleryItems));
+    } catch {
+      // Handle storage quota gracefully
+    }
+  }, [galleryItems]);
+
+  useEffect(() => {
+    localStorage.setItem('vm_urban_v4_gallery_likes', JSON.stringify(likedGalleryIds));
+  }, [likedGalleryIds]);
+
+  useEffect(() => {
+    localStorage.setItem('vm_urban_v4_lookbook', JSON.stringify(lookbook));
   }, [lookbook]);
 
   useEffect(() => {
-    localStorage.setItem('vm_urban_v3_reviews', JSON.stringify(reviews));
+    localStorage.setItem('vm_urban_v4_reviews', JSON.stringify(reviews));
   }, [reviews]);
 
   useEffect(() => {
-    localStorage.setItem('vm_urban_v3_appointments', JSON.stringify(appointments));
+    localStorage.setItem('vm_urban_v4_appointments', JSON.stringify(appointments));
   }, [appointments]);
 
   useEffect(() => {
-    localStorage.setItem('vm_urban_v3_blocked_slots', JSON.stringify(blockedSlots));
+    localStorage.setItem('vm_urban_v4_blocked_slots', JSON.stringify(blockedSlots));
   }, [blockedSlots]);
 
   // Dark mode effect
@@ -153,11 +243,20 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   }, [isDark]);
 
-  // History sync
-  const navigateTo = (page: AppPage) => {
+  // History & Section Navigation sync
+  const navigateTo = (page: AppPage, sectionId?: string) => {
     setCurrentPage(page);
     window.location.hash = `#/${page}`;
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (sectionId) {
+      setTimeout(() => {
+        const el = document.getElementById(sectionId);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 80);
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   useEffect(() => {
@@ -204,6 +303,52 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const deleteService = (id: string) => {
     setServices((prev) => prev.filter((s) => s.id !== id));
     setSelectedServiceIds((prev) => prev.filter((sId) => sId !== id));
+  };
+
+  const addGalleryItem = async (item: StudioGalleryItem) => {
+    setGalleryItems((prev) => [item, ...prev]);
+    try {
+      await addDoc(collection(db, 'studio_gallery'), {
+        title: item.title,
+        category: item.category,
+        imageUrl: item.imageUrl,
+        description: item.description,
+        dateLabel: item.dateLabel,
+        tags: item.tags,
+        technicalSpec: item.technicalSpec || '',
+        serviceId: item.serviceId || '',
+        priceLabel: item.priceLabel || '',
+        likes: item.likes || 1,
+        featured: !!item.featured,
+        createdAt: serverTimestamp(),
+      });
+    } catch {
+      // Already saved in local state & localStorage
+    }
+  };
+
+  const deleteGalleryItem = async (id: string) => {
+    setGalleryItems((prev) => prev.filter((item) => item.id !== id));
+    try {
+      await deleteDoc(doc(db, 'studio_gallery', id));
+    } catch {
+      // Handled locally
+    }
+  };
+
+  const toggleLikeGalleryItem = (id: string) => {
+    setLikedGalleryIds((prev) => {
+      const isLiked = !!prev[id];
+      const next = { ...prev, [id]: !isLiked };
+      setGalleryItems((items) =>
+        items.map((item) =>
+          item.id === id
+            ? { ...item, likes: Math.max(0, item.likes + (isLiked ? -1 : 1)) }
+            : item
+        )
+      );
+      return next;
+    });
   };
 
   const addLookbookItem = (item: LookbookItem) => {
@@ -262,6 +407,11 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         addService,
         updateService,
         deleteService,
+        galleryItems,
+        addGalleryItem,
+        deleteGalleryItem,
+        toggleLikeGalleryItem,
+        likedGalleryIds,
         lookbook,
         addLookbookItem,
         updateLookbookItem,
@@ -284,8 +434,6 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         selectedServiceIds,
         toggleSelectService,
         setSelectedServiceIds,
-        isStyleFinderOpen,
-        setIsStyleFinderOpen,
         isDark,
         setIsDark,
       }}

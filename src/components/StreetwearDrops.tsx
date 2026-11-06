@@ -23,8 +23,8 @@ export const StreetwearDrops: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-12">
         <div>
           <div className="flex items-center gap-2 mb-3">
-            <span className="w-2.5 h-2.5 bg-[#00F0FF] inline-block shadow-[0_0_8px_rgba(0,240,255,0.6)]" />
-            <span className="text-xs font-mono font-bold tracking-widest text-[#00F0FF] uppercase">
+            <span className="w-2.5 h-2.5 bg-[#A855F7] inline-block shadow-[0_0_8px_rgba(168,85,247,0.6)]" />
+            <span className="text-xs font-mono font-bold tracking-widest text-[#A855F7] uppercase">
               Curaduría & Arsenal Urbano
             </span>
           </div>
@@ -40,7 +40,7 @@ export const StreetwearDrops: React.FC = () => {
           <span className="text-xs font-mono text-zinc-500 uppercase block">
             Stock en Local
           </span>
-          <span className="text-sm font-mono font-bold text-[#00F0FF]">
+          <span className="text-sm font-mono font-bold text-[#FF4655]">
             VUELTA DE OBLIGADO 931 · VT
           </span>
         </div>
@@ -54,10 +54,10 @@ export const StreetwearDrops: React.FC = () => {
           return (
             <div
               key={drop.id}
-              className="bg-[#12131C] border border-[#272938] rounded-2xl p-6 flex flex-col justify-between hover:border-[#00F0FF]/50 transition-all group relative overflow-hidden"
+              className="bg-[#121420] border border-[#24283C] rounded-2xl p-6 flex flex-col justify-between hover:border-[#A855F7]/70 transition-all group relative overflow-hidden shadow-xl"
             >
               {/* Corner Tape Effect for Urban Look */}
-              <div className="absolute top-0 right-0 w-16 h-4 bg-[#00F0FF]/10 border-b border-l border-[#00F0FF]/20 transform rotate-12 translate-x-4 -translate-y-1 pointer-events-none" />
+              <div className="absolute top-0 right-0 w-16 h-4 bg-[#FF4655]/20 border-b border-l border-[#FF4655]/30 transform rotate-12 translate-x-4 -translate-y-1 pointer-events-none" />
 
               <div>
                 <div className="flex items-center justify-between gap-2 mb-4">
@@ -65,13 +65,13 @@ export const StreetwearDrops: React.FC = () => {
                     {drop.category}
                   </span>
                   {drop.badge && (
-                    <span className="px-2 py-0.5 bg-[#1C1E2B] text-[#00F0FF] font-mono text-[10px] font-bold rounded">
+                    <span className="px-2 py-0.5 bg-[#1C1F32] text-[#FF4655] font-mono text-[10px] font-bold rounded">
                       {drop.badge}
                     </span>
                   )}
                 </div>
 
-                <h3 className="text-lg font-bold text-white group-hover:text-[#00F0FF] transition-colors font-display mb-2">
+                <h3 className="text-lg font-bold text-white group-hover:text-[#A855F7] transition-colors font-display mb-2">
                   {drop.name}
                 </h3>
 
@@ -79,8 +79,8 @@ export const StreetwearDrops: React.FC = () => {
                   {drop.description}
                 </p>
 
-                <div className="p-2.5 bg-[#0A0B10] border border-[#1E202B] rounded-lg mb-6">
-                  <span className="text-[10px] font-mono text-zinc-400 block">
+                <div className="p-2.5 bg-[#0B0C14] border border-[#1E2236] rounded-lg mb-6">
+                  <span className="text-[10px] font-mono text-zinc-400 block font-bold">
                     Especificación Técnica:
                   </span>
                   <span className="text-xs font-mono font-bold text-zinc-200">
@@ -90,7 +90,7 @@ export const StreetwearDrops: React.FC = () => {
               </div>
 
               <div>
-                <div className="flex items-baseline justify-between mb-4 border-t border-[#1E202B] pt-4">
+                <div className="flex items-baseline justify-between mb-4 border-t border-[#1E2236] pt-4">
                   <span className="text-xs font-mono text-zinc-500">Precio</span>
                   <span className="text-xl font-mono font-black text-white">
                     ${drop.price.toLocaleString('es-AR')}
@@ -104,7 +104,7 @@ export const StreetwearDrops: React.FC = () => {
                   className={`w-full py-2.5 px-3 rounded-xl font-mono text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-95 ${
                     isAdded
                       ? 'bg-emerald-500 text-black font-black'
-                      : 'bg-[#1C1E2B] text-zinc-200 hover:bg-[#00F0FF] hover:text-black hover:font-bold border border-[#2B2E40]'
+                      : 'bg-[#1C1F32] text-zinc-200 hover:bg-gradient-to-r hover:from-[#A855F7] hover:to-[#D946EF] hover:text-white hover:font-bold border border-[#2B2E40]'
                   }`}
                 >
                   {isAdded ? (

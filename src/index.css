@@ -6,12 +6,15 @@
     --font-display: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
     --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     --font-mono: 'JetBrains Mono', monospace;
+    --color-urban-violet: #A855F7;
+    --color-urban-coral: #FF4655;
+    --color-urban-dark: #0A0B10;
   }
 
   body {
     font-family: var(--font-sans);
     letter-spacing: -0.01em;
-    background-color: #08090D;
+    background-color: #0A0B10;
     color: #F3F4F6;
     overflow-x: hidden;
   }
@@ -44,20 +47,20 @@
   animation-play-state: paused;
 }
 
-/* Caution Street Stencil Stripes */
+/* Caution Street Stencil Stripes - Urban Violet & Flame Coral */
 .bg-caution-stripes {
   background: repeating-linear-gradient(
     -45deg,
-    rgba(0, 240, 255, 0.15),
-    rgba(0, 240, 255, 0.15) 12px,
+    rgba(168, 85, 247, 0.18),
+    rgba(168, 85, 247, 0.18) 12px,
     transparent 12px,
     transparent 24px
   );
 }
 
-/* Halftone / Gritty Screen Pattern */
+/* Halftone / Gritty Screen Pattern with Violet Tone */
 .bg-halftone-grid {
-  background-image: radial-gradient(rgba(0, 240, 255, 0.08) 1.5px, transparent 1.5px);
+  background-image: radial-gradient(rgba(168, 85, 247, 0.12) 1.5px, transparent 1.5px);
   background-size: 16px 16px;
 }
 
@@ -126,13 +129,13 @@
   height: 5px;
 }
 ::-webkit-scrollbar-track {
-  background: #08090D;
+  background: #0A0B10;
 }
 ::-webkit-scrollbar-thumb {
   background: #252836;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #00F0FF;
+  background: #A855F7;
 }
 
 /* Subtle Distressed Concrete Textures with CSS Blend Modes */
@@ -147,9 +150,10 @@
   inset: 0;
   pointer-events: none;
   z-index: 1;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 300 300' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='concreteNoise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.18 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23concreteNoise)'/%3E%3C/svg%3E");
-  background-repeat: repeat;
-  mix-blend-mode: overlay;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 0),
+                    radial-gradient(rgba(168, 85, 247, 0.05) 1px, transparent 0);
+  background-size: 24px 24px;
+  background-position: 0 0, 12px 12px;
   opacity: 0.45;
   border-radius: inherit;
 }
@@ -160,9 +164,8 @@
   inset: 0;
   pointer-events: none;
   z-index: 1;
-  background: radial-gradient(circle at 80% 20%, rgba(0, 240, 255, 0.05) 0%, transparent 60%),
-              radial-gradient(circle at 15% 85%, rgba(255, 255, 255, 0.02) 0%, transparent 50%);
-  mix-blend-mode: soft-light;
+  background: radial-gradient(circle at 80% 20%, rgba(168, 85, 247, 0.08) 0%, transparent 60%),
+              radial-gradient(circle at 15% 85%, rgba(255, 70, 85, 0.06) 0%, transparent 50%);
   border-radius: inherit;
 }
 
@@ -179,17 +182,21 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 240 240' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='distressedGrunge'%3E%3CfeTurbulence type='turbulence' baseFrequency='0.05' numOctaves='3' result='noise'/%3E%3CfeDisplacementMap in='SourceGraphic' in2='noise' scale='5' xChannelSelector='R' yChannelSelector='G'/%3E%3C/filter%3E%3Cpath d='M0,40 Q120,45 240,40 M0,180 Q120,175 240,180' stroke='rgba(255,255,255,0.03)' stroke-width='1' fill='none' filter='url(%23distressedGrunge)'/%3E%3C/svg%3E");
-  background-size: 240px 240px;
-  mix-blend-mode: screen;
-  opacity: 0.3;
+  background-image: repeating-linear-gradient(
+    -35deg,
+    rgba(255, 255, 255, 0.015) 0px,
+    rgba(255, 255, 255, 0.015) 1px,
+    transparent 1px,
+    transparent 14px
+  );
+  opacity: 0.5;
   border-radius: inherit;
 }
 
 /* Urban Stencil Etched Border */
 .distressed-border {
-  border: 1px dashed rgba(0, 240, 255, 0.35);
-  box-shadow: 0 0 15px rgba(0, 240, 255, 0.08);
+  border: 1px dashed rgba(168, 85, 247, 0.45);
+  box-shadow: 0 0 15px rgba(168, 85, 247, 0.12);
 }
 
 /* Touch and Mobile Viewport Optimization */
@@ -226,4 +233,37 @@
       0% 100%
     );
   }
+}
+
+/* Generative Graffiti Mural CSS Animations */
+@keyframes graffiti-drip {
+  0% {
+    transform: scaleY(0.1);
+    opacity: 0;
+  }
+  40% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: scaleY(1);
+    opacity: 0.85;
+  }
+}
+
+@keyframes aerosol-float {
+  0%, 100% {
+    transform: translateY(0px) scale(1);
+  }
+  50% {
+    transform: translateY(-6px) scale(1.02);
+  }
+}
+
+.graffiti-drip-animated {
+  transform-origin: top center;
+  animation: graffiti-drip 1.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+.graffiti-aerosol-float {
+  animation: aerosol-float 10s ease-in-out infinite;
 }

@@ -1,43 +1,51 @@
 import React from 'react';
 import { useStudio } from '../context/StudioContext';
-import { Star, ShieldCheck, Coffee, Volume2, Sparkles, Radio, ArrowRight, Zap, Flame, Beer } from 'lucide-react';
+import { Star, Volume2, ArrowRight, Zap, Beer } from 'lucide-react';
+import { VoicePresentationPlayer } from '../components/VoicePresentationPlayer';
+import { BarberProfileSection } from '../components/BarberProfileSection';
 import { playMechanicalHover, playMechanicalClick } from '../utils/audioFeedback';
 
 export const ExperiencePage: React.FC = () => {
   const { config, reviews, navigateTo } = useStudio();
 
   return (
-    <div className="py-8 md:py-16 max-w-[1360px] mx-auto px-4 sm:px-6 space-y-16 md:space-y-24">
+    <div className="py-8 md:py-16 max-w-[1380px] mx-auto px-4 sm:px-6 space-y-16 md:space-y-20">
       
       {/* Title & Philosophy */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-[#222432]">
         <div>
-          <span className="font-mono text-xs uppercase tracking-widest text-[#00F0FF] font-bold block mb-1">
-            CONCEPTO &amp; CULTURA DE ESTUDIO
+          <span className="font-mono text-xs uppercase tracking-widest text-[#A855F7] font-bold block mb-1">
+            CONCEPTO &amp; CULTURA DE ESTUDIO // ATENCIÓN 1 A 1
           </span>
           <h1 className="font-display text-4xl md:text-5xl font-black text-white uppercase tracking-tight">
-            El Estudio Privado 1 a 1
+            Rodrigo &amp; El Estudio Privado 1 a 1
           </h1>
         </div>
-        <p className="text-xs font-mono text-zinc-400 max-w-[42ch]">
-          Diseñado para hombres que buscan un corte impecable, sin perder tiempo en salas de espera abarrotadas ni con barberos apurados.
+        <p className="text-xs font-mono text-zinc-400 max-w-[44ch]">
+          "Estilo propio, cero plantillas. Si venís con una idea, la sacamos. Si no, la armamos juntos."
         </p>
       </div>
 
+      {/* Rodrigo's Voice Presentation Player */}
+      <VoicePresentationPlayer />
+
+      {/* Full Barber Profile & Business Presentation */}
+      <BarberProfileSection />
+
       {/* Main Visual & Urban Street Manifesto */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center pt-4 border-t border-[#222432]">
         <div className="lg:col-span-6 space-y-6">
           <h2 className="font-display text-2xl md:text-3xl font-extrabold text-white leading-tight uppercase">
             Por qué cortarse en un estudio a puertas cerradas cambia todo el juego.
           </h2>
           <p className="text-zinc-300 leading-relaxed text-sm md:text-base">
-            En las barberías convencionales suele haber 4 o 5 sillones amontonados, música al palo sin filtro, gente esperando pegada a vos y barberos atendiendo llamadas o WhatsApps mientras te pasan la máquina.
+            En las barberías convencionales suele haber 4 o 5 sillones amontonados, gente esperando pegada a vos y barberos atendiendo llamadas o apurados mientras te pasan la máquina.
           </p>
           <p className="text-zinc-300 leading-relaxed text-sm md:text-base">
-            Acá la experiencia es 1 a 1 real: llegás a Vuelta de Obligado 931 y el espacio es 100% tuyo durante tu turno. Tenés café espresso o una bebida fría, la música que te gusta y a Rodrigo enfocado exclusivamente en dejarte el fade al milímetro por 12 mil pesos.
+            Acá la experiencia es 1 a 1 real: llegás a Vuelta de Obligado 931 y el espacio es 100% tuyo durante tu turno. Trabajamos con clippers profesionales, trimmers de precisión (cuchilla T), tijeras de esculpir y shaver de lámina de titanio 0.0 mm hipoalergénica, cuidando tu piel y logrando degradés perfectos por $12.000 ARS.
           </p>
 
-          <div className="pt-2 flex flex-wrap items-center gap-3 text-xs font-mono text-[#00F0FF]">
+          <div className="pt-2 flex flex-wrap items-center gap-3 text-xs font-mono text-[#A855F7]">
             <span className="bg-[#181A24] px-3 py-1.5 rounded-lg border border-[#272938]">VUELTA DE OBLIGADO 931</span>
             <span>·</span>
             <span className="bg-[#181A24] px-3 py-1.5 rounded-lg border border-[#272938]">VENADO TUERTO</span>
@@ -45,24 +53,24 @@ export const ExperiencePage: React.FC = () => {
         </div>
 
         <div className="lg:col-span-6">
-          <div className="relative rounded-2xl overflow-hidden border border-[#262836] bg-[#14151E] h-[480px] group shadow-2xl concrete-overlay">
+          <div className="relative rounded-2xl overflow-hidden border border-[#262836] bg-[#14151E] h-[460px] group shadow-2xl concrete-overlay">
             <img
               src="/src/assets/images/urban_barber_hands_detail_1793930883253.jpg"
-              alt="Rodrigo perfilando a navaja libre con vapor caliente y precisión milimétrica"
+              alt="Rodrigo trabajando con trimmer de precisión y shaver de titanio en Venado Tuerto"
               referrerPolicy="no-referrer"
               className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-700"
             />
-            <div className="absolute top-4 left-4 bg-black/80 border border-[#00F0FF]/40 backdrop-blur-md px-3 py-1.5 rounded-lg text-left shadow-lg">
-              <span className="text-[10px] font-mono font-bold text-[#00F0FF] block">
-                PULSO &amp; PRECISIÓN
+            <div className="absolute top-4 left-4 bg-black/80 border border-[#A855F7]/40 backdrop-blur-md px-3 py-1.5 rounded-lg text-left shadow-lg">
+              <span className="text-[10px] font-mono font-bold text-[#A855F7] block">
+                PULSO &amp; TECNOLOGÍA
               </span>
               <span className="text-[10px] font-mono text-zinc-300">
-                NAVAJA JAPONESA FEATHER
+                TRIMMER SKELETON &amp; SHAVER TITANIO 0.0MM
               </span>
             </div>
             <div className="absolute inset-x-0 bottom-0 p-6 bg-gradient-to-t from-black/95 via-black/60 to-transparent text-white font-mono text-xs">
-              <span className="text-[#00F0FF] font-bold block mb-1">EQUIPAMIENTO &amp; ATMÓSFERA</span>
-              <p className="text-zinc-300">Sillón hidráulico ergonómico, sonido curado y herramientas desinfectadas con radiación UV entre cada cliente.</p>
+              <span className="text-[#FF4655] font-bold block mb-1">EQUIPAMIENTO &amp; ATMÓSFERA</span>
+              <p className="text-zinc-300">Sillón hidráulico ergonómico, sonido curado y máquinas desinfectadas con radiación UV entre cada cliente.</p>
             </div>
           </div>
         </div>
@@ -71,21 +79,21 @@ export const ExperiencePage: React.FC = () => {
       {/* The 3 Urban Pillars */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="p-6 md:p-8 rounded-xl border border-[#222432] bg-[#111218] space-y-3">
-          <div className="w-10 h-10 rounded-lg bg-[#00F0FF] text-black flex items-center justify-center font-bold shadow-[0_0_12px_rgba(0,240,255,0.3)]">
+          <div className="w-10 h-10 rounded-lg bg-[#A855F7] text-white flex items-center justify-center font-bold shadow-[0_0_12px_rgba(168,85,247,0.4)]">
             <Zap className="w-5 h-5 stroke-[2.5]" />
           </div>
-          <span className="font-mono text-[11px] uppercase text-[#00F0FF] font-bold block">Pilar 01</span>
-          <h3 className="font-display text-xl font-bold text-white">Precisión Quirúrgica</h3>
+          <span className="font-mono text-[11px] uppercase text-[#A855F7] font-bold block">Pilar 01</span>
+          <h3 className="font-display text-xl font-bold text-white">Precisión Clipper &amp; Shaver</h3>
           <p className="text-xs md:text-sm text-zinc-400 leading-relaxed">
-            Clippers Babyliss Pro FX3 y Wahl Cordless calibradas a 0 mm. Pulido con shaver metálica para que el degradé no se desarme a los 3 días.
+            Clippers Babyliss Pro FX3, Wahl Cordless y Shaver de lámina de titanio calibradas a 0.0 mm para un degradé limpio, duradero y sin irritación.
           </p>
         </div>
 
         <div className="p-6 md:p-8 rounded-xl border border-[#222432] bg-[#111218] space-y-3">
-          <div className="w-10 h-10 rounded-lg bg-[#00F0FF] text-black flex items-center justify-center font-bold shadow-[0_0_12px_rgba(0,240,255,0.3)]">
+          <div className="w-10 h-10 rounded-lg bg-[#FF4655] text-white flex items-center justify-center font-bold shadow-[0_0_12px_rgba(255,70,85,0.4)]">
             <Volume2 className="w-5 h-5 stroke-[2.5]" />
           </div>
-          <span className="font-mono text-[11px] uppercase text-[#00F0FF] font-bold block">Pilar 02</span>
+          <span className="font-mono text-[11px] uppercase text-[#FF4655] font-bold block">Pilar 02</span>
           <h3 className="font-display text-xl font-bold text-white">Vibe &amp; Cero Teléfonos</h3>
           <p className="text-xs md:text-sm text-zinc-400 leading-relaxed">
             La web gestiona toda la agenda automáticamente. Nadie interrumpe tu corte para responder llamadas ni coordinar señas.
@@ -93,13 +101,13 @@ export const ExperiencePage: React.FC = () => {
         </div>
 
         <div className="p-6 md:p-8 rounded-xl border border-[#222432] bg-[#111218] space-y-3">
-          <div className="w-10 h-10 rounded-lg bg-[#00F0FF] text-black flex items-center justify-center font-bold shadow-[0_0_12px_rgba(0,240,255,0.3)]">
+          <div className="w-10 h-10 rounded-lg bg-[#D946EF] text-white flex items-center justify-center font-bold shadow-[0_0_12px_rgba(217,70,239,0.4)]">
             <Beer className="w-5 h-5 stroke-[2.5]" />
           </div>
-          <span className="font-mono text-[11px] uppercase text-[#00F0FF] font-bold block">Pilar 03</span>
-          <h3 className="font-display text-xl font-bold text-white">Hospitalidad Callejera</h3>
+          <span className="font-mono text-[11px] uppercase text-[#D946EF] font-bold block">Pilar 03</span>
+          <h3 className="font-display text-xl font-bold text-white">Comodidad Total</h3>
           <p className="text-xs md:text-sm text-zinc-400 leading-relaxed">
-            Café de especialidad en grano o cerveza fría de cortesía en cada corte. Toallas calientes vaporizadas con eucalipto y mentol para la barba.
+            Café de especialidad o bebida fría de cortesía en cada corte, buena música y atención 100% dedicada a tu estilo.
           </p>
         </div>
       </div>
@@ -108,7 +116,7 @@ export const ExperiencePage: React.FC = () => {
       <div className="p-6 md:p-10 rounded-2xl border border-[#222432] bg-[#101117] space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <span className="font-mono text-xs uppercase text-[#00F0FF] font-bold">
+            <span className="font-mono text-xs uppercase text-[#A855F7] font-bold">
               GOOGLE MAPS VERIFIED (5.0 ★)
             </span>
             <h3 className="font-display text-2xl font-bold text-white mt-1">
@@ -120,7 +128,7 @@ export const ExperiencePage: React.FC = () => {
             target="_blank"
             rel="noopener noreferrer"
             onMouseEnter={playMechanicalHover}
-            className="px-4 py-2 text-xs font-mono font-bold rounded-lg border border-[#2B2D3D] bg-[#161722] text-zinc-200 hover:text-white hover:border-[#00F0FF] transition-colors"
+            className="px-4 py-2 text-xs font-mono font-bold rounded-lg border border-[#2B2D3D] bg-[#161722] text-zinc-200 hover:text-white hover:border-[#A855F7] transition-colors"
           >
             Ver Todas las Reseñas
           </a>
@@ -134,7 +142,7 @@ export const ExperiencePage: React.FC = () => {
                   <h4 className="font-bold text-sm text-white">{rev.authorName}</h4>
                   <p className="text-[11px] font-mono text-zinc-500">{rev.relativeDate} · {rev.serviceTag}</p>
                 </div>
-                <div className="flex text-[#00F0FF]">
+                <div className="flex text-[#FF4655]">
                   {[...Array(rev.rating)].map((_, i) => (
                     <Star key={i} className="w-3.5 h-3.5 fill-current" />
                   ))}
@@ -166,7 +174,7 @@ export const ExperiencePage: React.FC = () => {
             navigateTo('booking');
           }}
           onMouseEnter={playMechanicalHover}
-          className="px-8 py-3.5 bg-[#00F0FF] text-black text-xs uppercase tracking-wider font-black rounded-xl hover:bg-[#00D5E5] transition-all cursor-pointer inline-flex items-center gap-2 shadow-lg active:scale-95"
+          className="px-8 py-3.5 bg-[#FF4655] text-white text-xs uppercase tracking-wider font-black rounded-xl hover:bg-[#FF2E40] transition-all cursor-pointer inline-flex items-center gap-2 shadow-lg active:scale-95"
         >
           <span>Ir a Reservar Turno</span>
           <ArrowRight className="w-4 h-4 stroke-[3]" />

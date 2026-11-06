@@ -51,12 +51,12 @@ export const UrbanParallaxBackground: React.FC = () => {
       className="fixed inset-0 pointer-events-none overflow-hidden z-0 select-none opacity-90"
     >
       {/* Subtle Noise / Concrete Ambient Background Shading */}
-      <div className="absolute inset-0 bg-[#08090D] opacity-100" />
+      <div className="absolute inset-0 bg-[#0A0B10] opacity-100" />
       
       {/* Ambient Neon Atmosphere Orbs */}
-      <div className="absolute -top-40 -left-40 w-96 h-96 rounded-full bg-[#00F0FF]/[0.05] blur-[120px]" />
-      <div className="absolute top-1/2 -right-40 w-[30rem] h-[30rem] rounded-full bg-[#00F0FF]/[0.035] blur-[150px]" />
-      <div className="absolute -bottom-40 left-1/3 w-[26rem] h-[26rem] rounded-full bg-cyan-400/[0.03] blur-[130px]" />
+      <div className="absolute -top-40 -left-40 w-96 h-96 rounded-full bg-[#A855F7]/[0.06] blur-[120px]" />
+      <div className="absolute top-1/2 -right-40 w-[30rem] h-[30rem] rounded-full bg-[#FF4655]/[0.045] blur-[150px]" />
+      <div className="absolute -bottom-40 left-1/3 w-[26rem] h-[26rem] rounded-full bg-[#D946EF]/[0.04] blur-[130px]" />
 
       {/* ================================================================ */}
       {/* LAYER 1: DEEP PARALLAX (Massive Outlined Typography & Watermark) */}
@@ -79,7 +79,7 @@ export const UrbanParallaxBackground: React.FC = () => {
         </div>
 
         {/* Bottom Location Watermark */}
-        <div className="flex justify-between items-center px-6 md:px-16 opacity-[0.045] font-mono font-bold text-sm sm:text-lg md:text-xl tracking-widest text-[#00F0FF] uppercase select-none">
+        <div className="flex justify-between items-center px-6 md:px-16 opacity-[0.045] font-mono font-bold text-sm sm:text-lg md:text-xl tracking-widest text-[#FF4655] uppercase select-none">
           <span>VENADO TUERTO // SANTA FE</span>
           <span>LAT 33.74° S</span>
         </div>
@@ -95,26 +95,26 @@ export const UrbanParallaxBackground: React.FC = () => {
         className="absolute inset-0 pointer-events-none"
       >
         {/* Top-Right Technical Grid Tag */}
-        <div className="absolute top-28 right-8 md:right-20 border border-[#00F0FF]/25 bg-black/50 backdrop-blur-sm p-3 rounded font-mono text-[10px] text-[#00F0FF]/80 tracking-widest uppercase hidden sm:block shadow-[0_0_15px_rgba(0,240,255,0.08)]">
+        <div className="absolute top-28 right-8 md:right-20 border border-[#A855F7]/30 bg-black/60 backdrop-blur-sm p-3 rounded-xl font-mono text-[10px] text-[#A855F7] tracking-widest uppercase hidden sm:block shadow-[0_0_15px_rgba(168,85,247,0.1)]">
           <div>LOC: VUELTA DE OBLIGADO 931</div>
           <div className="text-zinc-400 font-semibold mt-0.5">ZONE: VENADO TUERTO · SF</div>
           <div className="mt-1 flex items-center gap-1.5 text-[9px] text-zinc-300">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#00F0FF] animate-pulse" />
+            <span className="w-1.5 h-1.5 rounded-full bg-[#FF4655] animate-pulse" />
             <span>ESTUDIO DE AUTOR 1 A 1</span>
           </div>
         </div>
 
         {/* Left Side Reticle / Crosshair */}
-        <div className="absolute top-1/3 left-4 md:left-12 opacity-35 text-[#00F0FF] font-mono text-xs hidden lg:flex flex-col items-center gap-1">
-          <div className="w-8 h-8 border border-[#00F0FF]/40 rounded-full flex items-center justify-center">
-            <div className="w-2 h-2 bg-[#00F0FF] rounded-full shadow-[0_0_8px_#00F0FF]" />
+        <div className="absolute top-1/3 left-4 md:left-12 opacity-35 text-[#A855F7] font-mono text-xs hidden lg:flex flex-col items-center gap-1">
+          <div className="w-8 h-8 border border-[#A855F7]/40 rounded-full flex items-center justify-center">
+            <div className="w-2 h-2 bg-[#FF4655] rounded-full shadow-[0_0_8px_#FF4655]" />
           </div>
           <span className="text-[9px] tracking-widest text-zinc-400">33.7456° S</span>
         </div>
 
         {/* Right Center Target Decal */}
         <div className="absolute top-2/3 right-6 md:right-16 opacity-30 text-white font-mono text-xs hidden md:block">
-          <div className="border-l-2 border-t-2 border-[#00F0FF] w-6 h-6 mb-1" />
+          <div className="border-l-2 border-t-2 border-[#FF4655] w-6 h-6 mb-1" />
           <div className="text-[10px] tracking-wider text-zinc-400 font-bold uppercase">
             STENCIL SPEC // 0.0 MM
           </div>
@@ -131,23 +131,26 @@ export const UrbanParallaxBackground: React.FC = () => {
         className="absolute inset-0 pointer-events-none"
       >
         {/* Floating Neon Badge: Service & Price Tag (Desktop/Tablet) */}
-        <div className="absolute top-44 left-6 sm:left-16 lg:left-24 px-3.5 py-1.5 rounded-md border border-[#00F0FF]/35 bg-black/70 shadow-[0_0_20px_rgba(0,240,255,0.18)] text-[#00F0FF] font-mono font-black text-[11px] tracking-widest uppercase hidden sm:flex items-center gap-2">
-          <span className="w-2 h-2 bg-[#00F0FF] rounded-sm rotate-45 shadow-[0_0_8px_#00F0FF]" />
+        <div className="absolute top-44 left-6 sm:left-16 lg:left-24 px-3.5 py-1.5 rounded-xl border border-[#A855F7]/40 bg-black/75 shadow-[0_0_20px_rgba(168,85,247,0.2)] text-[#A855F7] font-mono font-black text-[11px] tracking-widest uppercase hidden sm:flex items-center gap-2">
+          <span className="w-2 h-2 bg-[#FF4655] rounded-sm rotate-45 shadow-[0_0_8px_#FF4655]" />
           <span>CORTE DE PELO: $12.000 ARS</span>
         </div>
 
         {/* Floating Bottom Left Coordinates */}
         <div className="absolute bottom-24 left-8 md:left-20 hidden lg:block font-mono text-[10px] text-zinc-400 uppercase tracking-widest">
-          <span className="text-[#00F0FF] font-bold">#</span> 61.9688° W · SANTA FE · ARG
+          <span className="text-[#A855F7] font-bold">#</span> 61.9688° W · SANTA FE · ARG
         </div>
 
-        {/* Small floating graphic razor element */}
-        <div className="absolute bottom-40 right-10 md:right-28 opacity-35 text-[#00F0FF] hidden sm:block">
+        {/* Small floating graphic barber comb element */}
+        <div className="absolute bottom-40 right-10 md:right-28 opacity-35 text-[#FF4655] hidden sm:block">
           <svg className="w-12 h-6" viewBox="0 0 60 30" fill="none" stroke="currentColor" strokeWidth="1.2">
-            <rect x="2" y="4" width="56" height="22" rx="2" />
-            <circle cx="15" cy="15" r="3" />
-            <circle cx="45" cy="15" r="3" />
-            <line x1="22" y1="15" x2="38" y2="15" strokeWidth="2" />
+            <rect x="2" y="4" width="56" height="8" rx="2" />
+            <line x1="8" y1="12" x2="8" y2="26" strokeWidth="1.5" />
+            <line x1="16" y1="12" x2="16" y2="26" strokeWidth="1.5" />
+            <line x1="24" y1="12" x2="24" y2="26" strokeWidth="1.5" />
+            <line x1="32" y1="12" x2="32" y2="26" strokeWidth="1.5" />
+            <line x1="40" y1="12" x2="40" y2="26" strokeWidth="1.5" />
+            <line x1="48" y1="12" x2="48" y2="26" strokeWidth="1.5" />
           </svg>
         </div>
       </motion.div>

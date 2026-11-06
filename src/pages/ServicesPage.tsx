@@ -6,7 +6,7 @@ import { Check, Plus, X, ArrowRight, Clock, Sparkles, Scissors, ShieldAlert } fr
 import { playMechanicalHover, playMechanicalClick } from '../utils/audioFeedback';
 
 export const ServicesPage: React.FC = () => {
-  const { services, selectedServiceIds, toggleSelectService, navigateTo, setIsStyleFinderOpen } = useStudio();
+  const { services, selectedServiceIds, toggleSelectService, navigateTo } = useStudio();
   const [activeDrawer, setActiveDrawer] = useState<StudioService | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('Todos');
 
@@ -22,7 +22,7 @@ export const ServicesPage: React.FC = () => {
       {/* Page Title & Intro */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-[#222432]">
         <div>
-          <span className="font-mono text-xs uppercase tracking-widest text-[#00F0FF] font-bold block mb-1">
+          <span className="font-mono text-xs uppercase tracking-widest text-[#A855F7] font-bold block mb-1">
             ESTUDIO EXCLUSIVO PARA HOMBRES
           </span>
           <h1 className="font-display text-4xl md:text-5xl font-black text-white uppercase tracking-tight">
@@ -33,17 +33,9 @@ export const ServicesPage: React.FC = () => {
           <p className="text-xs font-mono text-zinc-400 max-w-[42ch]">
             Cada corte tiene tiempo cronometrado exacto y 10 minutos entre turnos para esterilización con luz UV.
           </p>
-          <button
-            onClick={() => {
-              playMechanicalClick();
-              setIsStyleFinderOpen(true);
-            }}
-            onMouseEnter={playMechanicalHover}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#181A24] border border-[#2D3040] text-xs font-semibold text-zinc-200 hover:border-[#00F0FF] hover:text-[#00F0FF] transition-colors whitespace-nowrap cursor-pointer active:scale-95"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-[#00F0FF]" />
-            <span>Asesor de Corte</span>
-          </button>
+          <div className="px-3.5 py-2 rounded-lg bg-[#141622] border border-[#FF4655]/40 font-mono text-xs text-[#FF4655] font-bold">
+            SERVICIO PRINCIPAL: $12.000 ARS
+          </div>
         </div>
       </div>
 
@@ -59,7 +51,7 @@ export const ServicesPage: React.FC = () => {
             onMouseEnter={playMechanicalHover}
             className={`px-4 py-2 text-xs font-mono font-bold rounded-lg uppercase tracking-wider transition-colors cursor-pointer active:scale-95 ${
               selectedCategory === cat
-                ? 'bg-[#00F0FF] text-black shadow-md font-black'
+                ? 'bg-gradient-to-r from-[#A855F7] to-[#FF4655] text-white shadow-md font-black'
                 : 'bg-[#14151E] border border-[#232532] text-zinc-400 hover:text-white hover:border-zinc-500'
             }`}
           >
@@ -77,13 +69,13 @@ export const ServicesPage: React.FC = () => {
               key={service.id}
               className={`p-6 md:p-7 rounded-xl border transition-all flex flex-col justify-between concrete-overlay ${
                 isSelected
-                  ? 'border-[#00F0FF] bg-[#141620] shadow-[0_0_20px_rgba(0,240,255,0.15)]'
-                  : 'border-[#232532] bg-[#111218] hover:border-[#00F0FF]/40'
+                  ? 'border-[#A855F7] bg-[#141620] shadow-[0_0_20px_rgba(168,85,247,0.2)]'
+                  : 'border-[#232532] bg-[#111218] hover:border-[#A855F7]/40'
               }`}
             >
               <div>
                 <div className="flex items-center justify-between text-xs font-mono text-zinc-400 mb-2.5">
-                  <span className="text-[#00F0FF] font-bold">{service.index}. {service.category}</span>
+                  <span className="text-[#A855F7] font-bold">{service.index}. {service.category}</span>
                   <span className="text-xl font-black text-white">{formatPriceARS(service.price)}</span>
                 </div>
 
@@ -92,14 +84,14 @@ export const ServicesPage: React.FC = () => {
                     {service.name}
                   </h2>
                   {service.popularTag && (
-                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#00F0FF]/15 text-[#00F0FF] border border-[#00F0FF]/30 shrink-0">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#A855F7]/15 text-[#A855F7] border border-[#A855F7]/30 shrink-0">
                       {service.popularTag}
                     </span>
                   )}
                 </div>
 
                 <div className="flex items-center gap-2 text-xs font-mono text-zinc-400 mb-4">
-                  <Clock className="w-3.5 h-3.5 text-[#00F0FF]" />
+                  <Clock className="w-3.5 h-3.5 text-[#FF4655]" />
                   <span>{service.durationMinutes} minutos en sillón</span>
                 </div>
 
@@ -133,8 +125,8 @@ export const ServicesPage: React.FC = () => {
                   onMouseEnter={playMechanicalHover}
                   className={`inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-mono font-black rounded-lg uppercase tracking-wider cursor-pointer transition-all active:scale-95 ${
                     isSelected
-                      ? 'bg-[#00F0FF] text-black shadow-md'
-                      : 'border border-[#2C2E3E] bg-[#161722] text-zinc-200 hover:border-[#00F0FF] hover:text-white'
+                      ? 'bg-[#A855F7] text-white shadow-md'
+                      : 'border border-[#2C2E3E] bg-[#161722] text-zinc-200 hover:border-[#A855F7] hover:text-white'
                   }`}
                 >
                   {isSelected ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : <Plus className="w-3.5 h-3.5" />}
@@ -148,9 +140,9 @@ export const ServicesPage: React.FC = () => {
 
       {/* Floating Summary Bar if Services Selected */}
       {selectedServiceIds.length > 0 && (
-        <div className="p-5 md:p-6 rounded-xl border border-[#00F0FF] bg-[#14151E] flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">
+        <div className="p-5 md:p-6 rounded-xl border border-[#A855F7] bg-[#14151E] flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">
           <div>
-            <p className="font-mono text-xs uppercase text-[#00F0FF] font-bold">
+            <p className="font-mono text-xs uppercase text-[#A855F7] font-bold">
               SERVICIOS ELEGIDOS ({selectedServiceIds.length})
             </p>
             <p className="text-sm font-bold text-white">
@@ -164,7 +156,7 @@ export const ServicesPage: React.FC = () => {
               navigateTo('booking');
             }}
             onMouseEnter={playMechanicalHover}
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 text-xs font-mono font-black uppercase tracking-wider bg-[#00F0FF] text-black rounded-xl hover:bg-[#00D5E5] transition-all cursor-pointer shadow-md active:scale-95"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 text-xs font-mono font-black uppercase tracking-wider bg-[#FF4655] text-white rounded-xl hover:bg-[#FF2E40] transition-all cursor-pointer shadow-md active:scale-95"
           >
             <span>Continuar al Paso 2 (Horarios)</span>
             <ArrowRight className="w-4 h-4 stroke-[3]" />
@@ -178,7 +170,7 @@ export const ServicesPage: React.FC = () => {
           <div className="w-full max-w-lg bg-[#111218] border-l border-[#272938] text-white h-full p-6 md:p-8 overflow-y-auto flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between pb-4 mb-6 border-b border-[#222432]">
-                <span className="font-mono text-xs font-bold text-[#00F0FF]">
+                <span className="font-mono text-xs font-bold text-[#A855F7]">
                   FICHA TÉCNICA · {activeDrawer.category.toUpperCase()}
                 </span>
                 <button
@@ -197,7 +189,7 @@ export const ServicesPage: React.FC = () => {
               <h3 className="font-display text-2xl md:text-3xl font-extrabold text-white mb-1">
                 {activeDrawer.name}
               </h3>
-              <p className="font-mono text-lg text-[#00F0FF] font-bold mb-6">
+              <p className="font-mono text-lg text-[#FF4655] font-bold mb-6">
                 {formatPriceARS(activeDrawer.price)} · {activeDrawer.durationMinutes} minutos de sesión
               </p>
 
@@ -207,7 +199,7 @@ export const ServicesPage: React.FC = () => {
                   <ul className="space-y-1.5 text-zinc-300">
                     {activeDrawer.preparation.map((p, i) => (
                       <li key={i} className="flex items-start gap-2">
-                        <span className="text-[#00F0FF]">•</span>
+                        <span className="text-[#A855F7]">•</span>
                         <span>{p}</span>
                       </li>
                     ))}
@@ -219,7 +211,7 @@ export const ServicesPage: React.FC = () => {
                   <ul className="space-y-1.5 text-zinc-300">
                     {activeDrawer.executionSteps.map((step, i) => (
                       <li key={i} className="flex items-start gap-2">
-                        <span className="text-[#00F0FF]">•</span>
+                        <span className="text-[#FF4655]">•</span>
                         <span>{step}</span>
                       </li>
                     ))}
@@ -259,7 +251,7 @@ export const ServicesPage: React.FC = () => {
                   navigateTo('booking');
                 }}
                 onMouseEnter={playMechanicalHover}
-                className="flex-1 py-2.5 text-xs font-mono font-black uppercase tracking-wider bg-[#00F0FF] text-black rounded-xl hover:bg-[#00D5E5] transition-all cursor-pointer shadow-lg active:scale-95"
+                className="flex-1 py-2.5 text-xs font-mono font-black uppercase tracking-wider bg-gradient-to-r from-[#A855F7] to-[#FF4655] text-white rounded-xl hover:opacity-95 transition-all cursor-pointer shadow-lg active:scale-95"
               >
                 Agendar Este Corte
               </button>
