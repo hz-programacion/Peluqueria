@@ -139,7 +139,7 @@ export const GoogleReviewsSection: React.FC = () => {
                   1. CIERRE DE CITA EN ESTUDIO
                 </p>
                 <p className="text-stone-600 dark:text-[#8E8E93] leading-relaxed">
-                  Al cumplirse la hora de finalización del turno, el webhook registra el estado completado sin que Valentín toque su teléfono.
+                  Al cumplirse la hora de finalización del turno, el sistema registra el estado completado sin que Rodrigo toque su teléfono.
                 </p>
               </div>
               <div className="p-4 rounded-sm border border-stone-200 dark:border-white/[0.08] bg-stone-100/70 dark:bg-[#0C0C0D]">

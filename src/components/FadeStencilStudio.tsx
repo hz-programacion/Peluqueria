@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useStudio } from '../context/StudioContext';
 import { Crosshair, Ruler, Scissors, Sparkles, Check, ArrowRight } from 'lucide-react';
+import { playMechanicalHover, playMechanicalClick } from '../utils/audioFeedback';
 
 interface StencilPreset {
   id: string;
@@ -74,6 +75,7 @@ export const FadeStencilStudio: React.FC = () => {
   const preset = PRESETS.find((p) => p.id === activePresetId) || PRESETS[0];
 
   const handleBookSetup = () => {
+    playMechanicalClick();
     setSelectedServiceIds([preset.serviceId]);
     navigateTo('booking');
   };
@@ -84,8 +86,8 @@ export const FadeStencilStudio: React.FC = () => {
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-12">
         <div>
           <div className="flex items-center gap-2 mb-3">
-            <span className="w-2.5 h-2.5 bg-[#D4FF00] inline-block" />
-            <span className="text-xs font-mono font-bold tracking-widest text-[#D4FF00] uppercase">
+            <span className="w-2.5 h-2.5 bg-[#00F0FF] inline-block shadow-[0_0_8px_rgba(0,240,255,0.6)]" />
+            <span className="text-xs font-mono font-bold tracking-widest text-[#00F0FF] uppercase">
               Laboratorio Técnico // Stencil Studio
             </span>
           </div>
@@ -103,10 +105,14 @@ export const FadeStencilStudio: React.FC = () => {
             <button
               key={p.id}
               type="button"
-              onClick={() => setActivePresetId(p.id)}
-              className={`px-4 py-2 text-xs font-mono font-bold uppercase transition-all rounded-lg cursor-pointer whitespace-nowrap ${
+              onClick={() => {
+                playMechanicalClick();
+                setActivePresetId(p.id);
+              }}
+              onMouseEnter={playMechanicalHover}
+              className={`px-4 py-2 text-xs font-mono font-bold uppercase transition-all rounded-lg cursor-pointer whitespace-nowrap active:scale-95 ${
                 activePresetId === p.id
-                  ? 'bg-[#D4FF00] text-black shadow-lg'
+                  ? 'bg-[#00F0FF] text-black shadow-lg font-black'
                   : 'text-zinc-400 hover:text-white'
               }`}
             >
@@ -134,13 +140,13 @@ export const FadeStencilStudio: React.FC = () => {
           {/* Stencil Grid Crosshairs */}
           {showCrosshairs && (
             <div className="absolute inset-0 pointer-events-none flex flex-col justify-between p-6">
-              <div className="flex justify-between items-center text-[10px] font-mono text-[#D4FF00]/80">
-                <span>[X: 34.5889° S]</span>
-                <span>[Y: 58.4305° W]</span>
+              <div className="flex justify-between items-center text-[10px] font-mono text-[#00F0FF]/80">
+                <span>[X: 33.7456° S]</span>
+                <span>[Y: 61.9688° W · VT]</span>
               </div>
-              <div className="absolute top-1/2 left-0 right-0 h-px bg-[#D4FF00]/20 border-b border-dashed border-[#D4FF00]/30" />
-              <div className="absolute left-1/2 top-0 bottom-0 w-px bg-[#D4FF00]/20 border-r border-dashed border-[#D4FF00]/30" />
-              <div className="flex justify-between items-center text-[10px] font-mono text-[#D4FF00]/80">
+              <div className="absolute top-1/2 left-0 right-0 h-px bg-[#00F0FF]/20 border-b border-dashed border-[#00F0FF]/30" />
+              <div className="absolute left-1/2 top-0 bottom-0 w-px bg-[#00F0FF]/20 border-r border-dashed border-[#00F0FF]/30" />
+              <div className="flex justify-between items-center text-[10px] font-mono text-[#00F0FF]/80">
                 <span>GRID: ANATOMICAL 1:1</span>
                 <span>CALIBRATION: 0.0 MM</span>
               </div>
@@ -156,10 +162,10 @@ export const FadeStencilStudio: React.FC = () => {
                   className="absolute left-4 sm:left-8 right-4 sm:right-8 flex items-center gap-3 transition-all"
                   style={{ top: `${spec.yPct}%` }}
                 >
-                  <div className="w-2.5 h-2.5 rounded-full bg-[#D4FF00] shadow-[0_0_12px_#D4FF00] shrink-0" />
-                  <div className="h-px flex-1 bg-gradient-to-r from-[#D4FF00]/80 via-[#D4FF00]/30 to-transparent" />
-                  <div className="bg-[#0C0D12]/90 border border-[#D4FF00]/40 backdrop-blur-md px-3 py-1 rounded text-right shadow-xl">
-                    <div className="text-[11px] font-mono font-bold text-[#D4FF00]">
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#00F0FF] shadow-[0_0_12px_#00F0FF] shrink-0" />
+                  <div className="h-px flex-1 bg-gradient-to-r from-[#00F0FF]/80 via-[#00F0FF]/30 to-transparent" />
+                  <div className="bg-[#0C0D12]/90 border border-[#00F0FF]/40 backdrop-blur-md px-3 py-1 rounded text-right shadow-xl">
+                    <div className="text-[11px] font-mono font-bold text-[#00F0FF]">
                       {spec.zone} · {spec.length}
                     </div>
                     <div className="text-[9px] font-mono text-zinc-400">
@@ -176,10 +182,14 @@ export const FadeStencilStudio: React.FC = () => {
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => setShowMeasurements(!showMeasurements)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold flex items-center gap-1.5 transition-colors cursor-pointer ${
+                onClick={() => {
+                  playMechanicalClick();
+                  setShowMeasurements(!showMeasurements);
+                }}
+                onMouseEnter={playMechanicalHover}
+                className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold flex items-center gap-1.5 transition-colors cursor-pointer active:scale-95 ${
                   showMeasurements
-                    ? 'bg-[#D4FF00] text-black'
+                    ? 'bg-[#00F0FF] text-black font-black'
                     : 'bg-[#1C1E2B] text-zinc-400 hover:text-white'
                 }`}
               >
@@ -188,10 +198,14 @@ export const FadeStencilStudio: React.FC = () => {
               </button>
               <button
                 type="button"
-                onClick={() => setShowCrosshairs(!showCrosshairs)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold flex items-center gap-1.5 transition-colors cursor-pointer ${
+                onClick={() => {
+                  playMechanicalClick();
+                  setShowCrosshairs(!showCrosshairs);
+                }}
+                onMouseEnter={playMechanicalHover}
+                className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold flex items-center gap-1.5 transition-colors cursor-pointer active:scale-95 ${
                   showCrosshairs
-                    ? 'bg-[#D4FF00] text-black'
+                    ? 'bg-[#00F0FF] text-black font-black'
                     : 'bg-[#1C1E2B] text-zinc-400 hover:text-white'
                 }`}
               >
@@ -201,7 +215,7 @@ export const FadeStencilStudio: React.FC = () => {
             </div>
 
             <div className="text-[11px] font-mono text-zinc-400 hidden sm:block">
-              VALENTÍN MORETTI // ATELIER
+              RODRIGO CUTSSS // ATELIER
             </div>
           </div>
         </div>
@@ -218,7 +232,7 @@ export const FadeStencilStudio: React.FC = () => {
                   {preset.name}
                 </h3>
               </div>
-              <span className="px-2.5 py-1 bg-[#202230] text-[#D4FF00] font-mono text-xs font-bold rounded">
+              <span className="px-2.5 py-1 bg-[#202230] text-[#00F0FF] font-mono text-xs font-bold rounded">
                 CALIDAD 2026
               </span>
             </div>
@@ -240,7 +254,7 @@ export const FadeStencilStudio: React.FC = () => {
                   <span className="text-zinc-400">{s.zone}</span>
                   <div className="flex items-center gap-2">
                     <span className="text-zinc-500 text-[10px] hidden sm:inline">{s.tool}</span>
-                    <span className="text-[#D4FF00] font-bold">{s.length}</span>
+                    <span className="text-[#00F0FF] font-bold">{s.length}</span>
                   </div>
                 </div>
               ))}
@@ -248,7 +262,7 @@ export const FadeStencilStudio: React.FC = () => {
 
             {/* Styling Product Selection */}
             <div className="p-4 bg-[#1C1E2B] border border-[#272938] rounded-xl mb-6">
-              <div className="flex items-center gap-2 text-xs font-mono font-bold text-[#D4FF00] mb-2 uppercase">
+              <div className="flex items-center gap-2 text-xs font-mono font-bold text-[#00F0FF] mb-2 uppercase">
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>Recomendación de Styling</span>
               </div>
@@ -263,7 +277,8 @@ export const FadeStencilStudio: React.FC = () => {
             <button
               type="button"
               onClick={handleBookSetup}
-              className="w-full h-13 bg-[#D4FF00] text-black font-mono font-black text-sm uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 hover:bg-[#bce400] transition-colors cursor-pointer shadow-xl"
+              onMouseEnter={playMechanicalHover}
+              className="w-full h-13 bg-[#00F0FF] text-black font-mono font-black text-sm uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 hover:bg-[#00D5E5] transition-all cursor-pointer shadow-xl active:scale-95"
             >
               <Scissors className="w-4 h-4" />
               <span>Agendar este Setup ({preset.name.split('&')[0].trim()})</span>

@@ -237,9 +237,9 @@ export function buildAutomatedWhatsAppMessages(params: {
   reviewShortlink: string;
 }) {
   const servicesList = params.serviceNames.join(' + ');
-  const instantConfirmation = `Hola ${params.clientFirstName}, tu sesión 1 a 1 con Valentín Moretti quedó confirmada para el ${params.date} a las ${params.time} hs (${servicesList}). Dirección: Gorriti 4820, Piso 2 Estudio B. Recordá que contamos con 10 min de tolerancia.`;
-  const reminder2HoursBefore = `Hola ${params.clientFirstName}, te recordamos que hoy a las ${params.time} hs te esperamos en el estudio para tu sesión de ${servicesList}. Café de especialidad listo al llegar.`;
-  const reviewRequest2HoursAfter = `¡Hola ${params.clientFirstName}! Gracias por pasar hoy por el estudio. ¿Cómo quedó ese corte? Si tenés 20 segundos, me ayuda muchísimo que me dejes tu opinión acá: ${params.reviewShortlink}`;
+  const instantConfirmation = `Hola ${params.clientFirstName}, tu turno 1 a 1 en Rodrigo Cutsss quedó confirmado para el ${params.date} a las ${params.time} hs (${servicesList}). Dirección: Vuelta de Obligado 931, Venado Tuerto, Santa Fe. Recordá que contamos con 10 min de tolerancia.`;
+  const reminder2HoursBefore = `Hola ${params.clientFirstName}, te recordamos que hoy a las ${params.time} hs te esperamos en Rodrigo Cutsss para tu ${servicesList}. Vuelta de Obligado 931, Venado Tuerto.`;
+  const reviewRequest2HoursAfter = `¡Hola ${params.clientFirstName}! Gracias por pasar hoy por Rodrigo Cutsss. ¿Cómo quedó ese corte? Si tenés 20 segundos, me ayuda muchísimo tu opinión acá: ${params.reviewShortlink}`;
 
   return {
     instantConfirmation,

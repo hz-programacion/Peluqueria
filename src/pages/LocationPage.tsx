@@ -2,6 +2,7 @@ import React from 'react';
 import { useStudio } from '../context/StudioContext';
 import { MapPin, Navigation, Clock, ShieldAlert, Phone, ExternalLink, Calendar, CheckCircle2 } from 'lucide-react';
 import { getStudioLiveStatus } from '../utils/bookingEngine';
+import { playMechanicalHover, playMechanicalClick } from '../utils/audioFeedback';
 
 export const LocationPage: React.FC = () => {
   const { config, navigateTo } = useStudio();
@@ -13,15 +14,15 @@ export const LocationPage: React.FC = () => {
       {/* Title */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-[#222432]">
         <div>
-          <span className="font-mono text-xs uppercase tracking-widest text-[#D4FF00] font-bold block mb-1">
-            LOCALIZACIÓN &amp; PROTOCOLOS
+          <span className="font-mono text-xs uppercase tracking-widest text-[#00F0FF] font-bold block mb-1">
+            LOCALIZACIÓN &amp; ATENCIÓN 1 A 1
           </span>
           <h1 className="font-display text-4xl md:text-5xl font-black text-white uppercase tracking-tight">
-            Ubicación Palermo Soho
+            Ubicación Venado Tuerto
           </h1>
         </div>
         <p className="text-xs font-mono text-zinc-400 max-w-[42ch]">
-          Atención en segundo piso a puertas cerradas. El timbre y las indicaciones exactas se envían a tu WhatsApp al confirmar el turno.
+          Atención privada 1 a 1 en Vuelta de Obligado 931. Sin demoras ni esperas telefónicas: tu turno queda agendado al instante por la web.
         </p>
       </div>
 
@@ -33,9 +34,9 @@ export const LocationPage: React.FC = () => {
           <div className="space-y-5">
             
             {/* Live Clock Card */}
-            <div className="p-5 rounded-xl border border-[#D4FF00]/40 bg-[#12141D] text-white shadow-lg">
-              <span className="font-mono text-xs uppercase text-[#D4FF00] font-bold block">
-                ESTADO DEL ESTUDIO EN VIVO
+            <div className="p-5 rounded-xl border border-[#00F0FF]/40 bg-[#12141D] text-white shadow-lg concrete-overlay distressed-surface">
+              <span className="font-mono text-xs uppercase text-[#00F0FF] font-bold block">
+                ESTADO DEL LOCAL EN VIVO
               </span>
               <h2 className="font-display text-2xl font-bold mt-1 mb-1">
                 {liveStatus.headline}
@@ -46,18 +47,18 @@ export const LocationPage: React.FC = () => {
             </div>
 
             {/* Schedule Table */}
-            <div className="p-5 rounded-xl border border-[#232532] bg-[#111218] space-y-3.5">
+            <div className="p-5 rounded-xl border border-[#232532] bg-[#111218] space-y-3.5 concrete-overlay">
               <h3 className="font-mono text-xs uppercase text-zinc-400 font-bold">
                 Horarios de Corte
               </h3>
               <dl className="space-y-2 font-mono text-xs">
                 <div className="flex justify-between pb-2 border-b border-[#1E202B]">
                   <dt className="text-zinc-400">Martes a Viernes</dt>
-                  <dd className="font-bold text-white">11:00 – 21:00 hs</dd>
+                  <dd className="font-bold text-white">10:00 – 21:00 hs</dd>
                 </div>
                 <div className="flex justify-between pb-2 border-b border-[#1E202B]">
                   <dt className="text-zinc-400">Sábados</dt>
-                  <dd className="font-bold text-[#D4FF00]">11:00 – 20:00 hs</dd>
+                  <dd className="font-bold text-[#00F0FF]">10:00 – 20:00 hs</dd>
                 </div>
                 <div className="flex justify-between">
                   <dt className="text-zinc-400">Domingos y Lunes</dt>
@@ -67,16 +68,16 @@ export const LocationPage: React.FC = () => {
             </div>
 
             {/* Address & Instructions */}
-            <div className="p-5 rounded-xl border border-[#232532] bg-[#111218] space-y-2">
+            <div className="p-5 rounded-xl border border-[#232532] bg-[#111218] space-y-2 concrete-overlay">
               <h3 className="font-mono text-xs uppercase text-zinc-400 font-bold">
                 Dirección
               </h3>
               <p className="font-display text-xl font-bold text-white">{config.address}</p>
-              <p className="text-xs font-mono text-zinc-400">
-                {config.neighborhood} · Gorriti entre Armenia y Gurruchaga
+              <p className="text-xs font-mono text-[#00F0FF] font-bold">
+                {config.neighborhood}
               </p>
-              <p className="text-[11px] font-mono text-[#D4FF00]">
-                Estacionamiento privado disponible a 40 metros sobre Gorriti.
+              <p className="text-[11px] font-mono text-zinc-400">
+                Fácil acceso y estacionamiento cómodo en la cuadra.
               </p>
             </div>
           </div>
@@ -86,7 +87,8 @@ export const LocationPage: React.FC = () => {
               href={config.googleMapsUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 text-xs font-mono font-black uppercase tracking-wider bg-[#D4FF00] text-black rounded-xl hover:bg-[#bde400] transition-colors"
+              onMouseEnter={playMechanicalHover}
+              className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 text-xs font-mono font-black uppercase tracking-wider bg-[#00F0FF] text-black rounded-xl hover:bg-[#00D5E5] transition-all shadow-md active:scale-95"
             >
               <MapPin className="w-4 h-4" />
               <span>Google Maps</span>
@@ -95,9 +97,10 @@ export const LocationPage: React.FC = () => {
               href={config.wazeUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="px-5 py-3 text-xs font-mono font-bold uppercase tracking-wider border border-[#2B2D3D] bg-[#161722] text-zinc-200 hover:text-white hover:border-[#D4FF00] rounded-xl transition-colors"
+              onMouseEnter={playMechanicalHover}
+              className="px-5 py-3 text-xs font-mono font-bold uppercase tracking-wider border border-[#2B2D3D] bg-[#161722] text-zinc-200 hover:text-white hover:border-[#00F0FF] rounded-xl transition-all active:scale-95"
             >
-              <Navigation className="w-4 h-4 text-[#D4FF00]" />
+              <Navigation className="w-4 h-4 text-[#00F0FF]" />
               <span>Waze</span>
             </a>
           </div>
@@ -105,10 +108,10 @@ export const LocationPage: React.FC = () => {
 
         {/* Right Column: Custom Monochromatic SVG Map */}
         <div className="lg:col-span-7">
-          <div className="relative h-full min-h-[420px] rounded-2xl overflow-hidden border border-[#232532] bg-[#0E0F15] p-5 flex flex-col justify-between shadow-xl">
+          <div className="relative h-full min-h-[420px] rounded-2xl overflow-hidden border border-[#232532] bg-[#0E0F15] p-5 flex flex-col justify-between shadow-xl concrete-overlay">
             <svg
               viewBox="0 0 800 450"
-              aria-label="Mapa urbano de Gorriti 4820, Palermo Soho"
+              aria-label="Mapa urbano de Vuelta de Obligado 931, Venado Tuerto, Santa Fe"
               className="absolute inset-0 w-full h-full object-cover opacity-85"
             >
               <rect width="800" height="450" fill="#0C0D13" />
@@ -120,43 +123,43 @@ export const LocationPage: React.FC = () => {
                 <rect x="260" y="230" width="220" height="180" rx="4" />
                 <rect x="510" y="230" width="240" height="180" rx="4" />
               </g>
-              <line x1="0" y1="210" x2="800" y2="210" stroke="#D4FF00" strokeWidth="2.5" strokeOpacity="0.7" />
+              <line x1="0" y1="210" x2="800" y2="210" stroke="#00F0FF" strokeWidth="2.5" strokeOpacity="0.7" />
               <line x1="245" y1="0" x2="245" y2="450" stroke="#4A4D60" strokeWidth="1.5" strokeOpacity="0.4" />
               <line x1="495" y1="0" x2="495" y2="450" stroke="#4A4D60" strokeWidth="1.5" strokeOpacity="0.4" />
 
-              <text x="65" y="204" fill="#D4FF00" fontSize="11" fontFamily="JetBrains Mono, monospace" letterSpacing="2" fontWeight="bold">
-                CALLE GORRITI (ALTURA 4820)
+              <text x="65" y="204" fill="#00F0FF" fontSize="11" fontFamily="JetBrains Mono, monospace" letterSpacing="2" fontWeight="bold">
+                CALLE VUELTA DE OBLIGADO (N° 931)
               </text>
               <text x="252" y="100" fill="#8E92A8" fontSize="10" fontFamily="JetBrains Mono, monospace" letterSpacing="1.5" transform="rotate(90 252,100)">
-                ARMENIA
+                INTERSECCIÓN VT
               </text>
               <text x="502" y="100" fill="#8E92A8" fontSize="10" fontFamily="JetBrains Mono, monospace" letterSpacing="1.5" transform="rotate(90 502,100)">
-                GURRUCHAGA
+                SANTA FE
               </text>
 
-              <circle cx="370" cy="210" r="32" fill="#D4FF00" fillOpacity="0.15" />
-              <circle cx="370" cy="210" r="10" fill="#D4FF00" />
+              <circle cx="370" cy="210" r="32" fill="#00F0FF" fillOpacity="0.15" />
+              <circle cx="370" cy="210" r="10" fill="#00F0FF" />
               <circle cx="370" cy="210" r="4" fill="#000000" />
             </svg>
 
             <div className="relative z-10 flex items-center justify-between text-xs font-mono">
               <span className="px-3 py-1.5 rounded-lg bg-black/80 border border-white/10 text-white font-bold">
-                PALERMO SOHO · BUENOS AIRES
+                VENADO TUERTO · SANTA FE
               </span>
-              <span className="px-3 py-1.5 rounded-lg bg-black/80 border border-[#D4FF00]/40 text-[#D4FF00] font-bold">
-                MORETTI STUDIO
+              <span className="px-3 py-1.5 rounded-lg bg-black/80 border border-[#00F0FF]/40 text-[#00F0FF] font-bold">
+                RODRIGO CUTSSS
               </span>
             </div>
 
             <div className="relative z-10 p-4 rounded-xl bg-black/85 border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-white">
               <div>
-                <p className="font-display text-xl font-bold">Gorriti 4820 · Piso 2 B</p>
+                <p className="font-display text-xl font-bold">Vuelta de Obligado 931</p>
                 <p className="text-xs font-mono text-zinc-400">
-                  Palermo Soho · Timbre con código exclusivo de reserva
+                  Venado Tuerto · Atención exclusiva 1 a 1
                 </p>
               </div>
-              <span className="font-mono text-xs text-[#D4FF00] font-bold">
-                -34.5889, -58.4305
+              <span className="font-mono text-xs text-[#00F0FF] font-bold">
+                -33.7456, -61.9688
               </span>
             </div>
           </div>
@@ -166,7 +169,7 @@ export const LocationPage: React.FC = () => {
       {/* Studio Protocol Rules */}
       <div className="pt-4">
         <div className="mb-6">
-          <span className="font-mono text-xs uppercase text-[#D4FF00] font-bold block mb-1">
+          <span className="font-mono text-xs uppercase text-[#00F0FF] font-bold block mb-1">
             REGLAS DEL LOCAL
           </span>
           <h2 className="font-display text-3xl font-extrabold text-white">
@@ -176,7 +179,7 @@ export const LocationPage: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="p-6 rounded-xl border border-[#222432] bg-[#111218] space-y-2.5">
-            <span className="font-mono text-xs text-[#D4FF00] font-bold">REGLA 01 · PUNTUALIDAD</span>
+            <span className="font-mono text-xs text-[#00F0FF] font-bold">REGLA 01 · PUNTUALIDAD</span>
             <h3 className="font-display text-xl font-bold text-white">10 minutos de tolerancia</h3>
             <p className="text-xs text-zinc-400 leading-relaxed">
               Si llegás más de 10 min tarde se recortan los detalles finales o se reprograma el turno para no perjudicar al pibe que reservó después de vos.
@@ -184,7 +187,7 @@ export const LocationPage: React.FC = () => {
           </div>
 
           <div className="p-6 rounded-xl border border-[#222432] bg-[#111218] space-y-2.5">
-            <span className="font-mono text-xs text-[#D4FF00] font-bold">REGLA 02 · CANCELACIÓN</span>
+            <span className="font-mono text-xs text-[#00F0FF] font-bold">REGLA 02 · CANCELACIÓN</span>
             <h3 className="font-display text-xl font-bold text-white">Avisar 24 hs antes</h3>
             <p className="text-xs text-zinc-400 leading-relaxed">
               El WhatsApp te manda un link automático para cambiar de día u hora sin costo alguno hasta 24 horas antes del horario fijado.
@@ -192,7 +195,7 @@ export const LocationPage: React.FC = () => {
           </div>
 
           <div className="p-6 rounded-xl border border-[#222432] bg-[#111218] space-y-2.5">
-            <span className="font-mono text-xs text-[#D4FF00] font-bold">REGLA 03 · ESPACIO</span>
+            <span className="font-mono text-xs text-[#00F0FF] font-bold">REGLA 03 · ESPACIO</span>
             <h3 className="font-display text-xl font-bold text-white">Vení solo a cortarte</h3>
             <p className="text-xs text-zinc-400 leading-relaxed">
               Como el local es privado 1 a 1, no hay sala de espera comunitaria. Es un espacio tranquilo pensado para que te relajes.

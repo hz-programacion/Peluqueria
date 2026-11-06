@@ -3,6 +3,7 @@ import { useStudio } from '../context/StudioContext';
 import { StudioService } from '../data/studioData';
 import { formatPriceARS } from '../utils/bookingEngine';
 import { Check, Plus, X, ArrowRight, Clock, Sparkles, Scissors, ShieldAlert } from 'lucide-react';
+import { playMechanicalHover, playMechanicalClick } from '../utils/audioFeedback';
 
 export const ServicesPage: React.FC = () => {
   const { services, selectedServiceIds, toggleSelectService, navigateTo, setIsStyleFinderOpen } = useStudio();
@@ -21,7 +22,7 @@ export const ServicesPage: React.FC = () => {
       {/* Page Title & Intro */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-[#222432]">
         <div>
-          <span className="font-mono text-xs uppercase tracking-widest text-[#D4FF00] font-bold block mb-1">
+          <span className="font-mono text-xs uppercase tracking-widest text-[#00F0FF] font-bold block mb-1">
             ESTUDIO EXCLUSIVO PARA HOMBRES
           </span>
           <h1 className="font-display text-4xl md:text-5xl font-black text-white uppercase tracking-tight">
@@ -33,10 +34,14 @@ export const ServicesPage: React.FC = () => {
             Cada corte tiene tiempo cronometrado exacto y 10 minutos entre turnos para esterilización con luz UV.
           </p>
           <button
-            onClick={() => setIsStyleFinderOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#181A24] border border-[#2D3040] text-xs font-semibold text-zinc-200 hover:border-[#D4FF00] hover:text-[#D4FF00] transition-colors whitespace-nowrap cursor-pointer"
+            onClick={() => {
+              playMechanicalClick();
+              setIsStyleFinderOpen(true);
+            }}
+            onMouseEnter={playMechanicalHover}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#181A24] border border-[#2D3040] text-xs font-semibold text-zinc-200 hover:border-[#00F0FF] hover:text-[#00F0FF] transition-colors whitespace-nowrap cursor-pointer active:scale-95"
           >
-            <Sparkles className="w-3.5 h-3.5 text-[#D4FF00]" />
+            <Sparkles className="w-3.5 h-3.5 text-[#00F0FF]" />
             <span>Asesor de Corte</span>
           </button>
         </div>
@@ -47,10 +52,14 @@ export const ServicesPage: React.FC = () => {
         {categories.map((cat) => (
           <button
             key={cat}
-            onClick={() => setSelectedCategory(cat)}
-            className={`px-4 py-2 text-xs font-mono font-bold rounded-lg uppercase tracking-wider transition-colors cursor-pointer ${
+            onClick={() => {
+              playMechanicalClick();
+              setSelectedCategory(cat);
+            }}
+            onMouseEnter={playMechanicalHover}
+            className={`px-4 py-2 text-xs font-mono font-bold rounded-lg uppercase tracking-wider transition-colors cursor-pointer active:scale-95 ${
               selectedCategory === cat
-                ? 'bg-[#D4FF00] text-black shadow-md'
+                ? 'bg-[#00F0FF] text-black shadow-md font-black'
                 : 'bg-[#14151E] border border-[#232532] text-zinc-400 hover:text-white hover:border-zinc-500'
             }`}
           >
@@ -66,15 +75,15 @@ export const ServicesPage: React.FC = () => {
           return (
             <article
               key={service.id}
-              className={`p-6 md:p-7 rounded-xl border transition-all flex flex-col justify-between ${
+              className={`p-6 md:p-7 rounded-xl border transition-all flex flex-col justify-between concrete-overlay ${
                 isSelected
-                  ? 'border-[#D4FF00] bg-[#141620] shadow-[0_0_20px_rgba(212,255,0,0.12)]'
-                  : 'border-[#232532] bg-[#111218] hover:border-zinc-500'
+                  ? 'border-[#00F0FF] bg-[#141620] shadow-[0_0_20px_rgba(0,240,255,0.15)]'
+                  : 'border-[#232532] bg-[#111218] hover:border-[#00F0FF]/40'
               }`}
             >
               <div>
                 <div className="flex items-center justify-between text-xs font-mono text-zinc-400 mb-2.5">
-                  <span className="text-[#D4FF00] font-bold">{service.index}. {service.category}</span>
+                  <span className="text-[#00F0FF] font-bold">{service.index}. {service.category}</span>
                   <span className="text-xl font-black text-white">{formatPriceARS(service.price)}</span>
                 </div>
 
@@ -83,14 +92,14 @@ export const ServicesPage: React.FC = () => {
                     {service.name}
                   </h2>
                   {service.popularTag && (
-                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#D4FF00]/15 text-[#D4FF00] border border-[#D4FF00]/30 shrink-0">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#00F0FF]/15 text-[#00F0FF] border border-[#00F0FF]/30 shrink-0">
                       {service.popularTag}
                     </span>
                   )}
                 </div>
 
                 <div className="flex items-center gap-2 text-xs font-mono text-zinc-400 mb-4">
-                  <Clock className="w-3.5 h-3.5 text-[#D4FF00]" />
+                  <Clock className="w-3.5 h-3.5 text-[#00F0FF]" />
                   <span>{service.durationMinutes} minutos en sillón</span>
                 </div>
 
@@ -106,18 +115,26 @@ export const ServicesPage: React.FC = () => {
 
               <div className="pt-5 mt-5 border-t border-[#1E202B] flex items-center justify-between gap-4">
                 <button
-                  onClick={() => setActiveDrawer(service)}
+                  onClick={() => {
+                    playMechanicalClick();
+                    setActiveDrawer(service);
+                  }}
+                  onMouseEnter={playMechanicalHover}
                   className="text-xs font-mono text-zinc-400 hover:text-white underline underline-offset-4 cursor-pointer"
                 >
                   Ver Ficha Técnica y Pasos
                 </button>
 
                 <button
-                  onClick={() => toggleSelectService(service.id)}
-                  className={`inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-mono font-black rounded-lg uppercase tracking-wider cursor-pointer transition-colors ${
+                  onClick={() => {
+                    playMechanicalClick();
+                    toggleSelectService(service.id);
+                  }}
+                  onMouseEnter={playMechanicalHover}
+                  className={`inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-mono font-black rounded-lg uppercase tracking-wider cursor-pointer transition-all active:scale-95 ${
                     isSelected
-                      ? 'bg-[#D4FF00] text-black shadow-md'
-                      : 'border border-[#2C2E3E] bg-[#161722] text-zinc-200 hover:border-[#D4FF00] hover:text-white'
+                      ? 'bg-[#00F0FF] text-black shadow-md'
+                      : 'border border-[#2C2E3E] bg-[#161722] text-zinc-200 hover:border-[#00F0FF] hover:text-white'
                   }`}
                 >
                   {isSelected ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : <Plus className="w-3.5 h-3.5" />}
@@ -131,9 +148,9 @@ export const ServicesPage: React.FC = () => {
 
       {/* Floating Summary Bar if Services Selected */}
       {selectedServiceIds.length > 0 && (
-        <div className="p-5 md:p-6 rounded-xl border border-[#D4FF00] bg-[#14151E] flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">
+        <div className="p-5 md:p-6 rounded-xl border border-[#00F0FF] bg-[#14151E] flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">
           <div>
-            <p className="font-mono text-xs uppercase text-[#D4FF00] font-bold">
+            <p className="font-mono text-xs uppercase text-[#00F0FF] font-bold">
               SERVICIOS ELEGIDOS ({selectedServiceIds.length})
             </p>
             <p className="text-sm font-bold text-white">
@@ -142,8 +159,12 @@ export const ServicesPage: React.FC = () => {
           </div>
 
           <button
-            onClick={() => navigateTo('booking')}
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 text-xs font-mono font-black uppercase tracking-wider bg-[#D4FF00] text-black rounded-xl hover:bg-[#bde400] transition-colors cursor-pointer shadow-md"
+            onClick={() => {
+              playMechanicalClick();
+              navigateTo('booking');
+            }}
+            onMouseEnter={playMechanicalHover}
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 text-xs font-mono font-black uppercase tracking-wider bg-[#00F0FF] text-black rounded-xl hover:bg-[#00D5E5] transition-all cursor-pointer shadow-md active:scale-95"
           >
             <span>Continuar al Paso 2 (Horarios)</span>
             <ArrowRight className="w-4 h-4 stroke-[3]" />
@@ -157,12 +178,16 @@ export const ServicesPage: React.FC = () => {
           <div className="w-full max-w-lg bg-[#111218] border-l border-[#272938] text-white h-full p-6 md:p-8 overflow-y-auto flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between pb-4 mb-6 border-b border-[#222432]">
-                <span className="font-mono text-xs font-bold text-[#D4FF00]">
+                <span className="font-mono text-xs font-bold text-[#00F0FF]">
                   FICHA TÉCNICA · {activeDrawer.category.toUpperCase()}
                 </span>
                 <button
-                  onClick={() => setActiveDrawer(null)}
-                  className="p-1 text-zinc-400 hover:text-white rounded-lg hover:bg-white/5"
+                  onClick={() => {
+                    playMechanicalClick();
+                    setActiveDrawer(null);
+                  }}
+                  onMouseEnter={playMechanicalHover}
+                  className="p-1 text-zinc-400 hover:text-white rounded-lg hover:bg-white/5 cursor-pointer"
                   aria-label="Cerrar ficha técnica"
                 >
                   <X className="w-5 h-5" />
@@ -172,7 +197,7 @@ export const ServicesPage: React.FC = () => {
               <h3 className="font-display text-2xl md:text-3xl font-extrabold text-white mb-1">
                 {activeDrawer.name}
               </h3>
-              <p className="font-mono text-lg text-[#D4FF00] font-bold mb-6">
+              <p className="font-mono text-lg text-[#00F0FF] font-bold mb-6">
                 {formatPriceARS(activeDrawer.price)} · {activeDrawer.durationMinutes} minutos de sesión
               </p>
 
@@ -182,7 +207,7 @@ export const ServicesPage: React.FC = () => {
                   <ul className="space-y-1.5 text-zinc-300">
                     {activeDrawer.preparation.map((p, i) => (
                       <li key={i} className="flex items-start gap-2">
-                        <span className="text-[#D4FF00]">•</span>
+                        <span className="text-[#00F0FF]">•</span>
                         <span>{p}</span>
                       </li>
                     ))}
@@ -194,7 +219,7 @@ export const ServicesPage: React.FC = () => {
                   <ul className="space-y-1.5 text-zinc-300">
                     {activeDrawer.executionSteps.map((step, i) => (
                       <li key={i} className="flex items-start gap-2">
-                        <span className="text-[#D4FF00]">•</span>
+                        <span className="text-[#00F0FF]">•</span>
                         <span>{step}</span>
                       </li>
                     ))}
@@ -215,20 +240,26 @@ export const ServicesPage: React.FC = () => {
 
             <div className="pt-6 mt-6 border-t border-[#222432] flex items-center gap-3">
               <button
-                onClick={() => setActiveDrawer(null)}
-                className="px-4 py-2.5 text-xs font-mono border border-[#2B2D3D] rounded-xl text-zinc-400 hover:text-white"
+                onClick={() => {
+                  playMechanicalClick();
+                  setActiveDrawer(null);
+                }}
+                onMouseEnter={playMechanicalHover}
+                className="px-4 py-2.5 text-xs font-mono border border-[#2B2D3D] rounded-xl text-zinc-400 hover:text-white cursor-pointer"
               >
                 Cerrar
               </button>
               <button
                 onClick={() => {
+                  playMechanicalClick();
                   if (!selectedServiceIds.includes(activeDrawer.id)) {
                     toggleSelectService(activeDrawer.id);
                   }
                   setActiveDrawer(null);
                   navigateTo('booking');
                 }}
-                className="flex-1 py-2.5 text-xs font-mono font-black uppercase tracking-wider bg-[#D4FF00] text-black rounded-xl hover:bg-[#bde400] transition-colors"
+                onMouseEnter={playMechanicalHover}
+                className="flex-1 py-2.5 text-xs font-mono font-black uppercase tracking-wider bg-[#00F0FF] text-black rounded-xl hover:bg-[#00D5E5] transition-all cursor-pointer shadow-lg active:scale-95"
               >
                 Agendar Este Corte
               </button>

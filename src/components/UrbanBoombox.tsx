@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Volume2, VolumeX, Play, Pause, SkipForward, Radio, Disc3 } from 'lucide-react';
+import { playMechanicalHover, playMechanicalClick } from '../utils/audioFeedback';
 
 interface AudioTrack {
   id: string;
@@ -12,21 +13,21 @@ interface AudioTrack {
 const TRACKS: AudioTrack[] = [
   {
     id: 't1',
-    title: 'Drill 140 · Palermo Session',
+    title: 'Drill 140 · Venado Tuerto Session',
     sub: 'Sub-bass 808 + Rimshot metálico',
     bpm: 140,
     type: 'drill',
   },
   {
     id: 't2',
-    title: 'Lluvia & Vinilo en el Estudio',
+    title: 'Lluvia & Vinilo en Vuelta de Obligado',
     sub: 'Cálido tape hiss + Acordes Rhodes',
     bpm: 85,
     type: 'lofi',
   },
   {
     id: 't3',
-    title: 'Subte Línea D · Midnight Groove',
+    title: 'Streetline · Midnight Groove VT',
     sub: 'Hi-hats rápidos & Kick acústico',
     bpm: 128,
     type: 'vinyl',
@@ -170,22 +171,26 @@ export const UrbanBoombox: React.FC = () => {
         <div className="mb-3 w-80 bg-[#12131C] border border-[#272938] rounded-2xl p-4 shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-bottom-2 duration-200">
           <div className="flex items-center justify-between border-b border-[#222432] pb-3 mb-3">
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#D4FF00] inline-block animate-pulse" />
+              <span className="w-2 h-2 rounded-full bg-[#00F0FF] inline-block animate-pulse shadow-[0_0_8px_#00F0FF]" />
               <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-400 font-bold">
-                Studio Radio // Palermo
+                Studio Radio // Venado Tuerto
               </span>
             </div>
             <button
               type="button"
-              onClick={() => setIsExpanded(false)}
-              className="text-zinc-500 hover:text-white text-xs font-mono"
+              onClick={() => {
+                playMechanicalClick();
+                setIsExpanded(false);
+              }}
+              onMouseEnter={playMechanicalHover}
+              className="text-zinc-500 hover:text-white text-xs font-mono cursor-pointer"
             >
               [Cerrar]
             </button>
           </div>
 
           <div className="flex items-center gap-3 mb-3">
-            <div className={`w-12 h-12 rounded-xl bg-[#1C1E2B] border border-[#2D3042] flex items-center justify-center shrink-0 ${isPlaying ? 'text-[#D4FF00]' : 'text-zinc-500'}`}>
+            <div className={`w-12 h-12 rounded-xl bg-[#1C1E2B] border border-[#2D3042] flex items-center justify-center shrink-0 ${isPlaying ? 'text-[#00F0FF] border-[#00F0FF]/40' : 'text-zinc-500'}`}>
               <Disc3 className={`w-6 h-6 ${isPlaying ? 'animate-spin' : ''}`} style={{ animationDuration: '3s' }} />
             </div>
             <div className="min-w-0 flex-1">
@@ -203,7 +208,7 @@ export const UrbanBoombox: React.FC = () => {
             {[45, 80, 60, 95, 40, 70, 85, 50, 90, 65, 75, 40].map((h, i) => (
               <span
                 key={i}
-                className="w-1 rounded-full bg-[#D4FF00] transition-all"
+                className="w-1 rounded-full bg-[#00F0FF] transition-all"
                 style={{
                   height: isPlaying ? `${Math.max(15, (h * ((i % 3) + 1)) % 100)}%` : '15%',
                   opacity: isPlaying ? 0.9 : 0.3,
@@ -218,16 +223,24 @@ export const UrbanBoombox: React.FC = () => {
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={togglePlay}
-                className="w-10 h-10 rounded-xl bg-[#D4FF00] text-black flex items-center justify-center hover:bg-[#bce400] transition-colors cursor-pointer"
+                onClick={() => {
+                  playMechanicalClick();
+                  togglePlay();
+                }}
+                onMouseEnter={playMechanicalHover}
+                className="w-10 h-10 rounded-xl bg-[#00F0FF] text-black flex items-center justify-center hover:bg-[#00D5E5] transition-colors cursor-pointer active:scale-95 shadow-[0_0_15px_rgba(0,240,255,0.25)]"
                 title={isPlaying ? 'Pausar Beats' : 'Reproducir Beats'}
               >
                 {isPlaying ? <Pause className="w-4 h-4 fill-black" /> : <Play className="w-4 h-4 fill-black ml-0.5" />}
               </button>
               <button
                 type="button"
-                onClick={nextTrack}
-                className="w-10 h-10 rounded-xl bg-[#1C1E2B] border border-[#272938] text-white flex items-center justify-center hover:border-zinc-500 transition-colors cursor-pointer"
+                onClick={() => {
+                  playMechanicalClick();
+                  nextTrack();
+                }}
+                onMouseEnter={playMechanicalHover}
+                className="w-10 h-10 rounded-xl bg-[#1C1E2B] border border-[#272938] text-white flex items-center justify-center hover:border-[#00F0FF]/50 transition-colors cursor-pointer active:scale-95"
                 title="Siguiente Pista"
               >
                 <SkipForward className="w-4 h-4" />
@@ -237,8 +250,12 @@ export const UrbanBoombox: React.FC = () => {
             <div className="flex items-center gap-2 flex-1 max-w-[120px]">
               <button
                 type="button"
-                onClick={() => setIsMuted(!isMuted)}
-                className="text-zinc-400 hover:text-white"
+                onClick={() => {
+                  playMechanicalClick();
+                  setIsMuted(!isMuted);
+                }}
+                onMouseEnter={playMechanicalHover}
+                className="text-zinc-400 hover:text-white cursor-pointer"
               >
                 {isMuted ? <VolumeX className="w-4 h-4 text-red-400" /> : <Volume2 className="w-4 h-4" />}
               </button>
@@ -252,7 +269,7 @@ export const UrbanBoombox: React.FC = () => {
                   setVolume(parseFloat(e.target.value));
                   if (isMuted) setIsMuted(false);
                 }}
-                className="w-full accent-[#D4FF00] h-1.5 bg-[#272938] rounded-lg cursor-pointer"
+                className="w-full accent-[#00F0FF] h-1.5 bg-[#272938] rounded-lg cursor-pointer"
               />
             </div>
           </div>
@@ -260,24 +277,26 @@ export const UrbanBoombox: React.FC = () => {
       )}
 
       {/* Street Pill Launcher Button */}
-      <div className="flex items-center gap-2 bg-[#14151E]/95 border border-[#272938] backdrop-blur-md px-3.5 py-2 rounded-full shadow-2xl hover:border-[#D4FF00] transition-colors">
+      <div className="flex items-center gap-2 bg-[#14151E]/95 border border-[#272938] backdrop-blur-md px-3.5 py-2 rounded-full shadow-2xl hover:border-[#00F0FF] transition-colors">
         <button
           type="button"
           onClick={() => {
+            playMechanicalClick();
             if (!isPlaying) togglePlay();
             setIsExpanded(!isExpanded);
           }}
+          onMouseEnter={playMechanicalHover}
           className="flex items-center gap-2 cursor-pointer text-left"
         >
           <div className="relative">
-            <Radio className={`w-4 h-4 ${isPlaying ? 'text-[#D4FF00]' : 'text-zinc-400'}`} />
+            <Radio className={`w-4 h-4 ${isPlaying ? 'text-[#00F0FF]' : 'text-zinc-400'}`} />
             {isPlaying && (
-              <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-[#D4FF00] animate-ping" />
+              <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-[#00F0FF] animate-ping" />
             )}
           </div>
           <div className="text-xs font-mono font-bold text-zinc-200">
             {isPlaying ? (
-              <span className="text-[#D4FF00]">{currentTrack.bpm} BPM // ON AIR</span>
+              <span className="text-[#00F0FF]">{currentTrack.bpm} BPM // ON AIR</span>
             ) : (
               <span>STUDIO BEATS</span>
             )}
@@ -286,8 +305,12 @@ export const UrbanBoombox: React.FC = () => {
 
         <button
           type="button"
-          onClick={togglePlay}
-          className="w-6 h-6 rounded-full bg-[#D4FF00] text-black flex items-center justify-center hover:scale-105 transition-transform"
+          onClick={() => {
+            playMechanicalClick();
+            togglePlay();
+          }}
+          onMouseEnter={playMechanicalHover}
+          className="w-6 h-6 rounded-full bg-[#00F0FF] text-black flex items-center justify-center hover:scale-105 active:scale-95 transition-transform cursor-pointer"
           aria-label={isPlaying ? 'Pausar' : 'Reproducir'}
         >
           {isPlaying ? <Pause className="w-3 h-3 fill-black" /> : <Play className="w-3 h-3 fill-black ml-0.5" />}

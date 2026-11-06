@@ -20,6 +20,7 @@ import { FadeStencilStudio } from '../components/FadeStencilStudio';
 import { StreetwearDrops } from '../components/StreetwearDrops';
 import { ThermalReceiptBooking } from '../components/ThermalReceiptBooking';
 import { formatPriceARS } from '../utils/bookingEngine';
+import { playMechanicalHover, playMechanicalClick } from '../utils/audioFeedback';
 
 export const HomePage: React.FC = () => {
   const {
@@ -95,77 +96,89 @@ export const HomePage: React.FC = () => {
     <div className="space-y-20 md:space-y-32 pb-24 overflow-x-hidden">
       
       {/* 1. KINETIC TICKER (MARQUEE) */}
-      <div className="w-full bg-[#D4FF00] text-black py-2.5 font-mono text-xs font-black uppercase tracking-wider overflow-hidden border-b border-black select-none">
+      <div className="w-full bg-[#00F0FF] text-black py-2.5 font-mono text-xs font-black uppercase tracking-wider overflow-hidden border-b border-black select-none">
         <div className="animate-marquee whitespace-nowrap">
-          <span className="mx-4">⚡ MORETTI STUDIO // 1 CLIENTE POR TURNO</span>
+          <span className="mx-4">⚡ RODRIGO CUTSSS // VENADO TUERTO</span>
           <span className="mx-4">·</span>
-          <span className="mx-4">0.0 MM SHAVER DE TITANIO BABYLISS FX3</span>
+          <span className="mx-4">CORTE DE PELO: $12.000 ARS</span>
           <span className="mx-4">·</span>
-          <span className="mx-4">PALERMO SOHO · GORRITI 4820</span>
+          <span className="mx-4">VUELTA DE OBLIGADO 931</span>
           <span className="mx-4">·</span>
-          <span className="mx-4">UK DRILL &amp; TRAP SESSIONS</span>
+          <span className="mx-4">1 CLIENTE POR TURNO (SIN FILAS)</span>
           <span className="mx-4">·</span>
-          <span className="mx-4">CONFIRMACIÓN DIRECTA A WHATSAPP</span>
+          <span className="mx-4">0.0 MM SHAVER DE TITANIO &amp; NAVAJA LIBRE</span>
           <span className="mx-4">·</span>
-          <span className="mx-4">SIN FILAS DE ESPERA</span>
+          <span className="mx-4">DESPACHO INMEDIATO A WHATSAPP</span>
           <span className="mx-4">·</span>
-          <span className="mx-4">⚡ MORETTI STUDIO // 1 CLIENTE POR TURNO</span>
+          <span className="mx-4">⚡ RODRIGO CUTSSS // VENADO TUERTO</span>
           <span className="mx-4">·</span>
-          <span className="mx-4">0.0 MM SHAVER DE TITANIO BABYLISS FX3</span>
+          <span className="mx-4">CORTE DE PELO: $12.000 ARS</span>
           <span className="mx-4">·</span>
-          <span className="mx-4">PALERMO SOHO · GORRITI 4820</span>
+          <span className="mx-4">VUELTA DE OBLIGADO 931</span>
           <span className="mx-4">·</span>
-          <span className="mx-4">UK DRILL &amp; TRAP SESSIONS</span>
+          <span className="mx-4">1 CLIENTE POR TURNO (SIN FILAS)</span>
           <span className="mx-4">·</span>
         </div>
       </div>
 
       {/* 2. REVOLUTIONARY URBAN POSTER HERO */}
       <section className="max-w-[1380px] mx-auto px-4 sm:px-6 pt-4 sm:pt-8">
-        <div className="relative rounded-3xl bg-[#0F1017] border-2 border-[#242738] p-6 sm:p-10 lg:p-12 overflow-hidden shadow-2xl bg-halftone-grid">
+        <div className="relative rounded-3xl bg-[#0F1017] border-2 border-[#242738] p-6 sm:p-10 lg:p-12 overflow-hidden shadow-2xl bg-halftone-grid concrete-overlay distressed-surface">
           
           {/* Caution Tape Diagonal Decal */}
-          <div className="absolute -top-10 -right-10 w-60 h-10 bg-[#D4FF00] text-black font-mono font-black text-xs uppercase flex items-center justify-center transform rotate-45 shadow-lg pointer-events-none select-none tracking-widest">
+          <div className="absolute -top-10 -right-10 w-60 h-10 bg-[#00F0FF] text-black font-mono font-black text-xs uppercase flex items-center justify-center transform rotate-45 shadow-lg pointer-events-none select-none tracking-widest z-10">
             CAUTION // RAZOR SHARP
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center relative z-10">
             
             {/* Left Content: Huge Typography & Street Culture */}
-            <div className="lg:col-span-7 space-y-6 z-10">
+            <div className="lg:col-span-7 space-y-6">
               
               <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
-                <span className="px-3 py-1 bg-black border border-[#D4FF00] text-[#D4FF00] font-black uppercase rounded tracking-wider">
+                <span className="px-3 py-1 bg-black border border-[#00F0FF] text-[#00F0FF] font-black uppercase rounded tracking-wider shadow-[0_0_12px_rgba(0,240,255,0.15)]">
                   [ATELIER URBANO 1 A 1]
                 </span>
                 <span className="text-zinc-500">·</span>
                 <span className="text-zinc-300 font-bold flex items-center gap-1">
-                  <Star className="w-3.5 h-3.5 fill-[#D4FF00] text-[#D4FF00]" />
-                  5.0 ★ (142 Google Maps)
+                  <Star className="w-3.5 h-3.5 fill-[#00F0FF] text-[#00F0FF]" />
+                  5.0 ★ (Venado Tuerto)
                 </span>
                 <span className="text-zinc-500">·</span>
-                <span className="text-zinc-400">Gorriti 4820 · Piso 2 B</span>
+                <span className="text-[#00F0FF] font-bold">Vuelta de Obligado 931</span>
               </div>
 
-              {/* Giant Poster Headline */}
-              <h1 className="font-display text-[clamp(2.6rem,6vw,5.2rem)] font-black uppercase leading-[0.92] tracking-tighter text-white">
-                FADES A NAVAJA <br />
-                <span className="text-[#D4FF00] bg-black px-2 py-0.5 inline-block my-1 border border-[#D4FF00]/40">
-                  SIN FILTRO
-                </span> <br />
-                EN PALERMO.
-              </h1>
+              {/* Giant Poster Headline with Main Service & Price */}
+              <div className="space-y-3">
+                <h1 className="font-display text-[clamp(2.5rem,5.8vw,5rem)] font-black uppercase leading-[0.92] tracking-tighter text-white">
+                  CORTES DE AUTOR <br />
+                  <span className="text-[#00F0FF] bg-black px-2 py-0.5 inline-block my-1 border border-[#00F0FF]/40 shadow-[0_0_20px_rgba(0,240,255,0.2)]">
+                    FADES A NAVAJA
+                  </span> <br />
+                  EN VENADO TUERTO.
+                </h1>
+                
+                {/* Headline Badge: Main Service Price */}
+                <div className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-lg bg-[#141622] border border-[#00F0FF]/40 font-mono text-xs font-bold text-zinc-200">
+                  <span className="w-2 h-2 rounded-full bg-[#00F0FF] animate-ping" />
+                  <span>SERVICIO PRINCIPAL: <strong className="text-[#00F0FF] font-black">CORTE DE PELO $12.000 ARS</strong></span>
+                </div>
+              </div>
 
               <p className="text-base sm:text-lg text-zinc-300 max-w-xl font-normal leading-relaxed">
-                Estudio privado a puertas cerradas exclusivo para hombres. Sin salas de espera repletas, sin barberos atendiendo llamadas mientras te cortan y con la música que te gusta.
+                Estudio de barbería contemporáneo exclusivo para hombres en Venado Tuerto. Sin salas de espera abarrotadas, sin demoras y con atención dedicada 1 a 1 en Vuelta de Obligado 931.
               </p>
 
               {/* Interactive Audio Tester & Action Buttons */}
               <div className="pt-2 flex flex-wrap items-center gap-3.5">
                 <button
                   type="button"
-                  onClick={() => navigateTo('booking')}
-                  className="px-8 py-4 bg-[#D4FF00] text-black font-mono font-black text-xs uppercase tracking-wider rounded-xl hover:bg-[#bde400] transition-colors flex items-center gap-2.5 cursor-pointer shadow-[0_0_30px_rgba(212,255,0,0.25)]"
+                  onClick={() => {
+                    playMechanicalClick();
+                    navigateTo('booking');
+                  }}
+                  onMouseEnter={playMechanicalHover}
+                  className="px-8 py-4 bg-[#00F0FF] text-black font-mono font-black text-xs uppercase tracking-wider rounded-xl hover:bg-[#00D5E5] transition-all flex items-center gap-2.5 cursor-pointer shadow-[0_0_30px_rgba(0,240,255,0.25)] active:scale-95"
                 >
                   <Scissors className="w-4 h-4" />
                   <span>Emitir Ticket &amp; Reservar</span>
@@ -175,24 +188,32 @@ export const HomePage: React.FC = () => {
                 {/* Tactile Clipper Buzz Button */}
                 <button
                   type="button"
-                  onClick={playClipperSound}
-                  className={`px-5 py-4 border rounded-xl font-mono text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-2 ${
+                  onClick={() => {
+                    playMechanicalClick();
+                    playClipperSound();
+                  }}
+                  onMouseEnter={playMechanicalHover}
+                  className={`px-5 py-4 border rounded-xl font-mono text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-2 active:scale-95 ${
                     buzzerPlaying
-                      ? 'border-[#D4FF00] bg-[#D4FF00] text-black scale-95 shadow-lg'
-                      : 'border-[#2D3042] bg-[#161722] text-zinc-300 hover:text-white hover:border-[#D4FF00]'
+                      ? 'border-[#00F0FF] bg-[#00F0FF] text-black scale-95 shadow-[0_0_20px_rgba(0,240,255,0.4)]'
+                      : 'border-[#2D3042] bg-[#161722] text-zinc-300 hover:text-white hover:border-[#00F0FF]'
                   }`}
                   title="Presioná para escuchar el motor calibrado de la máquina"
                 >
-                  <Volume2 className={`w-4 h-4 ${buzzerPlaying ? 'text-black' : 'text-[#D4FF00]'}`} />
+                  <Volume2 className={`w-4 h-4 ${buzzerPlaying ? 'text-black' : 'text-[#00F0FF]'}`} />
                   <span>{buzzerPlaying ? 'Clippers FX 118Hz' : 'Probar Clipper'}</span>
                 </button>
 
                 <button
                   type="button"
-                  onClick={() => setIsStyleFinderOpen(true)}
-                  className="px-5 py-4 border border-[#2D3042] bg-[#161722] text-zinc-300 hover:text-white hover:border-[#D4FF00] rounded-xl font-mono text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer flex items-center gap-2"
+                  onClick={() => {
+                    playMechanicalClick();
+                    setIsStyleFinderOpen(true);
+                  }}
+                  onMouseEnter={playMechanicalHover}
+                  className="px-5 py-4 border border-[#2D3042] bg-[#161722] text-zinc-300 hover:text-white hover:border-[#00F0FF] rounded-xl font-mono text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-2 active:scale-95"
                 >
-                  <Sparkles className="w-4 h-4 text-[#D4FF00]" />
+                  <Sparkles className="w-4 h-4 text-[#00F0FF]" />
                   <span>Asesor de Fade</span>
                 </button>
               </div>
@@ -200,15 +221,15 @@ export const HomePage: React.FC = () => {
               {/* Quick Spec Strip */}
               <div className="pt-4 border-t border-[#222432] grid grid-cols-3 gap-4 text-xs font-mono">
                 <div>
-                  <span className="text-[#D4FF00] font-black block text-sm">0.0 MM</span>
-                  <span className="text-zinc-400 text-[11px]">Shaver Titanium</span>
+                  <span className="text-[#00F0FF] font-black block text-sm">CORTE $12K</span>
+                  <span className="text-zinc-400 text-[11px]">Precio transparente</span>
                 </div>
                 <div>
                   <span className="text-white font-black block text-sm">1 CLIENTE</span>
                   <span className="text-zinc-400 text-[11px]">Privacidad 100%</span>
                 </div>
                 <div>
-                  <span className="text-[#D4FF00] font-black block text-sm">WHATSAPP</span>
+                  <span className="text-[#00F0FF] font-black block text-sm">WHATSAPP</span>
                   <span className="text-zinc-400 text-[11px]">Confirmación directa</span>
                 </div>
               </div>
@@ -225,8 +246,8 @@ export const HomePage: React.FC = () => {
                 />
 
                 {/* Stencil Overlay Info */}
-                <div className="absolute top-4 left-4 bg-black/85 border border-[#D4FF00]/50 backdrop-blur-md px-3 py-1.5 rounded-lg text-left">
-                  <span className="text-[10px] font-mono font-black text-[#D4FF00] block tracking-wider">
+                <div className="absolute top-4 left-4 bg-black/85 border border-[#00F0FF]/50 backdrop-blur-md px-3 py-1.5 rounded-lg text-left shadow-lg">
+                  <span className="text-[10px] font-mono font-black text-[#00F0FF] block tracking-wider">
                     {photoAssets[activePhoto].tag}
                   </span>
                   <span className="text-[11px] font-mono text-white font-bold">
@@ -239,8 +260,8 @@ export const HomePage: React.FC = () => {
                     <span className="text-zinc-400 block text-[10px] uppercase">Especificación:</span>
                     <span className="text-zinc-200 font-bold">{photoAssets[activePhoto].spec}</span>
                   </div>
-                  <span className="px-2 py-1 bg-[#D4FF00] text-black font-mono font-black text-[10px] rounded uppercase">
-                    VALEN MORETTI
+                  <span className="px-2 py-1 bg-[#00F0FF] text-black font-mono font-black text-[10px] rounded uppercase">
+                    RODRIGO CUTSSS
                   </span>
                 </div>
               </div>
@@ -251,10 +272,14 @@ export const HomePage: React.FC = () => {
                   <button
                     key={key}
                     type="button"
-                    onClick={() => setActivePhoto(key)}
-                    className={`flex-1 py-2 px-2 rounded-lg font-mono text-[11px] font-bold uppercase transition-all cursor-pointer ${
+                    onClick={() => {
+                      playMechanicalClick();
+                      setActivePhoto(key);
+                    }}
+                    onMouseEnter={playMechanicalHover}
+                    className={`flex-1 py-2 px-2 rounded-lg font-mono text-[11px] font-bold uppercase transition-all cursor-pointer active:scale-95 ${
                       activePhoto === key
-                        ? 'bg-[#D4FF00] text-black shadow-md'
+                        ? 'bg-[#00F0FF] text-black shadow-md'
                         : 'bg-[#151722] border border-[#272938] text-zinc-400 hover:text-white'
                     }`}
                   >
@@ -274,7 +299,7 @@ export const HomePage: React.FC = () => {
       <section className="max-w-[1380px] mx-auto px-4 sm:px-6">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10 pb-4 border-b border-[#222432]">
           <div>
-            <span className="font-mono text-xs uppercase tracking-widest text-[#D4FF00] font-bold block mb-1">
+            <span className="font-mono text-xs uppercase tracking-widest text-[#00F0FF] font-bold block mb-1">
               ARSENAL DE CORTES // MEN ONLY
             </span>
             <h2 className="font-display text-3xl sm:text-4xl font-black text-white uppercase tracking-tight">
@@ -283,8 +308,12 @@ export const HomePage: React.FC = () => {
           </div>
           <button
             type="button"
-            onClick={() => navigateTo('services')}
-            className="text-xs font-mono font-bold uppercase tracking-wider text-[#D4FF00] hover:underline cursor-pointer"
+            onClick={() => {
+              playMechanicalClick();
+              navigateTo('services');
+            }}
+            onMouseEnter={playMechanicalHover}
+            className="text-xs font-mono font-bold uppercase tracking-wider text-[#00F0FF] hover:underline cursor-pointer"
           >
             Ver Carta Completa de Servicios &rarr;
           </button>
@@ -294,7 +323,7 @@ export const HomePage: React.FC = () => {
           {services.slice(0, 4).map((srv) => (
             <div
               key={srv.id}
-              className="bg-[#11121A] border-2 border-[#202230] rounded-2xl p-6 sm:p-7 flex flex-col justify-between hover:border-[#D4FF00]/60 transition-all group relative overflow-hidden"
+              className="bg-[#11121A] border-2 border-[#202230] rounded-2xl p-6 sm:p-7 flex flex-col justify-between hover:border-[#00F0FF]/60 transition-all group relative overflow-hidden"
             >
               <div>
                 <div className="flex items-center justify-between text-xs font-mono text-zinc-400 mb-3">
@@ -307,11 +336,11 @@ export const HomePage: React.FC = () => {
                 </div>
 
                 <div className="flex items-center gap-2 mb-3">
-                  <h3 className="font-display text-2xl font-bold text-white group-hover:text-[#D4FF00] transition-colors">
+                  <h3 className="font-display text-2xl font-bold text-white group-hover:text-[#00F0FF] transition-colors">
                     {srv.name}
                   </h3>
                   {srv.popularTag && (
-                    <span className="px-2 py-0.5 bg-[#D4FF00]/15 border border-[#D4FF00]/30 text-[#D4FF00] text-[10px] font-mono font-bold rounded">
+                    <span className="px-2 py-0.5 bg-[#00F0FF]/15 border border-[#00F0FF]/30 text-[#00F0FF] text-[10px] font-mono font-bold rounded">
                       {srv.popularTag}
                     </span>
                   )}
@@ -330,7 +359,11 @@ export const HomePage: React.FC = () => {
               <div className="pt-4 border-t border-[#1C1E28] flex items-center justify-between gap-4">
                 <button
                   type="button"
-                  onClick={() => navigateTo('services')}
+                  onClick={() => {
+                    playMechanicalClick();
+                    navigateTo('services');
+                  }}
+                  onMouseEnter={playMechanicalHover}
                   className="text-xs font-mono text-zinc-400 hover:text-white underline cursor-pointer"
                 >
                   Ver Ficha Técnica
@@ -339,10 +372,12 @@ export const HomePage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => {
+                    playMechanicalClick();
                     setSelectedServiceIds([srv.id]);
                     navigateTo('booking');
                   }}
-                  className="px-5 py-2.5 bg-[#D4FF00] text-black font-mono text-xs font-black uppercase tracking-wider rounded-xl hover:bg-[#bde400] transition-colors cursor-pointer shadow-md"
+                  onMouseEnter={playMechanicalHover}
+                  className="px-5 py-2.5 bg-[#00F0FF] text-black font-mono text-xs font-black uppercase tracking-wider rounded-xl hover:bg-[#00D5E5] transition-all cursor-pointer shadow-md active:scale-95"
                 >
                   Agendar este Corte
                 </button>
@@ -359,8 +394,8 @@ export const HomePage: React.FC = () => {
       <section className="max-w-[1380px] mx-auto px-4 sm:px-6">
         <div className="mb-10 pb-4 border-b border-[#222432]">
           <div className="flex items-center gap-2 mb-1">
-            <Barcode className="w-5 h-5 text-[#D4FF00]" />
-            <span className="font-mono text-xs uppercase tracking-widest text-[#D4FF00] font-bold">
+            <Barcode className="w-5 h-5 text-[#00F0FF]" />
+            <span className="font-mono text-xs uppercase tracking-widest text-[#00F0FF] font-bold">
               MOTOR DE DESPACHO INMEDIATO // CERO LLAMADAS
             </span>
           </div>
@@ -377,26 +412,27 @@ export const HomePage: React.FC = () => {
 
       {/* 7. REAL GOOGLE REVIEWS STRIP */}
       <section className="max-w-[1380px] mx-auto px-4 sm:px-6">
-        <div className="p-8 sm:p-10 rounded-3xl border border-[#232532] bg-[#101118]">
+        <div className="p-8 sm:p-10 rounded-3xl border border-[#232532] bg-[#101118] concrete-overlay distressed-surface">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 pb-6 border-b border-[#1E202B]">
             <div>
-              <span className="text-xs font-mono uppercase text-[#D4FF00] font-bold tracking-wider">
-                OPINIONES 100% REALES EN PALERMO SOHO
+              <span className="text-xs font-mono uppercase text-[#00F0FF] font-bold tracking-wider">
+                OPINIONES REALES EN VENADO TUERTO
               </span>
               <h3 className="font-display text-2xl sm:text-3xl font-extrabold text-white mt-1">
-                La Experiencia Contada por los Clientes
+                La Experiencia en Rodrigo Cutsss
               </h3>
             </div>
             <div className="flex items-center gap-4 font-mono">
               <div className="text-right">
                 <span className="text-2xl font-black text-white block">5.0 ★</span>
-                <span className="text-[10px] text-zinc-500">142 RESEÑAS GOOGLE</span>
+                <span className="text-[10px] text-zinc-500">100% RECOMENDADO</span>
               </div>
               <a
                 href={config.googleMapsUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-4 py-2 bg-[#181A26] border border-[#2C2E40] text-zinc-200 hover:text-white hover:border-[#D4FF00] rounded-xl text-xs font-bold uppercase transition-colors"
+                onMouseEnter={playMechanicalHover}
+                className="px-4 py-2 bg-[#181A26] border border-[#2C2E40] text-zinc-200 hover:text-white hover:border-[#00F0FF] rounded-xl text-xs font-bold uppercase transition-colors"
               >
                 Abrir Maps
               </a>
@@ -411,7 +447,7 @@ export const HomePage: React.FC = () => {
                     <h4 className="font-bold text-white text-sm">{rev.authorName}</h4>
                     <p className="text-[11px] font-mono text-zinc-500">{rev.relativeDate} · {rev.serviceTag}</p>
                   </div>
-                  <div className="flex text-[#D4FF00]">
+                  <div className="flex text-[#00F0FF]">
                     {[...Array(rev.rating)].map((_, i) => (
                       <Star key={i} className="w-3.5 h-3.5 fill-current" />
                     ))}

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, ArrowRight, Scissors, Check } from 'lucide-react';
 import { useStudio } from '../context/StudioContext';
+import { playMechanicalHover, playMechanicalClick } from '../utils/audioFeedback';
 
 interface HairOption {
   id: string;
@@ -83,6 +84,7 @@ export const StyleFinderModal: React.FC = () => {
   const rec = getRecommendation();
 
   const handleSelectAndBook = () => {
+    playMechanicalClick();
     setSelectedServiceIds([rec.service.id]);
     setIsStyleFinderOpen(false);
     navigateTo('booking');
@@ -99,18 +101,22 @@ export const StyleFinderModal: React.FC = () => {
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-[#232530]">
           <div className="flex items-center gap-2">
-            <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#D4FF00] text-black">
+            <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#00F0FF] text-black shadow-[0_0_12px_rgba(0,240,255,0.3)]">
               <Scissors className="w-4 h-4 stroke-[2.5]" />
             </span>
             <div>
-              <p className="text-[11px] font-mono uppercase tracking-widest text-[#D4FF00]">Asesor Urbano Interactivo</p>
+              <p className="text-[11px] font-mono uppercase tracking-widest text-[#00F0FF] font-bold">Asesor Urbano Interactivo</p>
               <h2 id="style-finder-title" className="text-xl font-bold font-display tracking-tight text-white">
                 Encontrá tu Corte Ideal en 2 Pasos
               </h2>
             </div>
           </div>
           <button
-            onClick={() => setIsStyleFinderOpen(false)}
+            onClick={() => {
+              playMechanicalClick();
+              setIsStyleFinderOpen(false);
+            }}
+            onMouseEnter={playMechanicalHover}
             className="p-2 text-zinc-400 hover:text-white rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
             aria-label="Cerrar asesor de corte"
           >
@@ -121,18 +127,26 @@ export const StyleFinderModal: React.FC = () => {
         {/* Step indicator */}
         <div className="flex items-center gap-2 my-5 text-xs font-mono">
           <button
-            onClick={() => setStep(1)}
-            className={`px-3 py-1.5 rounded-md font-semibold transition-colors cursor-pointer ${
-              step === 1 ? 'bg-[#D4FF00] text-black' : 'bg-[#1C1D26] text-zinc-400 hover:text-white'
+            onClick={() => {
+              playMechanicalClick();
+              setStep(1);
+            }}
+            onMouseEnter={playMechanicalHover}
+            className={`px-3 py-1.5 rounded-md font-semibold transition-colors cursor-pointer active:scale-95 ${
+              step === 1 ? 'bg-[#00F0FF] text-black font-black' : 'bg-[#1C1D26] text-zinc-400 hover:text-white'
             }`}
           >
             1. Tipo de Pelo
           </button>
           <span className="text-zinc-600">/</span>
           <button
-            onClick={() => setStep(2)}
-            className={`px-3 py-1.5 rounded-md font-semibold transition-colors cursor-pointer ${
-              step === 2 ? 'bg-[#D4FF00] text-black' : 'bg-[#1C1D26] text-zinc-400 hover:text-white'
+            onClick={() => {
+              playMechanicalClick();
+              setStep(2);
+            }}
+            onMouseEnter={playMechanicalHover}
+            className={`px-3 py-1.5 rounded-md font-semibold transition-colors cursor-pointer active:scale-95 ${
+              step === 2 ? 'bg-[#00F0FF] text-black font-black' : 'bg-[#1C1D26] text-zinc-400 hover:text-white'
             }`}
           >
             2. Vibe &amp; Estilo
@@ -150,17 +164,19 @@ export const StyleFinderModal: React.FC = () => {
                   <button
                     key={h.id}
                     onClick={() => {
+                      playMechanicalClick();
                       setHairType(h.id);
                     }}
-                    className={`text-left p-4 rounded-xl border transition-all cursor-pointer ${
+                    onMouseEnter={playMechanicalHover}
+                    className={`text-left p-4 rounded-xl border transition-all cursor-pointer active:scale-[0.99] ${
                       isSelected
-                        ? 'border-[#D4FF00] bg-[#181A22] text-white shadow-[0_0_15px_rgba(212,255,0,0.1)]'
-                        : 'border-[#232530] bg-[#14151C] text-zinc-300 hover:border-zinc-600'
+                        ? 'border-[#00F0FF] bg-[#181A22] text-white shadow-[0_0_15px_rgba(0,240,255,0.15)]'
+                        : 'border-[#232530] bg-[#14151C] text-zinc-300 hover:border-[#00F0FF]/40'
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1">
                       <span className="font-bold text-sm text-white">{h.label}</span>
-                      {isSelected && <Check className="w-4 h-4 text-[#D4FF00]" />}
+                      {isSelected && <Check className="w-4 h-4 text-[#00F0FF]" />}
                     </div>
                     <p className="text-xs text-zinc-400 leading-relaxed">{h.description}</p>
                   </button>
@@ -169,8 +185,12 @@ export const StyleFinderModal: React.FC = () => {
             </div>
             <div className="pt-4 flex justify-end">
               <button
-                onClick={() => setStep(2)}
-                className="flex items-center gap-2 px-5 py-2.5 bg-[#D4FF00] text-black font-bold text-xs uppercase tracking-wider rounded-xl hover:bg-[#bce400] transition-colors cursor-pointer"
+                onClick={() => {
+                  playMechanicalClick();
+                  setStep(2);
+                }}
+                onMouseEnter={playMechanicalHover}
+                className="flex items-center gap-2 px-5 py-2.5 bg-[#00F0FF] text-black font-black text-xs uppercase tracking-wider rounded-xl hover:bg-[#00D5E5] transition-all cursor-pointer active:scale-95 shadow-md"
               >
                 Siguiente Paso
                 <ArrowRight className="w-4 h-4" />
@@ -189,16 +209,20 @@ export const StyleFinderModal: React.FC = () => {
                 return (
                   <button
                     key={v.id}
-                    onClick={() => setVibe(v.id)}
-                    className={`text-left p-3.5 rounded-xl border transition-all cursor-pointer ${
+                    onClick={() => {
+                      playMechanicalClick();
+                      setVibe(v.id);
+                    }}
+                    onMouseEnter={playMechanicalHover}
+                    className={`text-left p-3.5 rounded-xl border transition-all cursor-pointer active:scale-[0.99] ${
                       isSelected
-                        ? 'border-[#D4FF00] bg-[#181A22] text-white shadow-[0_0_15px_rgba(212,255,0,0.1)]'
-                        : 'border-[#232530] bg-[#14151C] text-zinc-300 hover:border-zinc-600'
+                        ? 'border-[#00F0FF] bg-[#181A22] text-white shadow-[0_0_15px_rgba(0,240,255,0.15)]'
+                        : 'border-[#232530] bg-[#14151C] text-zinc-300 hover:border-[#00F0FF]/40'
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1">
                       <span className="font-bold text-sm text-white">{v.label}</span>
-                      {isSelected && <Check className="w-4 h-4 text-[#D4FF00]" />}
+                      {isSelected && <Check className="w-4 h-4 text-[#00F0FF]" />}
                     </div>
                     <p className="text-xs text-zinc-400">{v.tagline}</p>
                   </button>
@@ -209,7 +233,7 @@ export const StyleFinderModal: React.FC = () => {
             {/* Recommendation Box */}
             <div className="mt-4 p-4 rounded-xl bg-[#171821] border border-[#2B2E3D]">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] font-mono font-bold tracking-widest text-[#D4FF00] uppercase">
+                <span className="text-[10px] font-mono font-bold tracking-widest text-[#00F0FF] uppercase">
                   Recomendación para Vos
                 </span>
                 <span className="text-xs font-mono text-zinc-400">
@@ -233,14 +257,19 @@ export const StyleFinderModal: React.FC = () => {
 
             <div className="pt-2 flex items-center justify-between">
               <button
-                onClick={() => setStep(1)}
+                onClick={() => {
+                  playMechanicalClick();
+                  setStep(1);
+                }}
+                onMouseEnter={playMechanicalHover}
                 className="text-xs text-zinc-400 hover:text-white underline transition-colors cursor-pointer"
               >
                 Volver a cambiar pelo
               </button>
               <button
                 onClick={handleSelectAndBook}
-                className="flex items-center gap-2 px-6 py-2.5 bg-[#D4FF00] text-black font-extrabold text-xs uppercase tracking-wider rounded-xl hover:bg-[#bce400] transition-colors shadow-lg cursor-pointer"
+                onMouseEnter={playMechanicalHover}
+                className="flex items-center gap-2 px-6 py-2.5 bg-[#00F0FF] text-black font-black text-xs uppercase tracking-wider rounded-xl hover:bg-[#00D5E5] transition-all shadow-lg cursor-pointer active:scale-95"
               >
                 Agendar Este Corte
                 <ArrowRight className="w-4 h-4" />

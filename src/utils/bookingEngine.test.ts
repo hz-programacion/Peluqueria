@@ -14,12 +14,12 @@ test('calculateBookingSummary adds service durations plus a single 10-minute hyg
     ['srv-mid-fade-crop', 'srv-full-experience'],
     STUDIO_SERVICES
   );
-  // 45 min + 60 min = 105 min + 10 min buffer = 115 min
-  assert.equal(summary.serviceMinutes, 105);
+  // 40 min + 60 min = 100 min + 10 min buffer = 110 min
+  assert.equal(summary.serviceMinutes, 100);
   assert.equal(summary.bufferMinutes, 10);
-  assert.equal(summary.totalBlockMinutes, 115);
-  assert.equal(summary.totalPrice, 38000 + 52000);
-  assert.equal(summary.depositAmount, Math.round(90000 * 0.3));
+  assert.equal(summary.totalBlockMinutes, 110);
+  assert.equal(summary.totalPrice, 12000 + 17000);
+  assert.equal(summary.depositAmount, Math.round(29000 * 0.3));
 });
 
 test('calculateBookingSummary returns 0 buffer when no services are selected', () => {
@@ -112,10 +112,10 @@ test('buildAutomatedWhatsAppMessages includes direct Google Review shortlink 2 h
     date: '2026-11-06',
     time: '15:00',
     endTime: '15:55',
-    serviceNames: ['Mid / Low Fade & Crop Texturizado'],
-    reviewShortlink: 'https://g.page/r/MorettiUrbanStudio/review',
+    serviceNames: ['Corte de Pelo (Corte de Autor & Fade)'],
+    reviewShortlink: 'https://g.page/r/RodrigoCutsss/review',
   });
 
-  assert.ok(messages.reviewRequest2HoursAfter.includes('¡Hola Martín! Gracias por pasar hoy por el estudio.'));
-  assert.ok(messages.reviewRequest2HoursAfter.includes('https://g.page/r/MorettiUrbanStudio/review'));
+  assert.ok(messages.reviewRequest2HoursAfter.includes('¡Hola Martín! Gracias por pasar hoy por Rodrigo Cutsss.'));
+  assert.ok(messages.reviewRequest2HoursAfter.includes('https://g.page/r/RodrigoCutsss/review'));
 });
