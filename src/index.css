@@ -57,6 +57,24 @@
     radial-gradient(circle at 85% 80%, rgba(61, 79, 67, 0.05), transparent 50%);
 }
 
+[data-atelier-theme="crimson"] .atelier-paper-surface {
+  background-color: #F8F3ED;
+  background-image: radial-gradient(circle at 15% 10%, rgba(166, 93, 67, 0.09), transparent 45%),
+    radial-gradient(circle at 85% 80%, rgba(150, 115, 78, 0.06), transparent 50%);
+}
+
+[data-atelier-theme="volt"] .atelier-paper-surface {
+  background-color: #F3F5F1;
+  background-image: radial-gradient(circle at 15% 10%, rgba(61, 79, 67, 0.09), transparent 45%),
+    radial-gradient(circle at 85% 80%, rgba(150, 115, 78, 0.05), transparent 50%);
+}
+
+[data-atelier-theme="uv"] .atelier-paper-surface {
+  background-color: #F1ECE3;
+  background-image: radial-gradient(circle at 15% 10%, rgba(23, 21, 19, 0.08), transparent 45%),
+    radial-gradient(circle at 85% 80%, rgba(150, 115, 78, 0.09), transparent 50%);
+}
+
 .atelier-charcoal-surface {
   background-color: #171513;
   background-image: radial-gradient(circle at 80% 15%, rgba(150, 115, 78, 0.12), transparent 50%),

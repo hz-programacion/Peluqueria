@@ -86,54 +86,54 @@ export interface BusinessMetricsReport {
 const DEFAULT_REVIEWS: StudioReviewRecord[] = [
   {
     id: 'rev-seed-1',
-    clientName: 'Thiago Benítez',
-    serviceName: 'Corte de Pelo (Corte de Autor & Fade)',
+    clientName: 'Martín Salvatierra',
+    serviceName: 'Corte de Autor / Clásico',
     price: '$12.000 ARS',
     rating: 5,
-    date: 'Hace 2 días',
+    date: 'Hace 3 días',
     city: 'Venado Tuerto',
     verified: true,
     comment:
-      'Encontrar un estudio que entienda de fades urbanos y visagismo real en Venado Tuerto es oro puro. Rodrigo trabaja 1 a 1 sin apuros, puntual al minuto en Vuelta de Obligado 931.',
-    createdAtISO: new Date(Date.now() - 86400000 * 2).toISOString(),
+      'Una experiencia completamente distinta en Venado Tuerto. Sin ruidos ni gente esperando encima tuyo: llegás a tu hora en Vuelta de Obligado 931, te reciben con un café y Rodrigo se toma todo el tiempo para lograr exactamente el corte que buscás.',
+    createdAtISO: new Date(Date.now() - 86400000 * 3).toISOString(),
   },
   {
     id: 'rev-seed-2',
-    clientName: 'Lucas Santoro',
-    serviceName: 'Taper Fade & Contornos a Trimmer',
-    price: '$12.000 ARS',
+    clientName: 'Agustín Pellegrini',
+    serviceName: 'Corte + Perfilado de Barba',
+    price: '$17.000 ARS',
     rating: 5,
-    date: 'Hace 4 días',
+    date: 'Hace 5 días',
     city: 'Venado Tuerto',
     verified: true,
     comment:
-      'Tengo rulos y el Low Taper que me hace Rodrigo respeta la caída natural y me dura prolijo casi un mes. La atención privada 1 a 1 sin fila de espera marca toda la diferencia.',
-    createdAtISO: new Date(Date.now() - 86400000 * 4).toISOString(),
+      'La precisión con la tijera y el cuidado en el perfilado de barba con toalla tibia son de otro nivel. El corte crece prolijo durante semanas sin perder la forma.',
+    createdAtISO: new Date(Date.now() - 86400000 * 5).toISOString(),
   },
   {
     id: 'rev-seed-3',
-    clientName: 'Nahuel Rossi',
-    serviceName: 'Corte de Pelo + Color / Platinado Global',
+    clientName: 'Federico Ledesma',
+    serviceName: 'Coloración / Iluminación',
     price: '$28.000 ARS',
     rating: 5,
     date: 'Hace 1 semana',
     city: 'Venado Tuerto',
     verified: true,
     comment:
-      'Me hice el platinado global ceniza y quedó impecable cuidando el cuero cabelludo. El pulido con shaver de titanio 0.0mm y el polvo texturizante mate son de primer nivel.',
+      'Buscaba unos reflejos muy sutiles que no dañaran el pelo y el resultado superó lo que imaginaba. Ambiente tranquilo, trato personalizado y productos de primera línea.',
     createdAtISO: new Date(Date.now() - 86400000 * 7).toISOString(),
   },
   {
     id: 'rev-seed-4',
-    clientName: 'Facundo Morán',
-    serviceName: 'Corte de Pelo + Perfilado de Barba Completo',
-    price: '$17.000 ARS',
+    clientName: 'Nicolás Bertero',
+    serviceName: 'Lavado Premium y Nutrición Capilar',
+    price: '$9.500 ARS',
     rating: 5,
     date: 'Hace 2 semanas',
     city: 'Venado Tuerto',
     verified: true,
     comment:
-      'El perfilado de barba con trimmer en T, shaver de titanio y toalla caliente al vapor deja cero irritación. Reservás desde el celular y te sentás a la hora exacta.',
+      'Reservar desde el celular es comodísimo y la puntualidad es total. El lavado nutritivo con masaje capilar al final del corte hace que salgas renovado.',
     createdAtISO: new Date(Date.now() - 86400000 * 14).toISOString(),
   },
 ];
@@ -215,7 +215,7 @@ export class RateLimiter {
  */
 export function createInitialDatabaseState(): StudioDatabaseSchema {
   return {
-    version: 4,
+    version: 5,
     updatedAt: new Date().toISOString(),
     config: {
       ...INITIAL_STUDIO_CONFIG,
@@ -575,9 +575,9 @@ export class StudioRepository {
       if (fs.existsSync(this.filePath)) {
         const raw = fs.readFileSync(this.filePath, 'utf8');
         const parsed = JSON.parse(raw) as Partial<StudioDatabaseSchema>;
-        if (parsed && typeof parsed === 'object' && parsed.config && parsed.version === 4) {
+        if (parsed && typeof parsed === 'object' && parsed.config && parsed.version === 5) {
           return {
-            version: 4,
+            version: 5,
             updatedAt: parsed.updatedAt || new Date().toISOString(),
             config: {
               ...fallback.config,

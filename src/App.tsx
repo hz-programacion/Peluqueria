@@ -12,7 +12,7 @@ import { LocationPage } from './pages/LocationPage';
 import { AdminPage } from './pages/AdminPage';
 
 const AppShell: React.FC = () => {
-  const { currentPage } = useStudio();
+  const { currentPage, config } = useStudio();
 
   const renderPage = () => {
     switch (currentPage) {
@@ -36,7 +36,10 @@ const AppShell: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F7F4EE] text-[#171513] selection:bg-[#96734E] selection:text-[#F7F4EE] relative overflow-x-hidden">
+    <div
+      data-atelier-theme={config.urbanTheme || 'amber'}
+      className="min-h-screen flex flex-col bg-[#F7F4EE] text-[#171513] selection:bg-[#96734E] selection:text-[#F7F4EE] relative overflow-x-hidden transition-colors duration-300"
+    >
       <Header />
 
       <main className="flex-grow relative z-10">

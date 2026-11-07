@@ -175,7 +175,7 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const [config, setConfig] = useState<StudioConfig>(() => {
     try {
-      const saved = localStorage.getItem('vm_atelier_v4_config');
+      const saved = localStorage.getItem('vm_atelier_v5_config');
       if (saved) {
         const parsed = JSON.parse(saved);
         return {
@@ -192,7 +192,7 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const [services, setServices] = useState<StudioService[]>(() => {
     try {
-      const saved = localStorage.getItem('vm_atelier_v4_services');
+      const saved = localStorage.getItem('vm_atelier_v5_services');
       if (saved) return JSON.parse(saved);
     } catch {
       /* fallback */
@@ -202,7 +202,7 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const [galleryItems, setGalleryItems] = useState<StudioGalleryItem[]>(() => {
     try {
-      const saved = localStorage.getItem('vm_atelier_v4_gallery');
+      const saved = localStorage.getItem('vm_atelier_v5_gallery');
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
@@ -215,7 +215,7 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const [likedGalleryIds, setLikedGalleryIds] = useState<Record<string, boolean>>(() => {
     try {
-      const saved = localStorage.getItem('vm_atelier_v4_gallery_likes');
+      const saved = localStorage.getItem('vm_atelier_v5_gallery_likes');
       if (saved) return JSON.parse(saved);
     } catch {
       /* fallback */
@@ -225,7 +225,7 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const [lookbook, setLookbook] = useState<LookbookItem[]>(() => {
     try {
-      const saved = localStorage.getItem('vm_atelier_v4_lookbook');
+      const saved = localStorage.getItem('vm_atelier_v5_lookbook');
       if (saved) return JSON.parse(saved);
     } catch {
       /* fallback */
@@ -235,7 +235,7 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const [reviews, setReviews] = useState<GoogleReview[]>(() => {
     try {
-      const saved = localStorage.getItem('vm_atelier_v4_reviews');
+      const saved = localStorage.getItem('vm_atelier_v5_reviews');
       if (saved) return JSON.parse(saved);
     } catch {
       /* fallback */
@@ -245,7 +245,7 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const [appointments, setAppointments] = useState<AppointmentRecord[]>(() => {
     try {
-      const saved = localStorage.getItem('vm_atelier_v4_appointments');
+      const saved = localStorage.getItem('vm_atelier_v5_appointments');
       if (saved) return JSON.parse(saved);
     } catch {
       /* fallback */
@@ -255,7 +255,7 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const [blockedSlots, setBlockedSlots] = useState<BlockedSlot[]>(() => {
     try {
-      const saved = localStorage.getItem('vm_atelier_v4_blocked_slots');
+      const saved = localStorage.getItem('vm_atelier_v5_blocked_slots');
       if (saved) return JSON.parse(saved);
     } catch {
       /* fallback */
@@ -397,15 +397,15 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const handleStorage = (e: StorageEvent) => {
       if (!e.newValue) return;
       try {
-        if (e.key === 'vm_atelier_v4_appointments') {
+        if (e.key === 'vm_atelier_v5_appointments') {
           setAppointments(JSON.parse(e.newValue));
-        } else if (e.key === 'vm_atelier_v4_blocked_slots') {
+        } else if (e.key === 'vm_atelier_v5_blocked_slots') {
           setBlockedSlots(JSON.parse(e.newValue));
-        } else if (e.key === 'vm_atelier_v4_config') {
+        } else if (e.key === 'vm_atelier_v5_config') {
           setConfig((prev) => ({ ...prev, ...JSON.parse(e.newValue!) }));
-        } else if (e.key === 'vm_atelier_v4_services') {
+        } else if (e.key === 'vm_atelier_v5_services') {
           setServices(JSON.parse(e.newValue));
-        } else if (e.key === 'vm_atelier_v4_gallery') {
+        } else if (e.key === 'vm_atelier_v5_gallery') {
           setGalleryItems(JSON.parse(e.newValue));
         }
       } catch {
@@ -418,39 +418,39 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   // Sync state to local storage
   useEffect(() => {
-    localStorage.setItem('vm_atelier_v4_config', JSON.stringify(config));
+    localStorage.setItem('vm_atelier_v5_config', JSON.stringify(config));
   }, [config]);
 
   useEffect(() => {
-    localStorage.setItem('vm_atelier_v4_services', JSON.stringify(services));
+    localStorage.setItem('vm_atelier_v5_services', JSON.stringify(services));
   }, [services]);
 
   useEffect(() => {
     try {
-      localStorage.setItem('vm_atelier_v4_gallery', JSON.stringify(galleryItems));
+      localStorage.setItem('vm_atelier_v5_gallery', JSON.stringify(galleryItems));
     } catch {
       // Handle storage quota gracefully
     }
   }, [galleryItems]);
 
   useEffect(() => {
-    localStorage.setItem('vm_atelier_v4_gallery_likes', JSON.stringify(likedGalleryIds));
+    localStorage.setItem('vm_atelier_v5_gallery_likes', JSON.stringify(likedGalleryIds));
   }, [likedGalleryIds]);
 
   useEffect(() => {
-    localStorage.setItem('vm_atelier_v4_lookbook', JSON.stringify(lookbook));
+    localStorage.setItem('vm_atelier_v5_lookbook', JSON.stringify(lookbook));
   }, [lookbook]);
 
   useEffect(() => {
-    localStorage.setItem('vm_atelier_v4_reviews', JSON.stringify(reviews));
+    localStorage.setItem('vm_atelier_v5_reviews', JSON.stringify(reviews));
   }, [reviews]);
 
   useEffect(() => {
-    localStorage.setItem('vm_atelier_v4_appointments', JSON.stringify(appointments));
+    localStorage.setItem('vm_atelier_v5_appointments', JSON.stringify(appointments));
   }, [appointments]);
 
   useEffect(() => {
-    localStorage.setItem('vm_atelier_v4_blocked_slots', JSON.stringify(blockedSlots));
+    localStorage.setItem('vm_atelier_v5_blocked_slots', JSON.stringify(blockedSlots));
   }, [blockedSlots]);
 
   // Dark mode & UV Street Neon mode effect

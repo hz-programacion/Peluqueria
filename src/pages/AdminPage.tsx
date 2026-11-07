@@ -26,16 +26,12 @@ import {
   ArrowDown,
   RotateCcw,
   Palette,
-  Sparkles,
   Download,
   Search,
   Settings,
   TrendingUp,
 } from 'lucide-react';
-import {
-  StudioService,
-  GalleryItemCategory,
-} from '../data/studioData';
+import { StudioService, GalleryItemCategory } from '../data/studioData';
 import {
   HomeSectionId,
   UrbanThemePreset,
@@ -49,7 +45,6 @@ import {
   resolveInstagramInfo,
   resolveWhatsAppInfo,
 } from '../utils/bookingEngine';
-import { playMechanicalHover, playMechanicalClick } from '../utils/audioFeedback';
 
 const compressImageFile = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -95,38 +90,45 @@ const SECTION_ADMIN_META: Record<
 > = {
   booking: {
     key: 'showBookingSection',
-    label: 'Reserva de Turnos & Consulta por WhatsApp (#reservar)',
-    description: 'Turnero interactivo en vivo, consulta de ticket por WhatsApp y descarga PNG/ICS.',
+    label: 'Turnero Paso a Paso & Consulta por WhatsApp (#turnero)',
+    description:
+      'Asistente de reservas en 3 pasos, consulta de turno activo y descarga de comprobante PNG/ICS.',
   },
   services: {
     key: 'showServicesSection',
-    label: 'Carta de Servicios, Fades & Precios (#servicios)',
-    description: 'Tarjetas de cortes, barba y colorimetría con tiempos reales y reserva en 1 clic.',
+    label: 'Catálogo Interactivo de Servicios (#servicios)',
+    description:
+      'Carta editorial de servicios con vista previa sincronizada, tiempos, valores y selección en 1 clic.',
   },
   beforeAfter: {
     key: 'showBeforeAfterSection',
-    label: 'Comparador Interactivo "Antes / Después" Aerosol (#transformaciones)',
-    description: 'Slider interactivo con línea divisoria de spray para comparar cambios de look.',
+    label: 'Comparador Editorial "Antes & Después" (#transformaciones)',
+    description:
+      'Deslizador interactivo de sastrería capilar para comparar diagnóstico previo y resultado final.',
   },
   gallery: {
     key: 'showGallerySection',
-    label: 'Galería de Creaciones Reales & Lookbook (#galeria)',
-    description: 'Mural de trabajos reales en el estudio con filtros por categoría y zoom.',
+    label: 'Obras & Detalles de Autor (#obras)',
+    description:
+      'Portafolio fotográfico con revelado editorial, filtros por categoría y reserva directa.',
   },
   reviews: {
     key: 'showReviewsSection',
-    label: 'Reseñas Verificadas de Clientes (#opiniones)',
-    description: 'Carrusel de opiniones verificadas (5.0★) y formulario para dejar reseña.',
+    label: 'Voces del Estudio & Reseñas (#opiniones)',
+    description:
+      'Testimonios verificados de clientes en Venado Tuerto y formulario para publicar reseña.',
   },
   barber: {
     key: 'showBarberSection',
-    label: 'Presentación del Barbero & Equipamiento (#barbero)',
-    description: 'Filosofía 1 a 1, máquinas clipper/trimmer/shaver 0.0mm y contacto directo.',
+    label: 'Manifiesto & El Estudio (#estudio)',
+    description:
+      'Presentación editorial del espacio privado, filosofía uno a uno y fotografía con parallax.',
   },
   location: {
     key: 'showLocationSection',
-    label: 'Ubicación, Mapa Urbano & Horarios (#ubicacion)',
-    description: 'Dirección Vuelta de Obligado 931, accesos a Google Maps / Waze y alias.',
+    label: 'Ubicación, Plano & Horarios (#ubicacion)',
+    description:
+      'Dirección Vuelta de Obligado 931, plano de referencia, alias y accesos a Google Maps / Waze.',
   },
 };
 
@@ -186,12 +188,14 @@ export const AdminPage: React.FC = () => {
   const [appointmentSearch, setAppointmentSearch] = useState('');
   const [saveToast, setSaveToast] = useState('');
 
-  // Form state for Barber Name, Instagram Link/Handle, and WhatsApp Link/Number
+  // Form state for Profile, Texts & Rotating Banner
   const [barberNameForm, setBarberNameForm] = useState(config.authorName);
   const [instagramForm, setInstagramForm] = useState(config.instagram);
   const [whatsappDisplayForm, setWhatsappDisplayForm] = useState(config.phoneDisplay);
   const [whatsappRawForm, setWhatsappRawForm] = useState(config.whatsappRaw);
   const [studioTitleForm, setStudioTitleForm] = useState(config.studioTitle);
+  const [brandKickerForm, setBrandKickerForm] = useState(config.brandKicker);
+  const [taglineForm, setTaglineForm] = useState(config.tagline);
   const [addressForm, setAddressForm] = useState(config.address);
   const [neighborhoodForm, setNeighborhoodForm] = useState(config.neighborhood);
   const [transferAliasForm, setTransferAliasForm] = useState(config.transferAlias);
@@ -211,6 +215,8 @@ export const AdminPage: React.FC = () => {
     setWhatsappDisplayForm(config.phoneDisplay);
     setWhatsappRawForm(config.whatsappRaw);
     setStudioTitleForm(config.studioTitle);
+    setBrandKickerForm(config.brandKicker);
+    setTaglineForm(config.tagline);
     setAddressForm(config.address);
     setNeighborhoodForm(config.neighborhood);
     setTransferAliasForm(config.transferAlias);
@@ -226,6 +232,8 @@ export const AdminPage: React.FC = () => {
     config.phoneDisplay,
     config.whatsappRaw,
     config.studioTitle,
+    config.brandKicker,
+    config.tagline,
     config.address,
     config.neighborhood,
     config.transferAlias,
@@ -243,18 +251,18 @@ export const AdminPage: React.FC = () => {
   const [serviceFormData, setServiceFormData] = useState<Partial<StudioService>>({
     category: 'Fades & Cortes',
     name: '',
-    durationMinutes: 40,
+    durationMinutes: 45,
     price: 12000,
     shortDescription: '',
-    preparation: ['Venir con el cabello limpio'],
+    preparation: ['Cabello limpio y libre de fijadores pesados'],
     executionSteps: [
-      'Diagnóstico visagista',
-      'Degradé con clippers y shaver 0.0mm',
-      'Corte superior a tijera',
-      'Styling mate',
+      '10 min · Diagnóstico personalizado y estudio de facciones',
+      '20 min · Corte preciso a tijera y transiciones suaves',
+      '10 min · Texturizado en seco para movimiento natural',
+      '05 min · Peinado final con acabado mate orgánico',
     ],
-    aftercare: 'Mantiene máxima nitidez entre 10 y 14 días.',
-    productsUsed: 'Babyliss FX3 · Shaver Titanio · Polvo Mate',
+    aftercare: 'Recomendamos control cada 3 a 4 semanas.',
+    productsUsed: 'Tijeras de corte y esculpir · Máquina de precisión · Arcilla mate orgánica',
   });
 
   // Quick Manual Appointment Form
@@ -270,7 +278,7 @@ export const AdminPage: React.FC = () => {
   const [newBlockedTime, setNewBlockedTime] = useState('15:00');
   const [newBlockedDuration, setNewBlockedDuration] = useState(60);
   const [newBlockedReason, setNewBlockedReason] = useState(
-    'Almuerzo / Esterilización UV de herramientas'
+    'Pausa de mediodía y acondicionamiento del estudio'
   );
 
   // Admin Photo Upload Form
@@ -279,7 +287,7 @@ export const AdminPage: React.FC = () => {
   const [photoCategory, setPhotoCategory] = useState<GalleryItemCategory>('Cortes & Fades');
   const [photoDescription, setPhotoDescription] = useState('');
   const [photoTechnicalSpec, setPhotoTechnicalSpec] = useState('');
-  const [photoPriceTag] = useState(config.mainPriceDisplay || '$12.000');
+  const [photoPriceTag, setPhotoPriceTag] = useState(config.mainPriceDisplay || '$12.000 ARS');
   const [photoHideBuyButton, setPhotoHideBuyButton] = useState(false);
   const [photoHidePrice, setPhotoHidePrice] = useState(false);
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState('');
@@ -303,7 +311,6 @@ export const AdminPage: React.FC = () => {
 
   const handleSaveProfileAndLinks = (e: React.FormEvent) => {
     e.preventDefault();
-    playMechanicalClick();
 
     const cleanName = barberNameForm.trim() || 'Rodrigo';
     const cleanIg = instagramForm.trim() || '@rodrigo.cutsss';
@@ -317,7 +324,9 @@ export const AdminPage: React.FC = () => {
       instagram: cleanIg,
       phoneDisplay: whatsappDisplayForm.trim() || resolvedWa.display,
       whatsappRaw: resolvedWa.digits,
-      studioTitle: studioTitleForm.trim() || `${cleanName} Cutsss`,
+      studioTitle: studioTitleForm.trim() || `${cleanName} Estudio`,
+      brandKicker: brandKickerForm.trim() || 'Estudio de Corte & Autor',
+      tagline: taglineForm.trim() || config.tagline,
       address: addressForm.trim() || config.address,
       neighborhood: neighborhoodForm.trim() || config.neighborhood,
       transferAlias: transferAliasForm.trim() || config.transferAlias,
@@ -328,14 +337,11 @@ export const AdminPage: React.FC = () => {
     });
 
     triggerToast(
-      `Configuración guardada: ${cleanName} · IG: ${cleanIg} · WA: ${
-        whatsappDisplayForm.trim() || resolvedWa.display
-      }`
+      `Cambios guardados y aplicados en el sitio (${cleanName} · ${addressForm.trim()})`
     );
   };
 
   const handleExportAppointmentsCSV = () => {
-    playMechanicalClick();
     const headers = [
       'ID',
       'Fecha',
@@ -363,7 +369,7 @@ export const AdminPage: React.FC = () => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `agenda-rodrigo-cutsss-${todayStr}.csv`;
+    link.download = `agenda-estudio-${todayStr}.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -394,16 +400,17 @@ export const AdminPage: React.FC = () => {
 
     addGalleryItem({
       id: `gal-admin-${Date.now()}`,
-      title: photoTitle.trim() || `Trabajo en el Estudio · ${config.studioTitle}`,
+      title: photoTitle.trim() || `Obra en el Estudio · ${config.studioTitle}`,
       category: photoCategory || 'General',
       imageUrl: photoPreviewUrl.trim(),
       description:
         photoDescription.trim() ||
-        `Foto subida por ${config.authorName} desde el estudio privado en ${config.address}, ${config.neighborhood}.`,
-      technicalSpec: photoTechnicalSpec.trim() || 'Clipper & Shaver 0.0mm · Atención 1 a 1',
-      dateLabel: 'Reciente · VT',
-      likes: 25,
-      tags: ['RodrigoCutsss', 'VenadoTuerto'],
+        `Trabajo realizado por ${config.authorName} en el estudio de ${config.address}, ${config.neighborhood}.`,
+      technicalSpec:
+        photoTechnicalSpec.trim() || 'Corte a medida · Atención individual uno a uno',
+      dateLabel: 'Reciente · Estudio',
+      likes: 28,
+      tags: ['RodrigoEstudio', 'VenadoTuerto'],
       priceLabel: photoPriceTag.trim() || config.mainPriceDisplay,
       hideBuyButton: photoHideBuyButton,
       hidePrice: photoHidePrice,
@@ -416,7 +423,7 @@ export const AdminPage: React.FC = () => {
     setPhotoHideBuyButton(false);
     setPhotoHidePrice(false);
     setIsUploadModalOpen(false);
-    triggerToast('Foto publicada en la galería del sitio');
+    triggerToast('Obra publicada en el portafolio del sitio');
   };
 
   // Metric computations for today
@@ -430,76 +437,70 @@ export const AdminPage: React.FC = () => {
   const waInfo = resolveWhatsAppInfo(config.phoneDisplay, config.whatsappRaw);
   const normalizedOrder = normalizeSectionOrder(config.sectionOrder);
 
-  // If not authenticated, render refined PIN screen
+  // If not authenticated, render refined Editorial Atelier PIN screen
   if (!isAdminAuthenticated) {
     return (
-      <div className="py-16 md:py-24 px-4 flex items-center justify-center min-h-[70vh]">
-        <div className="w-full max-w-md p-6 md:p-8 rounded-2xl border border-[#232730] bg-[#111318] text-white shadow-2xl concrete-overlay">
-          <div className="relative z-10">
-            <div className="w-12 h-12 rounded-xl bg-[#F59E0B] text-zinc-950 flex items-center justify-center font-bold text-xl mb-5 shadow-md">
-              <Lock className="w-6 h-6 stroke-[2.5]" />
-            </div>
+      <div className="py-16 md:py-24 px-4 flex items-center justify-center min-h-[72vh] atelier-paper-surface">
+        <div className="w-full max-w-md p-8 sm:p-10 border border-[#171513]/15 bg-[#EFEAE1] text-[#171513] shadow-[0_24px_60px_rgba(23,21,19,0.08)]">
+          <div className="w-12 h-12 bg-[#171513] text-[#F7F4EE] flex items-center justify-center mb-6">
+            <Lock className="w-5 h-5 text-[#C8A97E]" />
+          </div>
 
-            <span className="font-mono text-xs uppercase text-[#F59E0B] font-bold block mb-1">
-              PORTAL DEL BARBERO · CONTROL TOTAL
-            </span>
-            <h1 className="font-display text-2xl md:text-3xl font-extrabold mb-2">
-              Acceso Privado de Estudio
-            </h1>
-            <p className="text-xs text-zinc-400 leading-relaxed mb-6">
-              Ingresá tu PIN para ordenar secciones, elegir paleta urbana, ajustar precios masivos, configurar horarios o gestionar turnos en vivo.
-            </p>
+          <span className="font-mono text-xs uppercase tracking-[0.18em] text-[#96734E] font-medium block mb-1">
+            Gestión del Estudio · Control Integral
+          </span>
+          <h1 className="font-display text-3xl sm:text-4xl font-medium text-[#171513] mb-2">
+            Acceso de Administración
+          </h1>
+          <p className="text-xs sm:text-sm text-[#4A443E] leading-relaxed mb-6">
+            Ingresá tu PIN para editar textos, precios, banner rotativo, orden de secciones,
+            horarios y turnos en tiempo real.
+          </p>
 
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div>
-                <label
-                  htmlFor="admin-pin"
-                  className="block text-xs font-mono uppercase text-zinc-400 mb-1.5 font-semibold"
-                >
-                  PIN de Seguridad
-                </label>
-                <input
-                  id="admin-pin"
-                  type="password"
-                  maxLength={8}
-                  value={pinInput}
-                  onChange={(e) => {
-                    setPinInput(e.target.value);
-                    setPinError('');
-                  }}
-                  placeholder="1234"
-                  className="w-full h-12 px-3.5 text-center tracking-[0.4em] text-xl font-mono font-bold rounded-xl border border-[#282D37] bg-[#0C0E12] text-white focus:border-[#F59E0B] focus:outline-none"
-                  autoFocus
-                />
-                {pinError && <p className="text-xs text-red-400 mt-2 font-mono">{pinError}</p>}
-              </div>
-
-              <button
-                type="submit"
-                onClick={playMechanicalClick}
-                onMouseEnter={playMechanicalHover}
-                className="w-full h-12 uppercase font-black text-xs tracking-wider bg-[#F59E0B] text-zinc-950 rounded-xl hover:bg-[#D97706] transition-all cursor-pointer shadow-lg active:scale-95"
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <label
+                htmlFor="admin-pin"
+                className="block text-xs font-mono uppercase tracking-wider text-[#575049] mb-1.5 font-medium"
               >
-                Entrar al Panel de Control
-              </button>
-            </form>
-
-            <div className="mt-6 pt-5 border-t border-[#1E222B] text-center">
-              <p className="text-xs font-mono text-zinc-500">
-                PIN maestro por defecto:{' '}
-                <strong className="text-[#F59E0B]">{config.adminPin || '1234'}</strong>
-              </p>
-              <button
-                onClick={() => {
-                  playMechanicalClick();
-                  navigateTo('home');
+                PIN de Seguridad
+              </label>
+              <input
+                id="admin-pin"
+                type="password"
+                maxLength={8}
+                value={pinInput}
+                onChange={(e) => {
+                  setPinInput(e.target.value);
+                  setPinError('');
                 }}
-                onMouseEnter={playMechanicalHover}
-                className="text-xs text-zinc-400 hover:text-white mt-2.5 underline cursor-pointer"
-              >
-                Volver a la portada del cliente
-              </button>
+                placeholder="1234"
+                className="w-full h-12 px-4 text-center tracking-[0.4em] text-xl font-mono font-semibold border border-[#171513]/25 bg-[#F7F4EE] text-[#171513] focus:border-[#96734E] focus:outline-none"
+                autoFocus
+              />
+              {pinError && <p className="text-xs text-[#A65D43] mt-2 font-mono">{pinError}</p>}
             </div>
+
+            <button
+              type="submit"
+              className="w-full h-12 uppercase font-medium text-xs tracking-[0.16em] bg-[#171513] text-[#F7F4EE] hover:bg-[#96734E] transition-colors cursor-pointer"
+            >
+              Ingresar al Panel del Estudio
+            </button>
+          </form>
+
+          <div className="mt-6 pt-5 border-t border-[#171513]/12 text-center">
+            <p className="text-xs font-mono text-[#655E57]">
+              PIN activo:{' '}
+              <strong className="text-[#96734E]">{config.adminPin || '1234'}</strong>
+            </p>
+            <button
+              type="button"
+              onClick={() => navigateTo('home')}
+              className="text-xs text-[#575049] hover:text-[#171513] mt-2.5 underline cursor-pointer"
+            >
+              Volver a la portada del estudio
+            </button>
           </div>
         </div>
       </div>
@@ -523,51 +524,53 @@ export const AdminPage: React.FC = () => {
     normalizedOrder.filter((id) => config[SECTION_ADMIN_META[id].key] !== false).length;
 
   return (
-    <div className="py-8 md:py-12 px-4 sm:px-6 max-w-[1380px] mx-auto text-white space-y-8">
+    <div className="py-10 md:py-14 px-4 sm:px-8 max-w-[1360px] mx-auto text-[#171513] space-y-8">
       {/* Toast Notification */}
       {saveToast && (
         <div
           role="status"
-          className="fixed bottom-6 right-6 z-50 px-4 py-3 bg-[#F59E0B] text-zinc-950 font-bold rounded-xl shadow-2xl text-xs font-mono flex items-center gap-2"
+          data-testid="admin-save-toast"
+          className="fixed bottom-6 right-6 z-50 px-5 py-3.5 bg-[#171513] text-[#F7F4EE] border border-[#C8A97E]/40 shadow-2xl text-xs font-mono flex items-center gap-2.5"
         >
-          <CheckCircle2 className="w-4 h-4 stroke-[2.5]" />
+          <CheckCircle2 className="w-4 h-4 text-[#C8A97E]" />
           <span>{saveToast}</span>
         </div>
       )}
 
       {/* Top Bar for Admin */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-[#232730]">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-6 border-b border-[#171513]/15">
         <div>
-          <div className="flex items-center gap-2 text-xs font-mono text-[#F59E0B] font-bold mb-1">
+          <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-[0.18em] text-[#96734E] font-medium mb-1">
             <Shield className="w-3.5 h-3.5" />
-            <span>CENTRO DE MANDO DEL ESTUDIO · {config.authorName.toUpperCase()}</span>
+            <span>DIRECCIÓN Y GESTIÓN DEL ESTUDIO · {config.authorName.toUpperCase()}</span>
           </div>
-          <h1 className="font-display text-3xl md:text-4xl font-black uppercase">
-            Panel de Control Total
+          <h1 className="font-display text-4xl md:text-5xl font-medium text-[#171513]">
+            Panel de Administración
           </h1>
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
           <button
-            onClick={() => {
-              playMechanicalClick();
-              setIsUploadModalOpen(true);
-            }}
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-mono font-black uppercase bg-[#F59E0B] text-zinc-950 rounded-xl shadow-sm hover:bg-[#D97706] cursor-pointer"
+            type="button"
+            onClick={() => setIsUploadModalOpen(true)}
+            className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-mono uppercase tracking-wider bg-[#96734E] text-[#F7F4EE] hover:bg-[#171513] transition-colors cursor-pointer"
           >
             <Camera className="w-3.5 h-3.5" />
-            <span>+ Subir Foto a Galería</span>
+            <span>+ Subir Obra a Galería</span>
           </button>
 
           <button
+            type="button"
+            data-testid="admin-view-public-site"
             onClick={() => navigateTo('home')}
-            className="px-4 py-2 text-xs font-mono font-bold rounded-xl border border-[#282D37] bg-[#161920] hover:border-[#F59E0B] transition-colors cursor-pointer"
+            className="px-4 py-2.5 text-xs font-mono uppercase tracking-wider border border-[#171513]/25 bg-[#EFEAE1] hover:bg-[#171513] hover:text-[#F7F4EE] transition-colors cursor-pointer"
           >
             Ver Sitio Público
           </button>
           <button
+            type="button"
             onClick={logoutAdmin}
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-mono font-bold rounded-xl bg-red-950/40 text-red-400 border border-red-800/40 hover:bg-red-900/40 cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-mono uppercase tracking-wider bg-[#A65D43]/12 text-[#A65D43] border border-[#A65D43]/30 hover:bg-[#A65D43] hover:text-[#F7F4EE] transition-colors cursor-pointer"
           >
             <LogOut className="w-3.5 h-3.5" />
             <span>Salir</span>
@@ -575,64 +578,65 @@ export const AdminPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Barbero Quick KPI Strip */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-4 rounded-xl border border-[#232730] bg-[#111318] distressed-surface">
-          <span className="text-[10px] font-mono font-bold uppercase text-zinc-500 block">
+      {/* Quick KPI Strip */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="p-5 border border-[#171513]/12 bg-[#EFEAE1]">
+          <span className="text-[10px] font-mono uppercase tracking-widest text-[#655E57] block">
             Turnos de Hoy ({todayStr})
           </span>
-          <p className="font-display text-2xl font-black text-white mt-0.5">
+          <p className="font-display text-3xl font-semibold text-[#171513] mt-1">
             {todayAppointments.length} Turnos Hoy
           </p>
-          <p className="text-[11px] font-mono text-[#F59E0B] mt-0.5">
-            {appointments.length} turnos totales · {formatPriceARS(totalRevenueEst)} est.
+          <p className="text-xs font-mono text-[#96734E] mt-1">
+            {appointments.length} totales · {formatPriceARS(totalRevenueEst)} est.
           </p>
         </div>
 
-        <div className="p-4 rounded-xl border border-[#232730] bg-[#111318] distressed-surface">
-          <span className="text-[10px] font-mono font-bold uppercase text-zinc-500 block">
-            Ocupación &amp; Servicio Top (Backend)
+        <div className="p-5 border border-[#171513]/12 bg-[#EFEAE1]">
+          <span className="text-[10px] font-mono uppercase tracking-widest text-[#655E57] block">
+            Secciones &amp; Ocupación
           </span>
-          <p className="font-display text-2xl font-black text-[#00F0FF] mt-0.5 tabular-nums">
-            {backendMetrics ? `${backendMetrics.todayOccupancyPercentage}% Ocupado` : `${visibleSectionsCount}/8 Activas`}
+          <p className="font-display text-3xl font-semibold text-[#171513] mt-1 tabular-nums">
+            {visibleSectionsCount}/8 Secciones
           </p>
-          <p className="text-[11px] font-mono text-zinc-400 mt-0.5 truncate">
+          <p className="text-xs font-mono text-[#4A443E] mt-1 truncate">
             {backendMetrics
-              ? `Top: ${backendMetrics.topServiceName}`
-              : `Modo: ${config.layoutMode === 'tabs' ? 'Pestañas Individuales' : 'Flujo Completo'}`}
+              ? `Servicio Top: ${backendMetrics.topServiceName}`
+              : `Modo: ${config.layoutMode === 'tabs' ? 'Pestañas' : 'Flujo Completo'}`}
           </p>
         </div>
 
-        <div className="p-4 rounded-xl border border-[#232730] bg-[#111318] distressed-surface">
-          <span className="text-[10px] font-mono font-bold uppercase text-zinc-500 block">
-            Barbero &amp; Redes Activas
+        <div className="p-5 border border-[#171513]/12 bg-[#EFEAE1]">
+          <span className="text-[10px] font-mono uppercase tracking-widest text-[#655E57] block">
+            Identidad &amp; Contacto Activo
           </span>
-          <p className="font-mono text-sm font-black text-white mt-1 truncate">
+          <p className="font-mono text-sm font-semibold text-[#171513] mt-1.5 truncate">
             {config.authorName} · {igInfo.handle}
           </p>
-          <p className="text-[11px] font-mono text-zinc-400 mt-0.5 truncate">
+          <p className="text-xs font-mono text-[#4A443E] mt-1 truncate">
             WA: {waInfo.display}
           </p>
         </div>
 
-        <div className="p-4 rounded-xl border border-[#232730] bg-[#111318] distressed-surface">
-          <span className="text-[10px] font-mono font-bold uppercase text-zinc-500 block">
-            Estado de la Agenda Hoy
+        <div className="p-5 border border-[#171513]/12 bg-[#EFEAE1]">
+          <span className="text-[10px] font-mono uppercase tracking-widest text-[#655E57] block">
+            Disponibilidad Hoy en Portada
           </span>
-          <p className="font-display text-xl font-bold text-white mt-0.5">
+          <p className="font-display text-2xl font-semibold text-[#171513] mt-1">
             {config.walkInStatus === 'available' ? 'Turnos Abiertos' : 'Agenda Completa'}
           </p>
           <button
+            type="button"
             onClick={() => {
               const newStatus = config.walkInStatus === 'available' ? 'booked_full' : 'available';
               updateConfig({ walkInStatus: newStatus });
               triggerToast(
-                `Estado actualizado: ${
-                  newStatus === 'available' ? 'Turnos abiertos hoy' : 'Agenda Completa'
+                `Estado en portada actualizado: ${
+                  newStatus === 'available' ? 'Turnos abiertos hoy' : 'Agenda completa hoy'
                 }`
               );
             }}
-            className="text-[11px] font-mono text-[#F59E0B] hover:underline mt-0.5 cursor-pointer"
+            className="text-xs font-mono text-[#96734E] hover:text-[#171513] underline mt-1 cursor-pointer"
           >
             Cambiar disponibilidad en vivo &rarr;
           </button>
@@ -640,25 +644,25 @@ export const AdminPage: React.FC = () => {
       </div>
 
       {/* Tabs Navigation */}
-      <div className="flex flex-wrap items-center gap-2 pb-2 border-b border-[#232730]">
+      <div className="flex flex-wrap items-center gap-2 pb-3 border-b border-[#171513]/15">
         {[
           {
             id: 'sections_profile',
-            label: 'Arquitectura, Orden de Secciones & Perfil',
+            label: 'Secciones, Textos & Banner Rotativo',
             icon: Sliders,
           },
           {
             id: 'business_rules',
-            label: 'Horarios, Reglas & Diseño Urbano',
+            label: 'Horarios, Paleta & Efectos',
             icon: Settings,
           },
           { id: 'appointments', label: `Turnos en Vivo (${appointments.length})`, icon: Calendar },
           { id: 'services', label: `Servicios & Precios (${services.length})`, icon: DollarSign },
-          { id: 'gallery', label: `Galería de Fotos (${galleryItems.length})`, icon: Camera },
+          { id: 'gallery', label: `Obras & Galería (${galleryItems.length})`, icon: Camera },
           { id: 'calendar', label: `Bloqueos de Horario (${blockedSlots.length})`, icon: Clock },
           {
             id: 'server_audit',
-            label: `Servidor, Métricas & Auditoría (${auditLogs.length})`,
+            label: `Servidor & Métricas (${auditLogs.length})`,
             icon: Shield,
           },
         ].map((tab) => {
@@ -667,11 +671,13 @@ export const AdminPage: React.FC = () => {
           return (
             <button
               key={tab.id}
+              type="button"
+              data-testid={`admin-tab-${tab.id}`}
               onClick={() => setActiveTab(tab.id as typeof activeTab)}
-              className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs uppercase tracking-wider font-mono font-bold transition-colors cursor-pointer ${
+              className={`inline-flex items-center gap-2 px-4 py-2.5 text-xs uppercase tracking-wider font-mono transition-colors cursor-pointer ${
                 isActive
-                  ? 'bg-[#F59E0B] text-zinc-950 shadow-sm'
-                  : 'bg-[#111318] border border-[#232730] text-zinc-400 hover:text-white hover:border-zinc-500'
+                  ? 'bg-[#171513] text-[#F7F4EE] font-semibold'
+                  : 'bg-[#EFEAE1] border border-[#171513]/15 text-[#4A443E] hover:text-[#171513] hover:border-[#171513]'
               }`}
             >
               <Icon className="w-3.5 h-3.5" />
@@ -685,101 +691,96 @@ export const AdminPage: React.FC = () => {
       {/* TAB 0: ARQUITECTURA, ORDEN DE SECCIONES, SWITCHES & PERFIL                  */}
       {/* =========================================================================== */}
       {activeTab === 'sections_profile' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Left Column: Live Section Reordering & Layout Architecture */}
           <div className="lg:col-span-6 space-y-6">
-            <div className="p-6 rounded-2xl border border-[#232730] bg-[#111318] space-y-5 shadow-xl">
-              <div className="border-b border-[#1E222B] pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="p-6 sm:p-7 border border-[#171513]/15 bg-[#EFEAE1] space-y-5">
+              <div className="border-b border-[#171513]/12 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <div className="flex items-center gap-2 text-[11px] font-mono uppercase text-[#F59E0B] font-bold mb-1">
+                  <div className="flex items-center gap-2 text-[11px] font-mono uppercase tracking-widest text-[#96734E] font-medium mb-1">
                     <LayoutGrid className="w-3.5 h-3.5" />
-                    <span>ARQUITECTURA Y JERARQUÍA DEL SITIO WEB</span>
+                    <span>ESTRUCTURA Y JERARQUÍA DEL SITIO</span>
                   </div>
-                  <h2 className="font-display text-2xl font-bold text-white">
-                    Orden de Secciones &amp; Switches
+                  <h2 className="font-display text-2xl sm:text-3xl font-medium text-[#171513]">
+                    Orden de Secciones &amp; Visibilidad
                   </h2>
-                  <p className="text-xs text-zinc-400 font-mono mt-1">
-                    Subí o bajá cada sección para decidir qué ven primero tus clientes (por ejemplo: Sacar Turno arriba y Reseñas antes que Ubicación).
+                  <p className="text-xs text-[#4A443E] mt-1">
+                    Reordená o activá/ocultá cada módulo. Todo cambio se refleja al instante en la
+                    portada principal.
                   </p>
                 </div>
 
                 <button
                   type="button"
                   onClick={() => {
-                    playMechanicalClick();
                     updateConfig({ sectionOrder: [...DEFAULT_SECTION_ORDER] });
-                    triggerToast('Orden recomendado restaurado (Sacar Turno #1, Reseñas arriba)');
+                    triggerToast('Orden recomendado restaurado');
                   }}
-                  className="px-3 py-2 rounded-xl border border-[#282D37] bg-[#161920] hover:border-[#F59E0B] text-[11px] font-mono font-bold text-zinc-300 hover:text-white flex items-center gap-1.5 cursor-pointer shrink-0"
+                  className="px-3.5 py-2 border border-[#171513]/20 bg-[#F7F4EE] hover:border-[#171513] text-xs font-mono text-[#171513] flex items-center gap-1.5 cursor-pointer shrink-0"
                 >
-                  <RotateCcw className="w-3.5 h-3.5 text-[#F59E0B]" />
-                  <span>Orden Recomendado</span>
+                  <RotateCcw className="w-3.5 h-3.5 text-[#96734E]" />
+                  <span>Orden por Defecto</span>
                 </button>
               </div>
 
               {/* Site Layout Mode Selector */}
-              <div className="p-4 rounded-xl bg-[#0C0E14] border border-[#232836] space-y-2.5">
-                <span className="font-mono text-[11px] uppercase text-[#00F0FF] font-bold block">
-                  Modo de Estructura Principal del Sitio:
+              <div className="p-4 bg-[#F7F4EE] border border-[#171513]/12 space-y-2.5">
+                <span className="font-mono text-[11px] uppercase tracking-wider text-[#96734E] font-medium block">
+                  Modo de Navegación en Portada:
                 </span>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <button
                     type="button"
                     onClick={() => {
-                      playMechanicalClick();
                       updateConfig({ layoutMode: 'landing' });
-                      triggerToast('Estructura cambiada a Flujo Completo Optimizado (Landing)');
+                      triggerToast('Estructura cambiada a Flujo Editorial Completo (Landing)');
                     }}
-                    className={`p-3 rounded-xl border text-left font-mono text-xs transition-all cursor-pointer ${
+                    className={`p-3.5 border text-left font-mono text-xs transition-all cursor-pointer ${
                       (config.layoutMode || 'landing') === 'landing'
-                        ? 'border-[#F59E0B] bg-[#F59E0B]/15 text-white font-bold'
-                        : 'border-[#232730] bg-[#111318] text-zinc-400 hover:text-white'
+                        ? 'border-[#171513] bg-[#171513] text-[#F7F4EE]'
+                        : 'border-[#171513]/15 bg-[#EFEAE1] text-[#4A443E] hover:border-[#171513]'
                     }`}
                   >
-                    <span className="block font-black text-[#F59E0B]">
-                      1. Landing de Flujo Completo
-                    </span>
-                    <span className="text-[11px] text-zinc-400 block mt-0.5">
-                      Muestra todas las secciones activas en el orden exacto de abajo.
+                    <span className="block font-semibold">1. Flujo Editorial Completo</span>
+                    <span className="text-[11px] opacity-80 block mt-0.5">
+                      Despliega todas las secciones activas en el orden configurado abajo.
                     </span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => {
-                      playMechanicalClick();
                       updateConfig({ layoutMode: 'tabs' });
                       triggerToast('Estructura cambiada a Vista por Pestañas Individuales');
                     }}
-                    className={`p-3 rounded-xl border text-left font-mono text-xs transition-all cursor-pointer ${
+                    className={`p-3.5 border text-left font-mono text-xs transition-all cursor-pointer ${
                       config.layoutMode === 'tabs'
-                        ? 'border-[#00F0FF] bg-[#00F0FF]/15 text-white font-bold'
-                        : 'border-[#232730] bg-[#111318] text-zinc-400 hover:text-white'
+                        ? 'border-[#171513] bg-[#171513] text-[#F7F4EE]'
+                        : 'border-[#171513]/15 bg-[#EFEAE1] text-[#4A443E] hover:border-[#171513]'
                     }`}
                   >
-                    <span className="block font-black text-[#00F0FF]">
-                      2. Sitio por Pestañas Individuales
-                    </span>
-                    <span className="text-[11px] text-zinc-400 block mt-0.5">
-                      Muestra una sola sección enfocada a la vez sin scroll largo.
+                    <span className="block font-semibold">2. Vista por Pestañas Individuales</span>
+                    <span className="text-[11px] opacity-80 block mt-0.5">
+                      Muestra una barra de pestañas editoriales para ver una sección a la vez.
                     </span>
                   </button>
                 </div>
               </div>
 
               {/* Fixed Portada Switch */}
-              <div className="p-4 rounded-xl border border-[#282D37] bg-[#161920] flex items-center justify-between gap-4">
+              <div className="p-4 border border-[#171513]/15 bg-[#F7F4EE] flex items-center justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 rounded bg-[#F59E0B]/20 text-[#F59E0B] font-mono text-[10px] font-black">
+                    <span className="px-2 py-0.5 bg-[#96734E]/15 text-[#96734E] font-mono text-[10px] font-semibold">
                       PORTADA
                     </span>
-                    <span className="font-mono text-xs font-bold text-white">
-                      Presentación Principal &amp; Próximo Turno Libre (#inicio)
+                    <span className="font-mono text-xs font-semibold text-[#171513]">
+                      Hero Editorial &amp; Próximo Turno Libre (#inicio)
                     </span>
                   </div>
-                  <p className="text-[11px] font-mono text-zinc-400 mt-1">
-                    Cabecera principal con mural graffiti, indicador de próximo turno hoy y accesos rápidos.
+                  <p className="text-[11px] text-[#575049] mt-1">
+                    Cabecera asimétrica con retrato parallax, titular serif e indicador de turno
+                    libre hoy.
                   </p>
                 </div>
 
@@ -789,22 +790,17 @@ export const AdminPage: React.FC = () => {
                   aria-checked={config.showHeroSection !== false}
                   aria-label="Mostrar u ocultar Portada Principal"
                   onClick={() => {
-                    playMechanicalClick();
                     const nextVal = config.showHeroSection === false;
                     updateConfig({ showHeroSection: nextVal });
-                    triggerToast(
-                      `Portada Principal: ${nextVal ? 'Visible' : 'Oculta'}`
-                    );
+                    triggerToast(`Portada Principal: ${nextVal ? 'Visible' : 'Oculta'}`);
                   }}
-                  className={`relative inline-flex h-7 w-13 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
-                    config.showHeroSection !== false ? 'bg-[#F59E0B]' : 'bg-[#252934]'
+                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
+                    config.showHeroSection !== false ? 'bg-[#171513]' : 'bg-[#C5BBAE]'
                   }`}
                 >
                   <span
-                    className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-zinc-950 transition ${
-                      config.showHeroSection !== false
-                        ? 'translate-x-6'
-                        : 'translate-x-0 bg-zinc-400'
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-[#F7F4EE] transition ${
+                      config.showHeroSection !== false ? 'translate-x-5' : 'translate-x-0'
                     }`}
                   />
                 </button>
@@ -818,10 +814,10 @@ export const AdminPage: React.FC = () => {
                   return (
                     <div
                       key={secId}
-                      className={`p-4 rounded-xl border transition-all flex items-center justify-between gap-3 ${
+                      className={`p-4 border transition-all flex items-center justify-between gap-3 ${
                         isEnabled
-                          ? 'bg-[#161920] border-[#282D37]'
-                          : 'bg-[#0C0E12] border-[#1E222B] opacity-70'
+                          ? 'bg-[#F7F4EE] border-[#171513]/15'
+                          : 'bg-[#E4DDD1]/60 border-[#171513]/10 opacity-70'
                       }`}
                     >
                       {/* Up / Down Order Controls */}
@@ -830,12 +826,11 @@ export const AdminPage: React.FC = () => {
                           type="button"
                           disabled={index === 0}
                           onClick={() => {
-                            playMechanicalClick();
                             moveSectionInOrder(secId, 'up');
                             triggerToast(`"${meta.label}" subida a posición #${index}`);
                           }}
                           title="Subir sección"
-                          className="w-7 h-7 rounded-lg border border-[#2C3240] bg-[#0C0E12] hover:border-[#F59E0B] text-zinc-300 hover:text-[#F59E0B] flex items-center justify-center disabled:opacity-30 cursor-pointer"
+                          className="w-7 h-7 border border-[#171513]/20 bg-[#EFEAE1] hover:border-[#171513] text-[#171513] flex items-center justify-center disabled:opacity-30 cursor-pointer"
                         >
                           <ArrowUp className="w-3.5 h-3.5" />
                         </button>
@@ -843,12 +838,11 @@ export const AdminPage: React.FC = () => {
                           type="button"
                           disabled={index === normalizedOrder.length - 1}
                           onClick={() => {
-                            playMechanicalClick();
                             moveSectionInOrder(secId, 'down');
                             triggerToast(`"${meta.label}" bajada a posición #${index + 2}`);
                           }}
                           title="Bajar sección"
-                          className="w-7 h-7 rounded-lg border border-[#2C3240] bg-[#0C0E12] hover:border-[#F59E0B] text-zinc-300 hover:text-[#F59E0B] flex items-center justify-center disabled:opacity-30 cursor-pointer"
+                          className="w-7 h-7 border border-[#171513]/20 bg-[#EFEAE1] hover:border-[#171513] text-[#171513] flex items-center justify-center disabled:opacity-30 cursor-pointer"
                         >
                           <ArrowDown className="w-3.5 h-3.5" />
                         </button>
@@ -856,25 +850,23 @@ export const AdminPage: React.FC = () => {
 
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="px-2 py-0.5 rounded bg-[#00F0FF]/15 text-[#00F0FF] font-mono text-[10px] font-black">
+                          <span className="px-2 py-0.5 bg-[#171513] text-[#F7F4EE] font-mono text-[10px]">
                             #{index + 1}
                           </span>
-                          <span className="font-mono text-xs font-bold text-white">
+                          <span className="font-mono text-xs font-semibold text-[#171513]">
                             {meta.label}
                           </span>
                           <span
-                            className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded ${
+                            className={`text-[10px] font-mono px-2 py-0.5 ${
                               isEnabled
-                                ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
-                                : 'bg-zinc-800 text-zinc-400 border border-zinc-700'
+                                ? 'bg-[#3D4F43]/15 text-[#3D4F43]'
+                                : 'bg-[#C5BBAE]/40 text-[#655E57]'
                             }`}
                           >
                             {isEnabled ? 'Visible' : 'Oculta'}
                           </span>
                         </div>
-                        <p className="text-[11px] font-mono text-zinc-400 mt-1">
-                          {meta.description}
-                        </p>
+                        <p className="text-[11px] text-[#575049] mt-1">{meta.description}</p>
                       </div>
 
                       <button
@@ -883,21 +875,18 @@ export const AdminPage: React.FC = () => {
                         aria-checked={isEnabled}
                         aria-label={`Mostrar u ocultar ${meta.label}`}
                         onClick={() => {
-                          playMechanicalClick();
                           updateConfig({ [meta.key]: !isEnabled });
                           triggerToast(
-                            `${meta.label}: ${
-                              !isEnabled ? 'Visible en portada' : 'Ocultada en portada'
-                            }`
+                            `${meta.label}: ${!isEnabled ? 'Visible en el sitio' : 'Oculta'}`
                           );
                         }}
-                        className={`relative inline-flex h-7 w-13 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                          isEnabled ? 'bg-[#F59E0B]' : 'bg-[#252934]'
+                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
+                          isEnabled ? 'bg-[#171513]' : 'bg-[#C5BBAE]'
                         }`}
                       >
                         <span
-                          className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-zinc-950 shadow-md ring-0 transition duration-200 ease-in-out ${
-                            isEnabled ? 'translate-x-6' : 'translate-x-0 bg-zinc-400'
+                          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-[#F7F4EE] transition ${
+                            isEnabled ? 'translate-x-5' : 'translate-x-0'
                           }`}
                         />
                       </button>
@@ -908,77 +897,200 @@ export const AdminPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Right Column: Form to update Barber Name, Instagram Link, WhatsApp Link & Card Switches */}
+          {/* Right Column: Form to update Identity, Texts, Rotating Banner & Card Switches */}
           <div className="lg:col-span-6 space-y-6">
             <form
               onSubmit={handleSaveProfileAndLinks}
-              className="p-6 rounded-2xl border border-[#232730] bg-[#111318] space-y-5 shadow-xl"
+              className="p-6 sm:p-7 border border-[#171513]/15 bg-[#EFEAE1] space-y-5"
             >
-              <div className="border-b border-[#1E222B] pb-4">
-                <div className="flex items-center gap-2 text-[11px] font-mono uppercase text-[#F59E0B] font-bold mb-1">
+              <div className="border-b border-[#171513]/12 pb-4">
+                <div className="flex items-center gap-2 text-[11px] font-mono uppercase tracking-widest text-[#96734E] font-medium mb-1">
                   <UserCheck className="w-3.5 h-3.5" />
-                  <span>FORMULARIO DE IDENTIDAD Y CONTACTO GLOBAL</span>
+                  <span>IDENTIDAD, TEXTOS Y BANNER ROTATIVO</span>
                 </div>
-                <h2 className="font-display text-2xl font-bold text-white">
-                  Barbero, Instagram, WhatsApp &amp; Banner
+                <h2 className="font-display text-2xl sm:text-3xl font-medium text-[#171513]">
+                  Datos del Estudio, Portada &amp; Contacto
                 </h2>
-                <p className="text-xs text-zinc-400 font-mono mt-1">
-                  Actualizá el nombre del barbero, enlaces de Instagram/WhatsApp, alias y anuncio superior.
+                <p className="text-xs text-[#4A443E] mt-1">
+                  Cualquier cambio que guardes acá actualiza la barra superior, el banner rotativo,
+                  la portada, el manifiesto, el turnero y el pie de página.
                 </p>
               </div>
 
               <div className="space-y-4">
-                <div>
-                  <label
-                    htmlFor="admin-barber-name"
-                    className="block text-xs font-mono text-zinc-300 mb-1.5 font-bold uppercase"
-                  >
-                    Nombre del Barbero *
-                  </label>
-                  <input
-                    id="admin-barber-name"
-                    name="authorName"
-                    type="text"
-                    required
-                    value={barberNameForm}
-                    onChange={(e) => setBarberNameForm(e.target.value)}
-                    placeholder="Ej. Rodrigo"
-                    className="w-full h-11 px-3.5 text-sm font-mono rounded-xl border border-[#282D37] bg-[#0C0E12] text-white focus:border-[#F59E0B] focus:outline-none"
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label
+                      htmlFor="admin-barber-name"
+                      className="block text-xs font-mono text-[#4A443E] mb-1 font-medium uppercase"
+                    >
+                      Nombre del Profesional *
+                    </label>
+                    <input
+                      id="admin-barber-name"
+                      name="authorName"
+                      type="text"
+                      required
+                      value={barberNameForm}
+                      onChange={(e) => setBarberNameForm(e.target.value)}
+                      className="w-full h-10 px-3 text-xs font-mono border border-[#171513]/20 bg-[#F7F4EE] text-[#171513]"
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="admin-studio-title"
+                      className="block text-xs font-mono text-[#4A443E] mb-1 font-medium uppercase"
+                    >
+                      Nombre del Estudio (Navbar / Marca) *
+                    </label>
+                    <input
+                      id="admin-studio-title"
+                      type="text"
+                      value={studioTitleForm}
+                      onChange={(e) => setStudioTitleForm(e.target.value)}
+                      className="w-full h-10 px-3 text-xs font-mono border border-[#171513]/20 bg-[#F7F4EE] text-[#171513]"
+                    />
+                  </div>
                 </div>
 
                 <div>
                   <label
-                    htmlFor="admin-instagram-link"
-                    className="block text-xs font-mono text-zinc-300 mb-1.5 font-bold uppercase"
+                    htmlFor="admin-promo-banner-text"
+                    className="block text-xs font-mono text-[#96734E] mb-1 font-semibold uppercase"
                   >
-                    Enlace o Usuario de Instagram *
+                    Texto Destacado del Banner Rotativo con Parallax
                   </label>
                   <input
-                    id="admin-instagram-link"
-                    name="instagram"
+                    id="admin-promo-banner-text"
                     type="text"
-                    required
-                    value={instagramForm}
-                    onChange={(e) => setInstagramForm(e.target.value)}
-                    placeholder="@rodrigo.cutsss o https://instagram.com/rodrigo.cutsss"
-                    className="w-full h-11 px-3.5 text-sm font-mono rounded-xl border border-[#282D37] bg-[#0C0E12] text-white focus:border-[#F59E0B] focus:outline-none"
+                    value={promoBannerTextForm}
+                    onChange={(e) => setPromoBannerTextForm(e.target.value)}
+                    placeholder="Ej. ATENCIÓN INDIVIDUAL UNO A UNO · VUELTA DE OBLIGADO 931"
+                    className="w-full h-10 px-3 text-xs font-mono border border-[#96734E]/40 bg-[#F7F4EE] text-[#171513]"
                   />
-                  <span className="text-[11px] font-mono text-zinc-500 block mt-1">
-                    Enlace activo:{' '}
-                    <strong className="text-zinc-300">
-                      {resolveInstagramInfo(instagramForm).url}
-                    </strong>
+                  <span className="text-[11px] text-[#655E57] block mt-1">
+                    Se combina automáticamente con los precios de servicios, dirección y próximo
+                    turno libre.
                   </span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
+                    <label className="block text-xs font-mono text-[#4A443E] mb-1 font-medium uppercase">
+                      Precio Base Destacado
+                    </label>
+                    <input
+                      id="admin-main-price"
+                      type="text"
+                      value={mainPriceForm}
+                      onChange={(e) => setMainPriceForm(e.target.value)}
+                      className="w-full h-10 px-3 text-xs font-mono border border-[#171513]/20 bg-[#F7F4EE] text-[#171513]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-mono text-[#4A443E] mb-1 font-medium uppercase">
+                      Dirección del Estudio
+                    </label>
+                    <input
+                      id="admin-address"
+                      type="text"
+                      value={addressForm}
+                      onChange={(e) => setAddressForm(e.target.value)}
+                      className="w-full h-10 px-3 text-xs font-mono border border-[#171513]/20 bg-[#F7F4EE] text-[#171513]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-mono text-[#4A443E] mb-1 font-medium uppercase">
+                      Ciudad y Provincia
+                    </label>
+                    <input
+                      id="admin-neighborhood"
+                      type="text"
+                      value={neighborhoodForm}
+                      onChange={(e) => setNeighborhoodForm(e.target.value)}
+                      className="w-full h-10 px-3 text-xs font-mono border border-[#171513]/20 bg-[#F7F4EE] text-[#171513]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-mono text-[#4A443E] mb-1 font-medium uppercase">
+                      Alias de Transferencia / Seña
+                    </label>
+                    <input
+                      id="admin-transfer-alias"
+                      type="text"
+                      value={transferAliasForm}
+                      onChange={(e) => setTransferAliasForm(e.target.value)}
+                      className="w-full h-10 px-3 text-xs font-mono border border-[#171513]/20 bg-[#F7F4EE] text-[#171513]"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-mono text-[#4A443E] mb-1 font-medium uppercase">
+                    Titular Principal de Portada (Hero)
+                  </label>
+                  <input
+                    id="admin-tagline"
+                    type="text"
+                    value={taglineForm}
+                    onChange={(e) => setTaglineForm(e.target.value)}
+                    className="w-full h-10 px-3 text-xs font-mono border border-[#171513]/20 bg-[#F7F4EE] text-[#171513]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-mono text-[#4A443E] mb-1 font-medium uppercase">
+                    Bajada / Subtítulo de Portada
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={heroSubtitleForm}
+                    onChange={(e) => setHeroSubtitleForm(e.target.value)}
+                    className="w-full p-2.5 text-xs font-mono border border-[#171513]/20 bg-[#F7F4EE] text-[#171513]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-mono text-[#4A443E] mb-1 font-medium uppercase">
+                    Texto del Manifiesto / El Estudio (#estudio)
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={bioForm}
+                    onChange={(e) => setBioForm(e.target.value)}
+                    className="w-full p-2.5 text-xs font-mono border border-[#171513]/20 bg-[#F7F4EE] text-[#171513]"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-[#171513]/12">
+                  <div>
+                    <label
+                      htmlFor="admin-instagram-link"
+                      className="block text-xs font-mono text-[#4A443E] mb-1 font-medium uppercase"
+                    >
+                      Instagram (Usuario o URL) *
+                    </label>
+                    <input
+                      id="admin-instagram-link"
+                      name="instagram"
+                      type="text"
+                      required
+                      value={instagramForm}
+                      onChange={(e) => setInstagramForm(e.target.value)}
+                      className="w-full h-10 px-3 text-xs font-mono border border-[#171513]/20 bg-[#F7F4EE] text-[#171513]"
+                    />
+                  </div>
+
+                  <div>
                     <label
                       htmlFor="admin-whatsapp-display"
-                      className="block text-xs font-mono text-zinc-300 mb-1.5 font-bold uppercase"
+                      className="block text-xs font-mono text-[#4A443E] mb-1 font-medium uppercase"
                     >
-                      WhatsApp (Número o Enlace) *
+                      WhatsApp Directo *
                     </label>
                     <input
                       id="admin-whatsapp-display"
@@ -994,121 +1106,40 @@ export const AdminPage: React.FC = () => {
                           setWhatsappRawForm(digits);
                         }
                       }}
-                      placeholder="+54 9 3462 55-4421"
-                      className="w-full h-11 px-3.5 text-sm font-mono rounded-xl border border-[#282D37] bg-[#0C0E12] text-white focus:border-[#F59E0B] focus:outline-none"
+                      className="w-full h-10 px-3 text-xs font-mono border border-[#171513]/20 bg-[#F7F4EE] text-[#171513]"
                     />
                   </div>
-
-                  <div>
-                    <label
-                      htmlFor="admin-whatsapp-raw"
-                      className="block text-xs font-mono text-zinc-300 mb-1.5 font-bold uppercase"
-                    >
-                      WhatsApp (Dígitos para wa.me)
-                    </label>
-                    <input
-                      id="admin-whatsapp-raw"
-                      name="whatsappRaw"
-                      type="text"
-                      value={whatsappRawForm}
-                      onChange={(e) => setWhatsappRawForm(e.target.value.replace(/\D/g, ''))}
-                      placeholder="5493462554421"
-                      className="w-full h-11 px-3.5 text-sm font-mono rounded-xl border border-[#282D37] bg-[#0C0E12] text-white focus:border-[#F59E0B] focus:outline-none"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-[#1E222B]">
-                  <div>
-                    <label className="block text-xs font-mono text-zinc-400 mb-1 font-semibold">
-                      Nombre del Estudio / Marca
-                    </label>
-                    <input
-                      type="text"
-                      value={studioTitleForm}
-                      onChange={(e) => setStudioTitleForm(e.target.value)}
-                      className="w-full h-10 px-3 text-xs font-mono rounded-xl border border-[#282D37] bg-[#0C0E12] text-white"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-mono text-zinc-400 mb-1 font-semibold">
-                      Precio Principal Destacado
-                    </label>
-                    <input
-                      type="text"
-                      value={mainPriceForm}
-                      onChange={(e) => setMainPriceForm(e.target.value)}
-                      className="w-full h-10 px-3 text-xs font-mono rounded-xl border border-[#282D37] bg-[#0C0E12] text-white"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-mono text-zinc-400 mb-1 font-semibold">
-                      Dirección del Estudio
-                    </label>
-                    <input
-                      type="text"
-                      value={addressForm}
-                      onChange={(e) => setAddressForm(e.target.value)}
-                      className="w-full h-10 px-3 text-xs font-mono rounded-xl border border-[#282D37] bg-[#0C0E12] text-white"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-mono text-zinc-400 mb-1 font-semibold">
-                      Alias de Transferencia / Seña
-                    </label>
-                    <input
-                      type="text"
-                      value={transferAliasForm}
-                      onChange={(e) => setTransferAliasForm(e.target.value)}
-                      className="w-full h-10 px-3 text-xs font-mono rounded-xl border border-[#282D37] bg-[#0C0E12] text-white"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-mono text-zinc-400 mb-1 font-semibold">
-                    Texto del Banner Superior de Anuncio
-                  </label>
-                  <input
-                    type="text"
-                    value={promoBannerTextForm}
-                    onChange={(e) => setPromoBannerTextForm(e.target.value)}
-                    placeholder="Ej. AGENDA ABIERTA ESTA SEMANA · VUELTA DE OBLIGADO 931"
-                    className="w-full h-10 px-3 text-xs font-mono rounded-xl border border-[#282D37] bg-[#0C0E12] text-white"
-                  />
                 </div>
               </div>
 
-              <div className="pt-3 border-t border-[#1E222B] flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2 text-xs font-mono text-zinc-400">
-                  <Instagram className="w-3.5 h-3.5 text-[#F59E0B]" />
+              <div className="pt-3 border-t border-[#171513]/12 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 text-xs font-mono text-[#575049]">
+                  <Instagram className="w-3.5 h-3.5 text-[#96734E]" />
                   <span>{resolveInstagramInfo(instagramForm).handle}</span>
                   <span>·</span>
-                  <MessageCircle className="w-3.5 h-3.5 text-[#F59E0B]" />
+                  <MessageCircle className="w-3.5 h-3.5 text-[#3D4F43]" />
                   <span>{whatsappDisplayForm}</span>
                 </div>
 
                 <button
                   type="submit"
-                  className="inline-flex items-center gap-2 px-6 py-3 text-xs font-mono font-black uppercase tracking-wider bg-[#F59E0B] text-zinc-950 rounded-xl hover:bg-[#D97706] cursor-pointer shadow-md active:scale-95 transition-all"
+                  data-testid="admin-save-profile-btn"
+                  className="inline-flex items-center gap-2 px-6 py-3 text-xs font-mono uppercase tracking-wider bg-[#171513] text-[#F7F4EE] hover:bg-[#96734E] transition-colors cursor-pointer"
                 >
                   <Save className="w-4 h-4" />
-                  <span>Guardar Perfil y Enlaces</span>
+                  <span>Guardar Cambios</span>
                 </button>
               </div>
             </form>
 
             {/* Card Elements Visibility Switches */}
-            <div className="p-6 rounded-2xl border border-[#232730] bg-[#111318] space-y-4 shadow-xl">
-              <div className="border-b border-[#1E222B] pb-3">
-                <span className="text-[10px] font-mono uppercase text-[#F59E0B] font-bold block">
-                  ELEMENTOS INTERNOS DE LAS TARJETAS
+            <div className="p-6 sm:p-7 border border-[#171513]/15 bg-[#EFEAE1] space-y-4">
+              <div className="border-b border-[#171513]/12 pb-3">
+                <span className="text-[10px] font-mono uppercase tracking-widest text-[#96734E] font-medium block">
+                  ELEMENTOS DE CATÁLOGO Y PORTAFOLIO
                 </span>
-                <h3 className="font-display text-xl font-bold text-white">
-                  Switches de Botones de Compra y Precios
+                <h3 className="font-display text-2xl font-medium text-[#171513]">
+                  Switches de Precios, Botones y Filtros
                 </h3>
               </div>
 
@@ -1116,41 +1147,49 @@ export const AdminPage: React.FC = () => {
                 {[
                   {
                     key: 'showServiceBookingButton' as const,
-                    label: 'Botón "Agendar Este Corte" en Tarjetas de Servicios',
-                    desc: 'Desactivalo si querés que las tarjetas de servicios sean solo informativas',
+                    label: 'Botón "Elegir servicio" en el Catálogo',
+                    desc: 'Muestra u oculta los botones de reserva directa en la carta de servicios',
                   },
                   {
                     key: 'showServicePrice' as const,
-                    label: 'Precios en Tarjetas de Servicios',
-                    desc: 'Muestra u oculta los precios en pesos en la carta de servicios',
+                    label: 'Precios en el Catálogo de Servicios y Banner',
+                    desc: 'Muestra u oculta los valores en pesos en la carta de servicios',
                   },
                   {
-                    key: 'showGalleryBookingButton' as const,
-                    label: 'Botón "Reservar turno" en Tarjetas de Galería',
-                    desc: 'Muestra u oculta el botón de reserva debajo de cada foto',
+                    key: 'showServiceDuration' as const,
+                    label: 'Duración (minutos) en el Catálogo de Servicios',
+                    desc: 'Muestra u oculta el tiempo estimado de cada sesión',
                   },
                   {
-                    key: 'showGalleryPriceBadge' as const,
-                    label: 'Etiqueta de Precio en Fotos de Galería',
-                    desc: 'Muestra u oculta la etiqueta de valor sobre cada foto',
+                    key: 'showServiceProducts' as const,
+                    label: 'Detalle "Incluye:" en el Catálogo de Servicios',
+                    desc: 'Muestra las herramientas y productos botánicos de cada servicio',
                   },
                   {
                     key: 'showGalleryFilter' as const,
-                    label: 'Pestañas de Categorías en la Galería',
-                    desc: 'Permite mostrar todas las fotos juntas o con pestañas por categoría',
+                    label: 'Pestañas de Categorías en Obras & Portafolio',
+                    desc: 'Permite filtrar las fotos por categoría en la sección #obras',
+                  },
+                  {
+                    key: 'showGalleryBookingButton' as const,
+                    label: 'Botón "Reservar" en Tarjetas de Obras',
+                    desc: 'Muestra u oculta el acceso al turnero debajo de cada obra',
+                  },
+                  {
+                    key: 'showGalleryPriceBadge' as const,
+                    label: 'Valor de Referencia en Tarjetas de Obras',
+                    desc: 'Muestra u oculta el precio junto a la fecha de cada obra',
                   },
                 ].map((item) => {
                   const enabled = Boolean(config[item.key]);
                   return (
                     <div
                       key={item.key}
-                      className="p-3.5 rounded-xl border border-[#232730] bg-[#161920] flex items-center justify-between gap-3"
+                      className="p-3.5 border border-[#171513]/12 bg-[#F7F4EE] flex items-center justify-between gap-3"
                     >
                       <div>
-                        <span className="font-bold text-white block">{item.label}</span>
-                        <span className="text-[11px] text-zinc-400 block mt-0.5">
-                          {item.desc}
-                        </span>
+                        <span className="font-semibold text-[#171513] block">{item.label}</span>
+                        <span className="text-[11px] text-[#575049] block mt-0.5">{item.desc}</span>
                       </div>
                       <button
                         type="button"
@@ -1158,17 +1197,16 @@ export const AdminPage: React.FC = () => {
                         aria-checked={enabled}
                         aria-label={item.label}
                         onClick={() => {
-                          playMechanicalClick();
                           updateConfig({ [item.key]: !enabled });
                           triggerToast(`${item.label}: ${!enabled ? 'Activo' : 'Oculto'}`);
                         }}
-                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
-                          enabled ? 'bg-[#F59E0B]' : 'bg-[#252934]'
+                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
+                          enabled ? 'bg-[#171513]' : 'bg-[#C5BBAE]'
                         }`}
                       >
                         <span
-                          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-zinc-950 transition duration-200 ease-in-out ${
-                            enabled ? 'translate-x-5' : 'translate-x-0 bg-zinc-400'
+                          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-[#F7F4EE] transition ${
+                            enabled ? 'translate-x-5' : 'translate-x-0'
                           }`}
                         />
                       </button>
@@ -1182,28 +1220,29 @@ export const AdminPage: React.FC = () => {
       )}
 
       {/* =========================================================================== */}
-      {/* TAB 1: HORARIOS, REGLAS DE NEGOCIO, TEMAS URBANOS & EFECTOS VISUALES        */}
+      {/* TAB 1: HORARIOS, REGLAS DE NEGOCIO, PALETA EDITORIAL & EFECTOS              */}
       {/* =========================================================================== */}
       {activeTab === 'business_rules' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Left: Business Rules, Opening/Closing Hours, Open Days, Buffer & PIN */}
-          <div className="lg:col-span-7 p-6 rounded-2xl border border-[#232730] bg-[#111318] space-y-6 shadow-xl">
-            <div className="border-b border-[#1E222B] pb-4">
-              <div className="flex items-center gap-2 text-[11px] font-mono uppercase text-[#F59E0B] font-bold mb-1">
+          <div className="lg:col-span-7 p-6 sm:p-7 border border-[#171513]/15 bg-[#EFEAE1] space-y-6">
+            <div className="border-b border-[#171513]/12 pb-4">
+              <div className="flex items-center gap-2 text-[11px] font-mono uppercase tracking-widest text-[#96734E] font-medium mb-1">
                 <Settings className="w-3.5 h-3.5" />
-                <span>LÓGICA DE NEGOCIO Y MOTOR DE TURNOS</span>
+                <span>REGLAS DE AGENDA Y ATENCIÓN</span>
               </div>
-              <h2 className="font-display text-2xl font-bold text-white">
+              <h2 className="font-display text-2xl sm:text-3xl font-medium text-[#171513]">
                 Horarios de Jornada, Días Abiertos, Señas y PIN
               </h2>
-              <p className="text-xs text-zinc-400 font-mono mt-1">
-                Estos parámetros gobiernan automáticamente los horarios que se muestran disponibles en el turnero de la portada.
+              <p className="text-xs text-[#4A443E] mt-1">
+                Estos parámetros gobiernan automáticamente los turnos libres que se calculan en
+                tiempo real en la portada y el turnero.
               </p>
             </div>
 
             {/* Active Days of the Week */}
             <div className="space-y-2">
-              <label className="block text-xs font-mono text-zinc-300 font-bold uppercase">
+              <label className="block text-xs font-mono text-[#171513] font-semibold uppercase">
                 Días de Atención Activos en el Turnero:
               </label>
               <div className="flex flex-wrap gap-2">
@@ -1214,7 +1253,6 @@ export const AdminPage: React.FC = () => {
                       key={d.day}
                       type="button"
                       onClick={() => {
-                        playMechanicalClick();
                         const nextDays = isDayOpen
                           ? config.openDays.filter((x) => x !== d.day)
                           : [...config.openDays, d.day].sort();
@@ -1225,10 +1263,10 @@ export const AdminPage: React.FC = () => {
                         updateConfig({ openDays: nextDays });
                         triggerToast(`Día ${d.full}: ${isDayOpen ? 'Cerrado' : 'Abierto'}`);
                       }}
-                      className={`px-3.5 py-2 rounded-xl font-mono text-xs font-bold border transition-all cursor-pointer ${
+                      className={`px-3.5 py-2 font-mono text-xs border transition-colors cursor-pointer ${
                         isDayOpen
-                          ? 'bg-[#F59E0B] text-zinc-950 border-[#F59E0B]'
-                          : 'bg-[#0C0E12] text-zinc-400 border-[#282D37] hover:text-white'
+                          ? 'bg-[#171513] text-[#F7F4EE] border-[#171513] font-semibold'
+                          : 'bg-[#F7F4EE] text-[#655E57] border-[#171513]/15 hover:text-[#171513]'
                       }`}
                     >
                       {d.full}
@@ -1241,7 +1279,7 @@ export const AdminPage: React.FC = () => {
             {/* Opening Hour, Closing Hour, Buffer & Courtesy */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-mono">
               <div>
-                <label className="block text-zinc-300 mb-1.5 font-bold uppercase">
+                <label className="block text-[#4A443E] mb-1.5 font-semibold uppercase">
                   Hora de Apertura (Formato 24h)
                 </label>
                 <input
@@ -1253,12 +1291,12 @@ export const AdminPage: React.FC = () => {
                     const val = Math.max(7, Math.min(20, Number(e.target.value)));
                     updateConfig({ openingHour: val });
                   }}
-                  className="w-full h-11 px-3.5 rounded-xl border border-[#282D37] bg-[#0C0E12] text-white font-bold"
+                  className="w-full h-11 px-3.5 border border-[#171513]/20 bg-[#F7F4EE] text-[#171513] font-semibold"
                 />
               </div>
 
               <div>
-                <label className="block text-zinc-300 mb-1.5 font-bold uppercase">
+                <label className="block text-[#4A443E] mb-1.5 font-semibold uppercase">
                   Hora de Cierre (Formato 24h)
                 </label>
                 <input
@@ -1270,21 +1308,21 @@ export const AdminPage: React.FC = () => {
                     const val = Math.max(12, Math.min(23, Number(e.target.value)));
                     updateConfig({ closingHour: val });
                   }}
-                  className="w-full h-11 px-3.5 rounded-xl border border-[#282D37] bg-[#0C0E12] text-white font-bold"
+                  className="w-full h-11 px-3.5 border border-[#171513]/20 bg-[#F7F4EE] text-[#171513] font-semibold"
                 />
               </div>
 
               <div>
-                <label className="block text-zinc-300 mb-1.5 font-bold uppercase">
-                  Buffer de Limpieza Entre Turnos (min)
+                <label className="block text-[#4A443E] mb-1.5 font-semibold uppercase">
+                  Pausa de Acondicionamiento Entre Turnos (min)
                 </label>
                 <select
                   value={config.cleanBufferMinutes}
                   onChange={(e) => {
                     updateConfig({ cleanBufferMinutes: Number(e.target.value) });
-                    triggerToast(`Buffer actualizado a ${e.target.value} min`);
+                    triggerToast(`Pausa entre turnos actualizada a ${e.target.value} min`);
                   }}
-                  className="w-full h-11 px-3.5 rounded-xl border border-[#282D37] bg-[#0C0E12] text-white font-bold"
+                  className="w-full h-11 px-3.5 border border-[#171513]/20 bg-[#F7F4EE] text-[#171513] font-semibold"
                 >
                   <option value={0}>0 min (Sin pausa)</option>
                   <option value={5}>5 min</option>
@@ -1295,7 +1333,7 @@ export const AdminPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-zinc-300 mb-1.5 font-bold uppercase">
+                <label className="block text-[#4A443E] mb-1.5 font-semibold uppercase">
                   Porcentaje de Seña por Transferencia (%)
                 </label>
                 <select
@@ -1304,7 +1342,7 @@ export const AdminPage: React.FC = () => {
                     updateConfig({ depositPercentage: Number(e.target.value) });
                     triggerToast(`Porcentaje de seña: ${e.target.value}%`);
                   }}
-                  className="w-full h-11 px-3.5 rounded-xl border border-[#282D37] bg-[#0C0E12] text-white font-bold"
+                  className="w-full h-11 px-3.5 border border-[#171513]/20 bg-[#F7F4EE] text-[#171513] font-semibold"
                 >
                   <option value={20}>20% de seña</option>
                   <option value={30}>30% de seña (Recomendado)</option>
@@ -1313,20 +1351,23 @@ export const AdminPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-zinc-300 mb-1.5 font-bold uppercase">
+                <label className="block text-[#4A443E] mb-1.5 font-semibold uppercase">
                   Texto Visible de Horarios
                 </label>
                 <input
                   type="text"
                   value={scheduleDisplayForm}
                   onChange={(e) => setScheduleDisplayForm(e.target.value)}
-                  onBlur={() => updateConfig({ scheduleDisplay: scheduleDisplayForm })}
-                  className="w-full h-11 px-3.5 rounded-xl border border-[#282D37] bg-[#0C0E12] text-white"
+                  onBlur={() => {
+                    updateConfig({ scheduleDisplay: scheduleDisplayForm });
+                    triggerToast('Texto de horarios actualizado');
+                  }}
+                  className="w-full h-11 px-3.5 border border-[#171513]/20 bg-[#F7F4EE] text-[#171513]"
                 />
               </div>
 
               <div>
-                <label className="block text-zinc-300 mb-1.5 font-bold uppercase">
+                <label className="block text-[#4A443E] mb-1.5 font-semibold uppercase">
                   PIN Maestro del Panel Admin
                 </label>
                 <div className="flex gap-2">
@@ -1335,7 +1376,7 @@ export const AdminPage: React.FC = () => {
                     maxLength={8}
                     value={adminPinForm}
                     onChange={(e) => setAdminPinForm(e.target.value)}
-                    className="flex-1 h-11 px-3.5 rounded-xl border border-[#282D37] bg-[#0C0E12] text-[#F59E0B] font-bold"
+                    className="flex-1 h-11 px-3.5 border border-[#171513]/20 bg-[#F7F4EE] text-[#96734E] font-semibold"
                   />
                   <button
                     type="button"
@@ -1344,7 +1385,7 @@ export const AdminPage: React.FC = () => {
                       updateConfig({ adminPin: adminPinForm.trim() });
                       triggerToast(`Nuevo PIN guardado: ${adminPinForm.trim()}`);
                     }}
-                    className="px-4 rounded-xl bg-[#F59E0B] text-zinc-950 font-black uppercase cursor-pointer"
+                    className="px-4 bg-[#171513] text-[#F7F4EE] font-semibold uppercase cursor-pointer"
                   >
                     Guardar PIN
                   </button>
@@ -1353,18 +1394,19 @@ export const AdminPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Right: Urban Aesthetic Theme Preset & Visual Effects Controls */}
-          <div className="lg:col-span-5 p-6 rounded-2xl border border-[#232730] bg-[#111318] space-y-6 shadow-xl">
-            <div className="border-b border-[#1E222B] pb-4">
-              <div className="flex items-center gap-2 text-[11px] font-mono uppercase text-[#00F0FF] font-bold mb-1">
+          {/* Right: Editorial Atmosphere Preset & Visual Effects Controls */}
+          <div className="lg:col-span-5 p-6 sm:p-7 border border-[#171513]/15 bg-[#EFEAE1] space-y-6">
+            <div className="border-b border-[#171513]/12 pb-4">
+              <div className="flex items-center gap-2 text-[11px] font-mono uppercase tracking-widest text-[#96734E] font-medium mb-1">
                 <Palette className="w-3.5 h-3.5" />
-                <span>DIRECCIÓN DE ARTE &amp; ESTÉTICA URBANA</span>
+                <span>DIRECCIÓN DE ARTE &amp; EFECTOS EDITORIALES</span>
               </div>
-              <h2 className="font-display text-2xl font-bold text-white">
-                Paleta de Colores &amp; Efectos
+              <h2 className="font-display text-2xl sm:text-3xl font-medium text-[#171513]">
+                Atmósfera &amp; Animaciones
               </h2>
-              <p className="text-xs text-zinc-400 font-mono mt-1">
-                Elegí la atmósfera cromática del sitio y controlá los efectos interactivos de aerosol y parallax.
+              <p className="text-xs text-[#4A443E] mt-1">
+                Personalizá el matiz del papel editorial, el banner rotativo con parallax y las
+                micro-interacciones del sitio.
               </p>
             </div>
 
@@ -1373,27 +1415,27 @@ export const AdminPage: React.FC = () => {
                 [
                   {
                     id: 'amber',
-                    name: 'Street Gold & Cyan',
-                    desc: 'Ámbar urbano, fuego y cian eléctrico',
-                    swatch: '#F59E0B',
-                  },
-                  {
-                    id: 'uv',
-                    name: 'UV Street Neon (Luz Negra)',
-                    desc: 'Cian fosforescente, ácido y magenta',
-                    swatch: '#00F0FF',
+                    name: 'Alabastro & Bronce Mate',
+                    desc: 'Hueso cálido original, carbón y bronce',
+                    swatch: '#96734E',
                   },
                   {
                     id: 'crimson',
-                    name: 'Crimson Spray Atelier',
-                    desc: 'Rojo aerosol intenso, naranja y oro',
-                    swatch: '#F43F5E',
+                    name: 'Terracota & Lino Cálido',
+                    desc: 'Matiz terracota suave y papel lino',
+                    swatch: '#A65D43',
                   },
                   {
                     id: 'volt',
-                    name: 'Acid Volt & Concrete',
-                    desc: 'Lima eléctrico, cian y hormigón',
-                    swatch: '#CCFF00',
+                    name: 'Salvia Botánico & Piedra',
+                    desc: 'Verde salvia de estudio y piedra clara',
+                    swatch: '#3D4F43',
+                  },
+                  {
+                    id: 'uv',
+                    name: 'Pergamino & Carbón Profundo',
+                    desc: 'Contraste editorial acentuado en pergamino',
+                    swatch: '#171513',
                   },
                 ] as { id: UrbanThemePreset; name: string; desc: string; swatch: string }[]
               ).map((preset) => {
@@ -1403,73 +1445,71 @@ export const AdminPage: React.FC = () => {
                     key={preset.id}
                     type="button"
                     onClick={() => {
-                      playMechanicalClick();
                       updateConfig({ urbanTheme: preset.id });
-                      triggerToast(`Tema urbano activado: ${preset.name}`);
+                      triggerToast(`Atmósfera editorial activada: ${preset.name}`);
                     }}
-                    className={`p-3.5 rounded-xl border text-left font-mono transition-all cursor-pointer ${
+                    className={`p-3.5 border text-left font-mono transition-all cursor-pointer ${
                       active
-                        ? 'border-white bg-[#191E2B] shadow-md'
-                        : 'border-[#252A36] bg-[#0C0E14] hover:border-zinc-500'
+                        ? 'border-[#171513] bg-[#171513] text-[#F7F4EE]'
+                        : 'border-[#171513]/15 bg-[#F7F4EE] text-[#171513] hover:border-[#171513]'
                     }`}
                   >
                     <div className="flex items-center gap-2 mb-1">
                       <span
-                        className="w-3.5 h-3.5 rounded-full shrink-0"
+                        className="w-3.5 h-3.5 rounded-full shrink-0 border border-white/30"
                         style={{ backgroundColor: preset.swatch }}
                       />
-                      <span className="text-xs font-black text-white">{preset.name}</span>
+                      <span className="text-xs font-semibold">{preset.name}</span>
                     </div>
-                    <p className="text-[11px] text-zinc-400">{preset.desc}</p>
+                    <p className="text-[11px] opacity-80">{preset.desc}</p>
                   </button>
                 );
               })}
             </div>
 
-            <div className="space-y-3 pt-2 border-t border-[#1E222B] text-xs font-mono">
+            <div className="space-y-3 pt-2 border-t border-[#171513]/12 text-xs font-mono">
               {[
                 {
                   key: 'showPromoBanner' as const,
-                  label: 'Banner Superior de Anuncio / Promo',
-                  desc: 'Muestra la barra superior con anuncio rápido y botón directo a reservar',
+                  label: 'Banner Rotativo Superior con Precios y Dirección',
+                  desc: 'Cinta animada continua en la cabecera con valores de servicios, dirección y horario',
                 },
                 {
                   key: 'enableParallax' as const,
-                  label: 'Efecto Parallax Urbano Multicapa',
-                  desc: 'Fondo arquitectónico y mural reactivo al movimiento del mouse y scroll',
+                  label: 'Efecto Parallax en Retratos & Velocidad del Banner',
+                  desc: 'Desplazamiento suave en fotografías y aceleración del banner al hacer scroll',
                 },
                 {
                   key: 'enableDripTrail' as const,
-                  label: 'Rastro de Aerosol (Graffiti Drip Trail)',
-                  desc: 'Efecto artístico de trazos de spray al desplazarse por la página',
+                  label: 'Revelado de Película Cálida & Botones Magnéticos',
+                  desc: 'Transición analógica en fotografías y atracción magnética sutil en botones',
                 },
               ].map((fx) => {
                 const isOn = config[fx.key] !== false;
                 return (
                   <div
                     key={fx.key}
-                    className="p-3.5 rounded-xl border border-[#232730] bg-[#161920] flex items-center justify-between gap-3"
+                    className="p-3.5 border border-[#171513]/12 bg-[#F7F4EE] flex items-center justify-between gap-3"
                   >
                     <div>
-                      <span className="font-bold text-white block">{fx.label}</span>
-                      <span className="text-[11px] text-zinc-400 block mt-0.5">{fx.desc}</span>
+                      <span className="font-semibold text-[#171513] block">{fx.label}</span>
+                      <span className="text-[11px] text-[#575049] block mt-0.5">{fx.desc}</span>
                     </div>
                     <button
                       type="button"
                       role="switch"
                       aria-checked={isOn}
                       onClick={() => {
-                        playMechanicalClick();
                         updateConfig({ [fx.key]: !isOn });
                         triggerToast(`${fx.label}: ${!isOn ? 'Activado' : 'Desactivado'}`);
                       }}
                       className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
-                        isOn ? 'bg-[#F59E0B]' : 'bg-[#252934]'
+                        isOn ? 'bg-[#171513]' : 'bg-[#C5BBAE]'
                       }`}
                     >
                       <span
-                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-zinc-950 transition ${
-                          isOn ? 'translate-x-5' : 'translate-x-0 bg-zinc-400'
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-[#F7F4EE] transition ${
+                          isOn ? 'translate-x-5' : 'translate-x-0'
                         }`}
                       />
                     </button>
@@ -1487,13 +1527,13 @@ export const AdminPage: React.FC = () => {
       {activeTab === 'appointments' && (
         <div className="space-y-6">
           {/* Quick Manual Appointment Creator */}
-          <div className="p-5 rounded-2xl border border-[#232730] bg-[#111318] space-y-4">
+          <div className="p-6 border border-[#171513]/15 bg-[#EFEAE1] space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <span className="text-[10px] font-mono uppercase text-[#F59E0B] font-bold block">
-                  CARGA RÁPIDA DE TURNO (OCUPA EL HORARIO EN VIVO AL INSTANTE)
+                <span className="text-[10px] font-mono uppercase tracking-widest text-[#96734E] font-medium block">
+                  CARGA MANUAL DE TURNO (ACTUALIZA LA AGENDA PÚBLICA AL INSTANTE)
                 </span>
-                <h3 className="font-display text-lg font-bold text-white">
+                <h3 className="font-display text-2xl font-medium text-[#171513]">
                   Agendar Turno Manual (Cliente por WhatsApp o Presencial)
                 </h3>
               </div>
@@ -1501,7 +1541,7 @@ export const AdminPage: React.FC = () => {
               <button
                 type="button"
                 onClick={handleExportAppointmentsCSV}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[#00F0FF]/50 bg-[#00F0FF]/10 hover:bg-[#00F0FF] text-[#00F0FF] hover:text-zinc-950 font-mono text-xs font-black uppercase tracking-wider transition-colors cursor-pointer"
+                className="inline-flex items-center gap-2 px-4 py-2.5 border border-[#171513] bg-[#F7F4EE] hover:bg-[#171513] text-[#171513] hover:text-[#F7F4EE] font-mono text-xs uppercase tracking-wider transition-colors cursor-pointer"
               >
                 <Download className="w-3.5 h-3.5" />
                 <span>Exportar Agenda CSV</span>
@@ -1510,29 +1550,29 @@ export const AdminPage: React.FC = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 text-xs font-mono">
               <div>
-                <label className="block text-zinc-400 mb-1">Fecha</label>
+                <label className="block text-[#575049] mb-1">Fecha</label>
                 <input
                   type="date"
                   value={manualDate}
                   onChange={(e) => setManualDate(e.target.value)}
-                  className="w-full h-10 px-3 rounded-lg border border-[#282D37] bg-[#0C0E12] text-white"
+                  className="w-full h-10 px-3 border border-[#171513]/20 bg-[#F7F4EE] text-[#171513]"
                 />
               </div>
               <div>
-                <label className="block text-zinc-400 mb-1">Horario</label>
+                <label className="block text-[#575049] mb-1">Horario</label>
                 <input
                   type="time"
                   value={manualTime}
                   onChange={(e) => setManualTime(e.target.value)}
-                  className="w-full h-10 px-3 rounded-lg border border-[#282D37] bg-[#0C0E12] text-white"
+                  className="w-full h-10 px-3 border border-[#171513]/20 bg-[#F7F4EE] text-[#171513]"
                 />
               </div>
               <div>
-                <label className="block text-zinc-400 mb-1">Servicio</label>
+                <label className="block text-[#575049] mb-1">Servicio</label>
                 <select
                   value={manualServiceId}
                   onChange={(e) => setManualServiceId(e.target.value)}
-                  className="w-full h-10 px-2.5 rounded-lg border border-[#282D37] bg-[#0C0E12] text-white"
+                  className="w-full h-10 px-2.5 border border-[#171513]/20 bg-[#F7F4EE] text-[#171513]"
                 >
                   {services.map((s) => (
                     <option key={s.id} value={s.id}>
@@ -1542,23 +1582,23 @@ export const AdminPage: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-zinc-400 mb-1">Cliente</label>
+                <label className="block text-[#575049] mb-1">Cliente</label>
                 <input
                   type="text"
                   value={manualClientName}
                   onChange={(e) => setManualClientName(e.target.value)}
                   placeholder="Ej. Franco Gómez"
-                  className="w-full h-10 px-3 rounded-lg border border-[#282D37] bg-[#0C0E12] text-white"
+                  className="w-full h-10 px-3 border border-[#171513]/20 bg-[#F7F4EE] text-[#171513]"
                 />
               </div>
               <div>
-                <label className="block text-zinc-400 mb-1">WhatsApp</label>
+                <label className="block text-[#575049] mb-1">WhatsApp</label>
                 <input
                   type="text"
                   value={manualClientWhatsapp}
                   onChange={(e) => setManualClientWhatsapp(e.target.value)}
                   placeholder="+54 9 3462 ..."
-                  className="w-full h-10 px-3 rounded-lg border border-[#282D37] bg-[#0C0E12] text-white"
+                  className="w-full h-10 px-3 border border-[#171513]/20 bg-[#F7F4EE] text-[#171513]"
                 />
               </div>
               <div className="flex items-end">
@@ -1571,18 +1611,18 @@ export const AdminPage: React.FC = () => {
                     }
                     const chosenSrv =
                       services.find((s) => s.id === manualServiceId) || services[0];
-                    const srvMin = chosenSrv ? chosenSrv.durationMinutes : 40;
+                    const srvMin = chosenSrv ? chosenSrv.durationMinutes : 45;
                     const endMin =
                       timeToMinutes(manualTime) + srvMin + config.cleanBufferMinutes + 120;
                     addAppointment({
-                      id: `app-manual-${Date.now()}`,
+                      id: `TK-${Date.now().toString().slice(-6)}`,
                       date: manualDate,
                       startTime: manualTime,
                       serviceMinutes: srvMin,
                       bufferMinutes: config.cleanBufferMinutes,
                       clientName: manualClientName.trim(),
                       whatsapp: manualClientWhatsapp.trim() || config.phoneDisplay,
-                      serviceNames: [chosenSrv ? chosenSrv.name : 'Corte de Pelo & Fade'],
+                      serviceNames: [chosenSrv ? chosenSrv.name : 'Corte de Autor / Clásico'],
                       paymentOption: 'commitment',
                       status: 'confirmed',
                       reviewLoopScheduledAt: minutesToTime(endMin),
@@ -1591,7 +1631,7 @@ export const AdminPage: React.FC = () => {
                     setManualClientWhatsapp('');
                     triggerToast(`Turno agendado para ${manualDate} a las ${manualTime} hs`);
                   }}
-                  className="w-full h-10 bg-[#F59E0B] hover:bg-[#D97706] text-zinc-950 font-mono font-black uppercase text-xs rounded-lg cursor-pointer"
+                  className="w-full h-10 bg-[#171513] hover:bg-[#96734E] text-[#F7F4EE] font-mono uppercase text-xs cursor-pointer transition-colors"
                 >
                   + Ocupar Turno
                 </button>
@@ -1601,40 +1641,43 @@ export const AdminPage: React.FC = () => {
 
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <h2 className="font-display text-2xl font-bold">Agenda de Turnos Confirmados</h2>
-              <p className="text-xs font-mono text-zinc-400">
-                Si cancelás un turno acá, ese horario vuelve a aparecer disponible en la portada inmediatamente.
+              <h2 className="font-display text-3xl font-medium">Agenda de Turnos Confirmados</h2>
+              <p className="text-xs font-mono text-[#575049]">
+                Si cancelás un turno acá, ese horario vuelve a quedar libre inmediatamente en el
+                turnero público.
               </p>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
               <div className="relative">
-                <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <Search className="w-3.5 h-3.5 text-[#8C8379] absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   value={appointmentSearch}
                   onChange={(e) => setAppointmentSearch(e.target.value)}
                   placeholder="Buscar cliente o WhatsApp..."
-                  className="h-9 pl-8 pr-3 rounded-lg border border-[#282D37] bg-[#0C0E12] text-xs font-mono text-white focus:border-[#F59E0B] focus:outline-none"
+                  className="h-9 pl-8 pr-3 border border-[#171513]/20 bg-[#EFEAE1] text-xs font-mono text-[#171513] focus:border-[#96734E] focus:outline-none"
                 />
               </div>
 
               <button
+                type="button"
                 onClick={() => setAppointmentFilter('today')}
-                className={`px-3 py-1.5 text-xs font-mono font-bold rounded-lg border transition-colors cursor-pointer ${
+                className={`px-3 py-1.5 text-xs font-mono border transition-colors cursor-pointer ${
                   appointmentFilter === 'today'
-                    ? 'border-[#F59E0B] bg-[#F59E0B] text-zinc-950'
-                    : 'border-[#232730] bg-[#111318] text-zinc-400 hover:text-white'
+                    ? 'border-[#171513] bg-[#171513] text-[#F7F4EE]'
+                    : 'border-[#171513]/15 bg-[#EFEAE1] text-[#575049]'
                 }`}
               >
                 Hoy {todayStr} ({todayAppointments.length})
               </button>
               <button
+                type="button"
                 onClick={() => setAppointmentFilter('all')}
-                className={`px-3 py-1.5 text-xs font-mono font-bold rounded-lg border transition-colors cursor-pointer ${
+                className={`px-3 py-1.5 text-xs font-mono border transition-colors cursor-pointer ${
                   appointmentFilter === 'all'
-                    ? 'border-[#F59E0B] bg-[#F59E0B] text-zinc-950'
-                    : 'border-[#232730] bg-[#111318] text-zinc-400 hover:text-white'
+                    ? 'border-[#171513] bg-[#171513] text-[#F7F4EE]'
+                    : 'border-[#171513]/15 bg-[#EFEAE1] text-[#575049]'
                 }`}
               >
                 Todos ({appointments.length})
@@ -1643,12 +1686,12 @@ export const AdminPage: React.FC = () => {
           </div>
 
           {displayedAppointments.length === 0 ? (
-            <div className="p-8 rounded-2xl border border-[#232730] bg-[#111318] text-center space-y-2">
-              <p className="font-display text-lg font-bold text-white">
+            <div className="p-8 border border-[#171513]/15 bg-[#EFEAE1] text-center space-y-2">
+              <p className="font-display text-2xl font-medium text-[#171513]">
                 No hay turnos registrados para este filtro
               </p>
-              <p className="text-xs font-mono text-zinc-400">
-                Todos los horarios dentro de la jornada están 100% libres en el calendario público.
+              <p className="text-xs font-mono text-[#655E57]">
+                Todos los horarios dentro de la jornada están disponibles en el turnero público.
               </p>
             </div>
           ) : (
@@ -1661,50 +1704,50 @@ export const AdminPage: React.FC = () => {
                 return (
                   <div
                     key={app.id}
-                    className={`p-5 md:p-6 rounded-xl border transition-colors flex flex-col md:flex-row md:items-center justify-between gap-6 ${
+                    className={`p-5 md:p-6 border transition-colors flex flex-col md:flex-row md:items-center justify-between gap-6 ${
                       isFinished
-                        ? 'border-[#1E222B] bg-[#0C0E12] opacity-70'
-                        : 'border-[#232730] bg-[#111318]'
+                        ? 'border-[#171513]/10 bg-[#E4DDD1]/60 opacity-70'
+                        : 'border-[#171513]/15 bg-[#EFEAE1]'
                     }`}
                   >
                     <div className="space-y-1.5">
                       <div className="flex flex-wrap items-center gap-2 text-xs font-mono">
-                        <span className="px-2.5 py-0.5 rounded bg-[#F59E0B] text-zinc-950 font-extrabold">
+                        <span className="px-2.5 py-0.5 bg-[#171513] text-[#F7F4EE] font-semibold">
                           {app.date}
                         </span>
-                        <span className="font-bold text-white">
+                        <span className="font-semibold text-[#171513]">
                           {app.startTime} a {minutesToTime(endMin)} hs
                         </span>
-                        <span className="text-zinc-600">·</span>
-                        <span className="text-zinc-300">
-                          {app.serviceMinutes}m corte + {app.bufferMinutes}m buffer
+                        <span className="text-[#8C8379]">·</span>
+                        <span className="text-[#575049]">
+                          {app.serviceMinutes}m servicio + {app.bufferMinutes}m pausa
                         </span>
-                        <span className="text-zinc-600">·</span>
+                        <span className="text-[#8C8379]">·</span>
                         <span
                           className={
                             app.paymentOption === 'deposit'
-                              ? 'text-emerald-400 font-bold'
-                              : 'text-zinc-400'
+                              ? 'text-[#3D4F43] font-semibold'
+                              : 'text-[#655E57]'
                           }
                         >
                           {app.paymentOption === 'deposit'
-                            ? `Seña ${config.depositPercentage}% Acreditada`
+                            ? `Seña ${config.depositPercentage}%`
                             : 'Abono en el Estudio'}
                         </span>
                       </div>
 
-                      <h3 className="font-display text-xl font-bold text-white">
+                      <h3 className="font-display text-2xl font-medium text-[#171513]">
                         {app.clientName}
                       </h3>
 
-                      <p className="text-xs font-mono text-zinc-300">
+                      <p className="text-xs font-mono text-[#4A443E]">
                         Servicio:{' '}
-                        <span className="text-white font-semibold">
+                        <span className="text-[#171513] font-semibold">
                           {app.serviceNames.join(' + ')}
                         </span>
                       </p>
 
-                      <div className="flex items-center gap-4 text-xs font-mono text-zinc-500 pt-1">
+                      <div className="flex items-center gap-4 text-xs font-mono text-[#655E57] pt-1">
                         <span>WhatsApp: {app.whatsapp}</span>
                       </div>
                     </div>
@@ -1722,7 +1765,7 @@ export const AdminPage: React.FC = () => {
                         )}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="px-3 py-2 rounded-xl border border-emerald-500/40 bg-emerald-500/10 text-emerald-300 text-xs font-mono font-bold hover:bg-emerald-500/20 flex items-center gap-1.5"
+                        className="px-3.5 py-2 border border-[#3D4F43]/40 bg-[#3D4F43]/10 text-[#3D4F43] text-xs font-mono font-medium hover:bg-[#3D4F43] hover:text-[#F7F4EE] transition-colors flex items-center gap-1.5"
                       >
                         <MessageCircle className="w-3.5 h-3.5" />
                         <span>WhatsApp</span>
@@ -1741,11 +1784,7 @@ export const AdminPage: React.FC = () => {
                               : 'Cita marcada como completada'
                           );
                         }}
-                        className={`px-3 py-2 text-xs font-mono font-bold rounded-xl border transition-colors cursor-pointer ${
-                          isFinished
-                            ? 'border-zinc-700 text-zinc-400'
-                            : 'border-[#F59E0B]/40 text-[#F59E0B] bg-[#F59E0B]/10'
-                        }`}
+                        className="px-3.5 py-2 text-xs font-mono border border-[#171513]/25 bg-[#F7F4EE] text-[#171513] hover:bg-[#171513] hover:text-[#F7F4EE] transition-colors cursor-pointer"
                       >
                         {isFinished ? 'Reabrir' : 'Completado'}
                       </button>
@@ -1758,7 +1797,7 @@ export const AdminPage: React.FC = () => {
                             `Turno de ${app.clientName} (${app.startTime} hs) cancelado y horario liberado`
                           );
                         }}
-                        className="px-3 py-2 text-xs font-mono font-bold text-red-400 hover:text-white border border-red-500/30 hover:bg-red-500/20 rounded-xl flex items-center gap-1.5 cursor-pointer"
+                        className="px-3.5 py-2 text-xs font-mono text-[#A65D43] hover:text-[#F7F4EE] border border-[#A65D43]/35 hover:bg-[#A65D43] transition-colors flex items-center gap-1.5 cursor-pointer"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                         <span>Cancelar y Liberar</span>
@@ -1773,41 +1812,41 @@ export const AdminPage: React.FC = () => {
       )}
 
       {/* =========================================================================== */}
-      {/* TAB 3: GALLERY MANAGEMENT (ADMIN-ONLY UPLOAD + HIDE CARD ELEMENTS)          */}
+      {/* TAB 3: GALLERY MANAGEMENT                                                   */}
       {/* =========================================================================== */}
       {activeTab === 'gallery' && (
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h2 className="font-display text-2xl font-bold">
-                Galería de Fotos del Estudio (Exclusivo Admin)
+              <h2 className="font-display text-3xl font-medium">
+                Obras &amp; Portafolio del Estudio (#obras)
               </h2>
-              <p className="text-xs text-zinc-400 font-mono">
-                Subí cualquier foto sin complicarte con etiquetas. También podés ocultar el botón de compra/reserva, ocultar precios o pausar fotos.
+              <p className="text-xs text-[#575049] font-mono">
+                Subí nuevas fotografías o controlá la visibilidad individual de cada obra, su
+                precio y su botón de reserva.
               </p>
             </div>
             <button
               type="button"
               onClick={() => setIsUploadModalOpen(true)}
-              className="inline-flex items-center gap-2 px-5 py-3 text-xs font-mono font-black uppercase tracking-wider bg-[#F59E0B] text-zinc-950 rounded-xl hover:bg-[#D97706] cursor-pointer shadow-md"
+              className="inline-flex items-center gap-2 px-5 py-3 text-xs font-mono uppercase tracking-wider bg-[#171513] text-[#F7F4EE] hover:bg-[#96734E] cursor-pointer"
             >
               <Upload className="w-4 h-4" />
-              <span>Subir Foto a la Galería</span>
+              <span>Subir Nueva Obra</span>
             </button>
           </div>
 
-          {/* Grid of Gallery Photos with Per-Card Toggles */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {galleryItems.map((item) => (
               <div
                 key={item.id}
-                className={`rounded-2xl border overflow-hidden flex flex-col justify-between transition-all ${
+                className={`border overflow-hidden flex flex-col justify-between transition-all ${
                   item.hidden
-                    ? 'border-zinc-800 bg-[#0C0E12] opacity-60'
-                    : 'border-[#232730] bg-[#111318]'
+                    ? 'border-[#171513]/10 bg-[#E4DDD1]/60 opacity-60'
+                    : 'border-[#171513]/15 bg-[#EFEAE1]'
                 }`}
               >
-                <div className="h-52 overflow-hidden relative bg-black">
+                <div className="h-52 overflow-hidden relative bg-[#171513]">
                   <img
                     src={item.imageUrl}
                     alt={item.title}
@@ -1815,31 +1854,28 @@ export const AdminPage: React.FC = () => {
                     className="w-full h-full object-cover"
                   />
                   <div className="absolute top-3 left-3 flex items-center gap-1.5">
-                    <span className="px-2.5 py-1 bg-black/85 text-[#F59E0B] font-mono text-[10px] font-bold rounded-lg border border-[#F59E0B]/40">
+                    <span className="px-2.5 py-1 bg-[#171513]/85 text-[#F7F4EE] font-mono text-[10px]">
                       {item.category}
                     </span>
                     {item.hidden && (
-                      <span className="px-2 py-1 bg-red-600 text-white font-mono text-[10px] font-black rounded-lg uppercase">
+                      <span className="px-2 py-1 bg-[#A65D43] text-[#F7F4EE] font-mono text-[10px] uppercase">
                         OCULTA
                       </span>
                     )}
                   </div>
                 </div>
 
-                <div className="p-4 flex-1 flex flex-col justify-between space-y-4">
+                <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
                   <div>
-                    <h3 className="font-display text-lg font-bold text-white mb-1">
+                    <h3 className="font-display text-xl font-medium text-[#171513] mb-1">
                       {item.title}
                     </h3>
-                    <p className="text-xs text-zinc-400 line-clamp-2 mb-2">
-                      {item.description}
-                    </p>
+                    <p className="text-xs text-[#4A443E] line-clamp-2">{item.description}</p>
                   </div>
 
-                  {/* Per-Card Element Visibility Controls */}
-                  <div className="pt-3 border-t border-[#1E222B] space-y-2">
-                    <span className="text-[10px] font-mono uppercase text-zinc-500 font-bold block">
-                      Ocultar / Mostrar en esta tarjeta:
+                  <div className="pt-3 border-t border-[#171513]/12 space-y-2">
+                    <span className="text-[10px] font-mono uppercase text-[#655E57] block">
+                      Opciones en esta obra:
                     </span>
                     <div className="flex flex-wrap gap-1.5">
                       <button
@@ -1848,22 +1884,14 @@ export const AdminPage: React.FC = () => {
                           updateGalleryItem(item.id, { hidden: !item.hidden });
                           triggerToast(
                             !item.hidden
-                              ? 'Foto ocultada del sitio público'
-                              : 'Foto visible en el sitio público'
+                              ? 'Obra ocultada del portafolio público'
+                              : 'Obra visible en el portafolio público'
                           );
                         }}
-                        className={`px-2.5 py-1 rounded-lg font-mono text-[10px] font-bold border cursor-pointer flex items-center gap-1 ${
-                          item.hidden
-                            ? 'border-red-500/50 bg-red-500/15 text-red-300'
-                            : 'border-[#282D37] bg-[#161920] text-zinc-300 hover:text-white'
-                        }`}
+                        className="px-2.5 py-1 font-mono text-[10px] border border-[#171513]/20 bg-[#F7F4EE] text-[#171513] cursor-pointer flex items-center gap-1"
                       >
-                        {item.hidden ? (
-                          <EyeOff className="w-3 h-3" />
-                        ) : (
-                          <Eye className="w-3 h-3" />
-                        )}
-                        <span>{item.hidden ? 'Foto Oculta' : 'Foto Visible'}</span>
+                        {item.hidden ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                        <span>{item.hidden ? 'Oculta' : 'Visible'}</span>
                       </button>
 
                       <button
@@ -1874,17 +1902,13 @@ export const AdminPage: React.FC = () => {
                           });
                           triggerToast(
                             !item.hideBuyButton
-                              ? 'Botón Reservar/Comprar ocultado en esta tarjeta'
-                              : 'Botón Reservar/Comprar activado en esta tarjeta'
+                              ? 'Botón Reservar ocultado en esta obra'
+                              : 'Botón Reservar visible en esta obra'
                           );
                         }}
-                        className={`px-2.5 py-1 rounded-lg font-mono text-[10px] font-bold border cursor-pointer ${
-                          item.hideBuyButton
-                            ? 'border-amber-500/50 bg-amber-500/15 text-amber-300'
-                            : 'border-[#282D37] bg-[#161920] text-zinc-300 hover:text-white'
-                        }`}
+                        className="px-2.5 py-1 font-mono text-[10px] border border-[#171513]/20 bg-[#F7F4EE] text-[#171513] cursor-pointer"
                       >
-                        {item.hideBuyButton ? 'Sin Botón Compra' : 'Con Botón Compra'}
+                        {item.hideBuyButton ? 'Sin Botón Reservar' : 'Con Botón Reservar'}
                       </button>
 
                       <button
@@ -1893,15 +1917,11 @@ export const AdminPage: React.FC = () => {
                           updateGalleryItem(item.id, { hidePrice: !item.hidePrice });
                           triggerToast(
                             !item.hidePrice
-                              ? 'Precio ocultado en esta foto'
-                              : 'Precio visible en esta foto'
+                              ? 'Precio ocultado en esta obra'
+                              : 'Precio visible en esta obra'
                           );
                         }}
-                        className={`px-2.5 py-1 rounded-lg font-mono text-[10px] font-bold border cursor-pointer ${
-                          item.hidePrice
-                            ? 'border-amber-500/50 bg-amber-500/15 text-amber-300'
-                            : 'border-[#282D37] bg-[#161920] text-zinc-300 hover:text-white'
-                        }`}
+                        className="px-2.5 py-1 font-mono text-[10px] border border-[#171513]/20 bg-[#F7F4EE] text-[#171513] cursor-pointer"
                       >
                         {item.hidePrice ? 'Precio Oculto' : 'Precio Visible'}
                       </button>
@@ -1912,12 +1932,12 @@ export const AdminPage: React.FC = () => {
                         type="button"
                         onClick={() => {
                           deleteGalleryItem(item.id);
-                          triggerToast('Foto eliminada de la galería');
+                          triggerToast('Obra eliminada de la galería');
                         }}
-                        className="inline-flex items-center gap-1 text-[11px] font-mono text-red-400 hover:text-red-300 cursor-pointer"
+                        className="inline-flex items-center gap-1 text-[11px] font-mono text-[#A65D43] hover:underline cursor-pointer"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
-                        <span>Eliminar foto</span>
+                        <span>Eliminar obra</span>
                       </button>
                     </div>
                   </div>
@@ -1935,34 +1955,35 @@ export const AdminPage: React.FC = () => {
         <div className="space-y-6">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div>
-              <h2 className="font-display text-2xl font-bold">
-                Servicios, Precios y Actualización Masiva
+              <h2 className="font-display text-3xl font-medium">
+                Catálogo de Servicios, Precios y Ajuste Masivo
               </h2>
-              <p className="text-xs text-zinc-400 font-mono">
-                Editá precios individuales o aplicá un ajuste porcentual en 1 clic a toda la carta (redondeado a múltiplos de $500 ARS).
+              <p className="text-xs text-[#575049] font-mono">
+                Editá cada servicio o aplicá un ajuste porcentual en 1 clic a toda la carta y al
+                banner rotativo (redondeado a múltiplos de $500 ARS).
               </p>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <div className="flex items-center gap-1.5 p-1.5 rounded-xl bg-[#111318] border border-[#232730] font-mono text-xs">
-                <span className="px-2 text-zinc-400 font-bold flex items-center gap-1">
-                  <TrendingUp className="w-3.5 h-3.5 text-[#F59E0B]" />
+              <div className="flex items-center gap-1.5 p-1.5 bg-[#EFEAE1] border border-[#171513]/15 font-mono text-xs">
+                <span className="px-2 text-[#4A443E] font-semibold flex items-center gap-1">
+                  <TrendingUp className="w-3.5 h-3.5 text-[#96734E]" />
                   <span>Ajuste Masivo:</span>
                 </span>
                 {[-10, 10, 15, 20].map((pct) => (
                   <button
                     key={pct}
                     type="button"
+                    data-testid={`admin-bulk-price-${pct}`}
                     onClick={() => {
-                      playMechanicalClick();
                       bulkAdjustServicePrices(pct);
                       triggerToast(
-                        `Precios de todos los servicios actualizados en ${
+                        `Precios del catálogo y banner actualizados en ${
                           pct > 0 ? `+${pct}%` : `${pct}%`
                         }`
                       );
                     }}
-                    className="px-2.5 py-1.5 rounded-lg bg-[#161920] hover:bg-[#F59E0B] text-zinc-200 hover:text-zinc-950 font-black border border-[#282D37] transition-colors cursor-pointer"
+                    className="px-2.5 py-1.5 bg-[#F7F4EE] hover:bg-[#171513] text-[#171513] hover:text-[#F7F4EE] font-semibold border border-[#171513]/15 transition-colors cursor-pointer"
                   >
                     {pct > 0 ? `+${pct}%` : `${pct}%`}
                   </button>
@@ -1970,30 +1991,30 @@ export const AdminPage: React.FC = () => {
               </div>
 
               <button
+                type="button"
                 onClick={() => {
                   setEditingService(null);
                   setServiceFormData({
                     index: String(services.length + 1).padStart(2, '0'),
                     category: 'Fades & Cortes',
                     name: '',
-                    durationMinutes: 40,
+                    durationMinutes: 45,
                     price: 12000,
                     shortDescription: '',
-                    preparation: ['Venir con el pelo limpio'],
+                    preparation: ['Cabello limpio y libre de fijadores pesados'],
                     executionSteps: [
-                      'Diagnóstico',
-                      'Degradé con clippers & shaver 0.0mm',
-                      'Corte a tijera',
-                      'Styling',
+                      '10 min · Diagnóstico personalizado y estudio de facciones',
+                      '25 min · Desarrollo del corte a tijera y máquina',
+                      '10 min · Lavado y acabado con pomada mate botánica',
                     ],
-                    aftercare: 'Recomendamos control cada 2 semanas.',
-                    productsUsed: 'Babyliss FX3 · Shaver Titanio · Polvo mate',
+                    aftercare: 'Recomendamos control cada 3 semanas.',
+                    productsUsed: 'Tijera de autor · Máquina de precisión · Arcilla mate orgánica',
                   });
                   setIsNewServiceModalOpen(true);
                 }}
-                className="inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-mono font-black uppercase tracking-wider bg-[#F59E0B] text-zinc-950 rounded-xl hover:bg-[#D97706] cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-mono uppercase tracking-wider bg-[#171513] text-[#F7F4EE] hover:bg-[#96734E] cursor-pointer"
               >
-                <Plus className="w-3.5 h-3.5 stroke-[3]" />
+                <Plus className="w-3.5 h-3.5" />
                 <span>Añadir Servicio</span>
               </button>
             </div>
@@ -2003,36 +2024,35 @@ export const AdminPage: React.FC = () => {
             {services.map((srv) => (
               <div
                 key={srv.id}
-                className={`p-5 md:p-6 rounded-xl border flex flex-col justify-between transition-all ${
+                className={`p-6 border flex flex-col justify-between transition-all ${
                   srv.hidden
-                    ? 'border-zinc-800 bg-[#0C0E12] opacity-60'
-                    : 'border-[#232730] bg-[#111318]'
+                    ? 'border-[#171513]/10 bg-[#E4DDD1]/60 opacity-60'
+                    : 'border-[#171513]/15 bg-[#EFEAE1]'
                 }`}
               >
                 <div>
-                  <div className="flex items-center justify-between gap-4 font-mono text-xs text-zinc-400 mb-2">
-                    <span className="text-[#F59E0B] font-bold">
+                  <div className="flex items-center justify-between gap-4 font-mono text-xs text-[#655E57] mb-2">
+                    <span className="text-[#96734E] font-semibold">
                       {srv.index}. {srv.category}
                     </span>
-                    <span className="text-lg font-black text-white">
+                    <span className="text-lg font-semibold text-[#171513]">
                       {formatPriceARS(srv.price)}
                     </span>
                   </div>
 
-                  <h3 className="font-display text-xl font-bold text-white mb-1">
+                  <h3 className="font-display text-2xl font-medium text-[#171513] mb-1">
                     {srv.name}
                   </h3>
-                  <p className="text-xs font-mono text-zinc-300 mb-2">
+                  <p className="text-xs font-mono text-[#575049] mb-2">
                     Duración en agenda: {srv.durationMinutes} minutos
                   </p>
-                  <p className="text-xs text-zinc-400 leading-relaxed mb-4">
+                  <p className="text-xs text-[#4A443E] leading-relaxed mb-4">
                     {srv.shortDescription}
                   </p>
 
-                  {/* Per-Service Card Visibility Toggles */}
-                  <div className="p-3 rounded-xl bg-[#161920] border border-[#232730] space-y-2 mb-3">
-                    <span className="text-[10px] font-mono uppercase text-zinc-400 font-bold block">
-                      Opciones de visualización en la tarjeta:
+                  <div className="p-3.5 bg-[#F7F4EE] border border-[#171513]/12 space-y-2 mb-3">
+                    <span className="text-[10px] font-mono uppercase text-[#655E57] block">
+                      Opciones en este servicio:
                     </span>
                     <div className="flex flex-wrap gap-1.5">
                       <button
@@ -2045,13 +2065,9 @@ export const AdminPage: React.FC = () => {
                               : 'Servicio activado en la carta pública'
                           );
                         }}
-                        className={`px-2.5 py-1 rounded-lg font-mono text-[10px] font-bold border cursor-pointer ${
-                          srv.hidden
-                            ? 'border-red-500/50 bg-red-500/15 text-red-300'
-                            : 'border-[#282D37] bg-[#111318] text-zinc-300'
-                        }`}
+                        className="px-2.5 py-1 font-mono text-[10px] border border-[#171513]/20 bg-[#EFEAE1] text-[#171513] cursor-pointer"
                       >
-                        {srv.hidden ? 'Tarjeta Oculta' : 'Tarjeta Visible'}
+                        {srv.hidden ? 'Servicio Oculto' : 'Servicio Visible'}
                       </button>
 
                       <button
@@ -2062,19 +2078,13 @@ export const AdminPage: React.FC = () => {
                           });
                           triggerToast(
                             !srv.hideBuyButton
-                              ? 'Botón de compra/reserva ocultado en este servicio'
-                              : 'Botón de compra/reserva visible en este servicio'
+                              ? 'Botón Elegir servicio ocultado'
+                              : 'Botón Elegir servicio visible'
                           );
                         }}
-                        className={`px-2.5 py-1 rounded-lg font-mono text-[10px] font-bold border cursor-pointer ${
-                          srv.hideBuyButton
-                            ? 'border-amber-500/50 bg-amber-500/15 text-amber-300'
-                            : 'border-[#282D37] bg-[#111318] text-zinc-300'
-                        }`}
+                        className="px-2.5 py-1 font-mono text-[10px] border border-[#171513]/20 bg-[#EFEAE1] text-[#171513] cursor-pointer"
                       >
-                        {srv.hideBuyButton
-                          ? 'Botón Reservar Oculto'
-                          : 'Botón Reservar Activo'}
+                        {srv.hideBuyButton ? 'Botón Reservar Oculto' : 'Botón Reservar Activo'}
                       </button>
 
                       <button
@@ -2083,15 +2093,11 @@ export const AdminPage: React.FC = () => {
                           updateService(srv.id, { hidePrice: !srv.hidePrice });
                           triggerToast(
                             !srv.hidePrice
-                              ? 'Precio ocultado en esta tarjeta'
-                              : 'Precio visible en esta tarjeta'
+                              ? 'Precio ocultado en este servicio'
+                              : 'Precio visible en este servicio'
                           );
                         }}
-                        className={`px-2.5 py-1 rounded-lg font-mono text-[10px] font-bold border cursor-pointer ${
-                          srv.hidePrice
-                            ? 'border-amber-500/50 bg-amber-500/15 text-amber-300'
-                            : 'border-[#282D37] bg-[#111318] text-zinc-300'
-                        }`}
+                        className="px-2.5 py-1 font-mono text-[10px] border border-[#171513]/20 bg-[#EFEAE1] text-[#171513] cursor-pointer"
                       >
                         {srv.hidePrice ? 'Precio Oculto' : 'Precio Visible'}
                       </button>
@@ -2099,26 +2105,28 @@ export const AdminPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="pt-4 mt-2 border-t border-[#1E222B] flex items-center justify-between">
-                  <span className="text-xs text-zinc-500 font-mono">ID: {srv.id}</span>
+                <div className="pt-4 mt-2 border-t border-[#171513]/12 flex items-center justify-between">
+                  <span className="text-xs text-[#655E57] font-mono">ID: {srv.id}</span>
                   <div className="flex items-center gap-2">
                     <button
+                      type="button"
                       onClick={() => {
                         setEditingService(srv);
                         setServiceFormData(srv);
                         setIsNewServiceModalOpen(true);
                       }}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-mono font-bold border border-[#282D37] rounded-lg hover:border-[#F59E0B] cursor-pointer"
+                      className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-mono border border-[#171513]/25 bg-[#F7F4EE] hover:bg-[#171513] hover:text-[#F7F4EE] transition-colors cursor-pointer"
                     >
                       <Edit3 className="w-3.5 h-3.5" />
-                      <span>Editar Datos</span>
+                      <span>Editar</span>
                     </button>
                     <button
+                      type="button"
                       onClick={() => {
                         deleteService(srv.id);
-                        triggerToast('Servicio eliminado de la carta');
+                        triggerToast('Servicio eliminado del catálogo');
                       }}
-                      className="p-1.5 text-zinc-500 hover:text-red-400 border border-[#282D37] rounded-lg cursor-pointer"
+                      className="p-1.5 text-[#A65D43] border border-[#A65D43]/30 hover:bg-[#A65D43] hover:text-[#F7F4EE] cursor-pointer"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -2136,45 +2144,46 @@ export const AdminPage: React.FC = () => {
       {activeTab === 'calendar' && (
         <div className="space-y-6">
           <div>
-            <h2 className="font-display text-2xl font-bold mb-1">
-              Bloqueos de Horario &amp; Pausas del Barbero
+            <h2 className="font-display text-3xl font-medium mb-1">
+              Bloqueos de Horario &amp; Pausas del Estudio
             </h2>
-            <p className="text-xs text-zinc-400 font-mono">
-              Bloqueá franjas para almuerzo, descanso o mantenimiento de máquinas. Esos horarios desaparecen al instante del turnero público.
+            <p className="text-xs text-[#575049] font-mono">
+              Bloqueá franjas para almuerzo o diligencias. Esos horarios dejan de ofrecerse al
+              instante en el turnero público.
             </p>
           </div>
 
-          <div className="p-6 rounded-xl border border-[#232730] bg-[#111318]">
-            <h3 className="font-mono text-xs uppercase text-[#F59E0B] font-bold mb-4">
-              Bloquear Horario Específico
+          <div className="p-6 border border-[#171513]/15 bg-[#EFEAE1]">
+            <h3 className="font-mono text-xs uppercase tracking-widest text-[#96734E] font-medium mb-4">
+              Bloquear Franja Horaria Específica
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
-                <label className="block text-xs font-mono text-zinc-400 mb-1 font-semibold">
+                <label className="block text-xs font-mono text-[#4A443E] mb-1 font-medium">
                   Fecha
                 </label>
                 <input
                   type="date"
                   value={newBlockedDate}
                   onChange={(e) => setNewBlockedDate(e.target.value)}
-                  className="w-full h-10 px-3 text-xs font-mono rounded-lg border border-[#282D37] bg-[#0C0E12] text-white"
+                  className="w-full h-10 px-3 text-xs font-mono border border-[#171513]/20 bg-[#F7F4EE] text-[#171513]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-mono text-zinc-400 mb-1 font-semibold">
+                <label className="block text-xs font-mono text-[#4A443E] mb-1 font-medium">
                   Hora de Inicio
                 </label>
                 <input
                   type="time"
                   value={newBlockedTime}
                   onChange={(e) => setNewBlockedTime(e.target.value)}
-                  className="w-full h-10 px-3 text-xs font-mono rounded-lg border border-[#282D37] bg-[#0C0E12] text-white"
+                  className="w-full h-10 px-3 text-xs font-mono border border-[#171513]/20 bg-[#F7F4EE] text-[#171513]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-mono text-zinc-400 mb-1 font-semibold">
+                <label className="block text-xs font-mono text-[#4A443E] mb-1 font-medium">
                   Duración (minutos)
                 </label>
                 <input
@@ -2182,26 +2191,26 @@ export const AdminPage: React.FC = () => {
                   step={15}
                   value={newBlockedDuration}
                   onChange={(e) => setNewBlockedDuration(Number(e.target.value))}
-                  className="w-full h-10 px-3 text-xs font-mono rounded-lg border border-[#282D37] bg-[#0C0E12] text-white"
+                  className="w-full h-10 px-3 text-xs font-mono border border-[#171513]/20 bg-[#F7F4EE] text-[#171513]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-mono text-zinc-400 mb-1 font-semibold">
+                <label className="block text-xs font-mono text-[#4A443E] mb-1 font-medium">
                   Motivo
                 </label>
                 <input
                   type="text"
                   value={newBlockedReason}
                   onChange={(e) => setNewBlockedReason(e.target.value)}
-                  placeholder="Ej. Almuerzo o mantenimiento"
-                  className="w-full h-10 px-3 text-xs font-mono rounded-lg border border-[#282D37] bg-[#0C0E12] text-white"
+                  className="w-full h-10 px-3 text-xs font-mono border border-[#171513]/20 bg-[#F7F4EE] text-[#171513]"
                 />
               </div>
             </div>
 
             <div className="mt-4 flex justify-end">
               <button
+                type="button"
                 onClick={() => {
                   if (!newBlockedDate || !newBlockedTime) return;
                   addBlockedSlot({
@@ -2211,9 +2220,9 @@ export const AdminPage: React.FC = () => {
                     durationMinutes: newBlockedDuration,
                     reason: newBlockedReason,
                   });
-                  triggerToast('Franja horaria bloqueada en el calendario en vivo');
+                  triggerToast('Franja horaria bloqueada en el turnero público');
                 }}
-                className="px-5 py-2.5 text-xs font-mono font-bold uppercase tracking-wider bg-[#F59E0B] text-zinc-950 rounded-lg hover:bg-[#D97706] cursor-pointer"
+                className="px-5 py-2.5 text-xs font-mono uppercase tracking-wider bg-[#171513] text-[#F7F4EE] hover:bg-[#96734E] cursor-pointer"
               >
                 Bloquear Horario
               </button>
@@ -2221,30 +2230,31 @@ export const AdminPage: React.FC = () => {
           </div>
 
           <div className="space-y-3">
-            <h3 className="font-display text-xl font-bold">
+            <h3 className="font-display text-2xl font-medium">
               Bloqueos Activos ({blockedSlots.length})
             </h3>
             {blockedSlots.map((b) => (
               <div
                 key={b.id}
-                className="p-4 rounded-xl border border-[#232730] bg-[#111318] flex items-center justify-between gap-4 font-mono text-xs"
+                className="p-4 border border-[#171513]/15 bg-[#EFEAE1] flex items-center justify-between gap-4 font-mono text-xs"
               >
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-white">
+                    <span className="font-semibold text-[#171513]">
                       {b.date} · {b.startTime} hs
                     </span>
-                    <span className="text-[#F59E0B]">({b.durationMinutes} minutos)</span>
+                    <span className="text-[#96734E]">({b.durationMinutes} minutos)</span>
                   </div>
-                  <p className="text-zinc-400 mt-0.5">{b.reason || 'Pausa de estudio'}</p>
+                  <p className="text-[#575049] mt-0.5">{b.reason || 'Pausa de estudio'}</p>
                 </div>
 
                 <button
+                  type="button"
                   onClick={() => {
                     deleteBlockedSlot(b.id);
                     triggerToast('Bloqueo eliminado y horario liberado');
                   }}
-                  className="text-red-400 hover:text-white px-3 py-1.5 border border-red-500/30 rounded-lg cursor-pointer flex items-center gap-1"
+                  className="text-[#A65D43] hover:bg-[#A65D43] hover:text-[#F7F4EE] px-3 py-1.5 border border-[#A65D43]/35 cursor-pointer flex items-center gap-1 transition-colors"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                   <span>Liberar</span>
@@ -2262,97 +2272,91 @@ export const AdminPage: React.FC = () => {
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h2 className="font-display text-2xl font-bold">
-                Estado del Servidor Full-Stack, Métricas &amp; Auditoría
+              <h2 className="font-display text-3xl font-medium">
+                Estado del Servidor, Métricas &amp; Registro de Operaciones
               </h2>
-              <p className="text-xs text-zinc-400 font-mono">
-                Monitoreo en tiempo real del motor de reservas anti-colisión, persistencia JSON y registro de seguridad.
+              <p className="text-xs text-[#575049] font-mono">
+                Monitoreo del motor de reservas anti-colisión, sincronización con Firebase y
+                persistencia en el servidor.
               </p>
             </div>
             <button
               type="button"
               onClick={() => {
-                playMechanicalClick();
                 refreshBackendState();
                 triggerToast('Estado y métricas sincronizados con el servidor');
               }}
-              className="px-4 py-2.5 rounded-xl bg-[#F59E0B] text-zinc-950 font-mono text-xs font-black uppercase tracking-wider cursor-pointer"
+              className="px-4 py-2.5 bg-[#171513] text-[#F7F4EE] font-mono text-xs uppercase tracking-wider cursor-pointer"
             >
-              Sincronizar con Servidor Ahora
+              Sincronizar Ahora
             </button>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 font-mono text-xs">
-            <div className="p-4 rounded-xl bg-[#111318] border border-[#232730]">
-              <span className="text-zinc-400 uppercase text-[10px] font-bold block">
-                Conexión API /api/*
-              </span>
-              <p className="font-display text-xl font-black text-emerald-400 mt-1">
+            <div className="p-5 bg-[#EFEAE1] border border-[#171513]/15">
+              <span className="text-[#655E57] uppercase text-[10px] block">Conexión API /api/*</span>
+              <p className="font-display text-2xl font-semibold text-[#3D4F43] mt-1">
                 {backendConnected ? 'ONLINE · SINCRONIZADO' : 'MODO LOCAL ACTIVO'}
               </p>
-              <span className="text-[11px] text-zinc-400 block mt-0.5">
-                Rate-Limiting &amp; Sanitización Activos
+              <span className="text-[11px] text-[#575049] block mt-0.5">
+                Validación y sanitización activas
               </span>
             </div>
 
-            <div className="p-4 rounded-xl bg-[#111318] border border-[#232730]">
-              <span className="text-zinc-400 uppercase text-[10px] font-bold block">
+            <div className="p-5 bg-[#EFEAE1] border border-[#171513]/15">
+              <span className="text-[#655E57] uppercase text-[10px] block">
                 Ocupación de Jornada Hoy
               </span>
-              <p className="font-display text-2xl font-black text-[#00F0FF] mt-1 tabular-nums">
+              <p className="font-display text-3xl font-semibold text-[#171513] mt-1 tabular-nums">
                 {backendMetrics ? `${backendMetrics.todayOccupancyPercentage}%` : '25%'}
               </p>
-              <span className="text-[11px] text-zinc-400 block mt-0.5">
+              <span className="text-[11px] text-[#575049] block mt-0.5">
                 {backendMetrics
                   ? `${backendMetrics.freeSlotsTodayCount} horarios libres hoy`
                   : 'Cálculo dinámico por bloques'}
               </span>
             </div>
 
-            <div className="p-4 rounded-xl bg-[#111318] border border-[#232730]">
-              <span className="text-zinc-400 uppercase text-[10px] font-bold block">
+            <div className="p-5 bg-[#EFEAE1] border border-[#171513]/15">
+              <span className="text-[#655E57] uppercase text-[10px] block">
                 Facturación Estimada Hoy
               </span>
-              <p className="font-display text-2xl font-black text-[#F59E0B] mt-1 tabular-nums">
+              <p className="font-display text-3xl font-semibold text-[#96734E] mt-1 tabular-nums">
                 {formatPriceARS(
                   backendMetrics ? backendMetrics.todayEstimatedRevenueARS : totalRevenueEst
                 )}
               </p>
-              <span className="text-[11px] text-zinc-400 block mt-0.5">
-                Total general:{' '}
+              <span className="text-[11px] text-[#575049] block mt-0.5">
+                Acumulado:{' '}
                 {formatPriceARS(
                   backendMetrics ? backendMetrics.totalEstimatedRevenueARS : totalRevenueEst
                 )}
               </span>
             </div>
 
-            <div className="p-4 rounded-xl bg-[#111318] border border-[#232730]">
-              <span className="text-zinc-400 uppercase text-[10px] font-bold block">
-                Modalidades Elegidas
-              </span>
-              <p className="font-display text-xl font-black text-white mt-1 tabular-nums">
+            <div className="p-5 bg-[#EFEAE1] border border-[#171513]/15">
+              <span className="text-[#655E57] uppercase text-[10px] block">Modalidades Elegidas</span>
+              <p className="font-display text-2xl font-semibold text-[#171513] mt-1 tabular-nums">
                 {backendMetrics
                   ? `${backendMetrics.depositAppointmentsCount} Seña / ${backendMetrics.commitmentAppointmentsCount} Estudio`
                   : `${appointments.length} Turnos Activos`}
               </p>
-              <span className="text-[11px] text-[#CCFF00] block mt-0.5 truncate">
+              <span className="text-[11px] text-[#3D4F43] block mt-0.5 truncate">
                 {backendMetrics ? backendMetrics.nextAvailableSlotLabel : 'Agenda verificada'}
               </span>
             </div>
           </div>
 
-          <div className="p-6 rounded-2xl bg-[#111318] border border-[#232730] space-y-4">
-            <div className="flex items-center justify-between border-b border-[#1E222B] pb-3">
-              <h3 className="font-display text-xl font-bold text-white">
-                Registro de Auditoría y Operaciones del Servidor ({auditLogs.length})
+          <div className="p-6 bg-[#EFEAE1] border border-[#171513]/15 space-y-4">
+            <div className="flex items-center justify-between border-b border-[#171513]/12 pb-3">
+              <h3 className="font-display text-2xl font-medium text-[#171513]">
+                Registro de Operaciones ({auditLogs.length})
               </h3>
-              <span className="text-xs font-mono text-[#00F0FF]">
-                Persistencia Atómica JSON
-              </span>
+              <span className="text-xs font-mono text-[#96734E]">Persistencia Atómica JSON</span>
             </div>
 
             {auditLogs.length === 0 ? (
-              <p className="text-xs font-mono text-zinc-400">
+              <p className="text-xs font-mono text-[#655E57]">
                 No hay eventos registrados aún en esta sesión.
               </p>
             ) : (
@@ -2360,20 +2364,20 @@ export const AdminPage: React.FC = () => {
                 {auditLogs.slice(0, 35).map((log) => (
                   <div
                     key={log.id}
-                    className="p-3 rounded-xl bg-[#0C0E12] border border-[#1E222B] flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+                    className="p-3 bg-[#F7F4EE] border border-[#171513]/12 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
                   >
                     <div className="space-y-0.5">
                       <div className="flex items-center gap-2">
-                        <span className="px-2 py-0.5 rounded bg-[#F59E0B]/15 text-[#F59E0B] text-[10px] font-black uppercase">
+                        <span className="px-2 py-0.5 bg-[#171513] text-[#F7F4EE] text-[10px] uppercase">
                           {log.action}
                         </span>
-                        <span className="text-[10px] uppercase text-zinc-400 font-bold">
+                        <span className="text-[10px] uppercase text-[#655E57]">
                           Actor: {log.actor}
                         </span>
                       </div>
-                      <p className="text-zinc-200">{log.details}</p>
+                      <p className="text-[#171513]">{log.details}</p>
                     </div>
-                    <span className="text-[11px] text-zinc-500 tabular-nums shrink-0">
+                    <span className="text-[11px] text-[#655E57] tabular-nums shrink-0">
                       {new Date(log.timestamp).toLocaleString('es-AR')}
                     </span>
                   </div>
@@ -2388,20 +2392,21 @@ export const AdminPage: React.FC = () => {
       {/* MODAL: ADMIN PHOTO UPLOAD TO GALLERY                                        */}
       {/* =========================================================================== */}
       {isUploadModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-xs">
-          <div className="w-full max-w-lg bg-[#111318] border border-[#282D37] text-white rounded-2xl p-6 max-h-[90vh] overflow-y-auto shadow-2xl">
-            <div className="flex items-center justify-between pb-4 mb-4 border-b border-[#1E222B]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#171513]/75 backdrop-blur-xs">
+          <div className="w-full max-w-lg bg-[#F7F4EE] border border-[#171513]/20 text-[#171513] p-6 sm:p-8 max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div className="flex items-center justify-between pb-4 mb-4 border-b border-[#171513]/12">
               <div>
-                <span className="text-[10px] font-mono uppercase text-[#F59E0B] font-bold block">
-                  EXCLUSIVO ADMINISTRADOR
+                <span className="text-[10px] font-mono uppercase tracking-widest text-[#96734E] block">
+                  ARCHIVO VISUAL DEL ESTUDIO
                 </span>
-                <h3 className="font-display text-xl font-bold">
-                  Subir Nueva Foto a la Galería
+                <h3 className="font-display text-2xl font-medium">
+                  Subir Nueva Obra al Portafolio
                 </h3>
               </div>
               <button
+                type="button"
                 onClick={() => setIsUploadModalOpen(false)}
-                className="p-1 text-zinc-400 hover:text-white cursor-pointer"
+                className="p-1 text-[#655E57] hover:text-[#171513] cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -2409,8 +2414,8 @@ export const AdminPage: React.FC = () => {
 
             <form onSubmit={handleCreateGalleryPhoto} className="space-y-4 text-xs font-mono">
               <div>
-                <label className="block text-zinc-300 mb-1.5 font-bold">
-                  1. Elegir Foto desde tu Celular / PC o pegar Link *
+                <label className="block text-[#171513] mb-1.5 font-semibold">
+                  1. Elegir Foto desde tu Dispositivo o pegar URL *
                 </label>
                 <div className="flex flex-col sm:flex-row gap-2">
                   <input
@@ -2423,11 +2428,11 @@ export const AdminPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="px-4 py-2.5 rounded-xl bg-[#161920] border border-[#F59E0B]/50 text-white font-bold hover:bg-[#F59E0B]/20 cursor-pointer flex items-center justify-center gap-2"
+                    className="px-4 py-2.5 bg-[#EFEAE1] border border-[#171513]/25 text-[#171513] font-semibold hover:border-[#171513] cursor-pointer flex items-center justify-center gap-2"
                   >
-                    <Upload className="w-4 h-4 text-[#F59E0B]" />
+                    <Upload className="w-4 h-4 text-[#96734E]" />
                     <span>
-                      {isCompressingPhoto ? 'Procesando foto...' : 'Seleccionar Archivo'}
+                      {isCompressingPhoto ? 'Procesando imagen...' : 'Seleccionar Archivo'}
                     </span>
                   </button>
                   <input
@@ -2435,11 +2440,11 @@ export const AdminPage: React.FC = () => {
                     value={photoPreviewUrl}
                     onChange={(e) => setPhotoPreviewUrl(e.target.value)}
                     placeholder="O pegá la URL de una imagen..."
-                    className="flex-1 h-10 px-3 rounded-xl border border-[#282D37] bg-[#0C0E12] text-white"
+                    className="flex-1 h-10 px-3 border border-[#171513]/20 bg-[#EFEAE1] text-[#171513]"
                   />
                 </div>
                 {photoPreviewUrl && (
-                  <div className="mt-3 h-40 rounded-xl overflow-hidden border border-[#282D37] bg-black">
+                  <div className="mt-3 h-40 overflow-hidden border border-[#171513]/15 bg-[#171513]">
                     <img
                       src={photoPreviewUrl}
                       alt="Vista previa"
@@ -2451,52 +2456,68 @@ export const AdminPage: React.FC = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-zinc-400 mb-1">
-                    Título de la Foto (Opcional)
-                  </label>
+                  <label className="block text-[#575049] mb-1">Título de la Obra</label>
                   <input
                     type="text"
                     value={photoTitle}
                     onChange={(e) => setPhotoTitle(e.target.value)}
-                    placeholder="Ej. Mid Fade en el Estudio"
-                    className="w-full h-10 px-3 rounded-lg border border-[#282D37] bg-[#0C0E12] text-white"
+                    placeholder="Ej. Corte a Tijera & Textura"
+                    className="w-full h-10 px-3 border border-[#171513]/20 bg-[#EFEAE1] text-[#171513]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-zinc-400 mb-1">Sección (Opcional)</label>
+                  <label className="block text-[#575049] mb-1">Categoría</label>
                   <select
                     value={photoCategory}
-                    onChange={(e) =>
-                      setPhotoCategory(e.target.value as GalleryItemCategory)
-                    }
-                    className="w-full h-10 px-3 rounded-lg border border-[#282D37] bg-[#0C0E12] text-white"
+                    onChange={(e) => setPhotoCategory(e.target.value as GalleryItemCategory)}
+                    className="w-full h-10 px-3 border border-[#171513]/20 bg-[#EFEAE1] text-[#171513]"
                   >
                     <option value="Cortes & Fades">Cortes &amp; Fades</option>
                     <option value="El Estudio & Local">El Estudio &amp; Local</option>
                     <option value="Máquinas & Setup">Máquinas &amp; Setup</option>
                     <option value="Color & Diseños">Color &amp; Diseños</option>
                     <option value="Cultura & Streetwear">Cultura &amp; Streetwear</option>
-                    <option value="General">General (Sin etiqueta)</option>
+                    <option value="General">General</option>
                   </select>
                 </div>
               </div>
 
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[#575049] mb-1">Especificación Técnica</label>
+                  <input
+                    type="text"
+                    value={photoTechnicalSpec}
+                    onChange={(e) => setPhotoTechnicalSpec(e.target.value)}
+                    placeholder="Ej. Tijera japonesa · Acabado mate"
+                    className="w-full h-10 px-3 border border-[#171513]/20 bg-[#EFEAE1] text-[#171513]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[#575049] mb-1">Etiqueta de Valor</label>
+                  <input
+                    type="text"
+                    value={photoPriceTag}
+                    onChange={(e) => setPhotoPriceTag(e.target.value)}
+                    className="w-full h-10 px-3 border border-[#171513]/20 bg-[#EFEAE1] text-[#171513]"
+                  />
+                </div>
+              </div>
+
               <div>
-                <label className="block text-zinc-400 mb-1">
-                  Descripción breve (Opcional)
-                </label>
+                <label className="block text-[#575049] mb-1">Descripción breve</label>
                 <textarea
                   rows={2}
                   value={photoDescription}
                   onChange={(e) => setPhotoDescription(e.target.value)}
-                  placeholder="Si lo dejás vacío se publica directo sin texto extra..."
-                  className="w-full p-2.5 rounded-lg border border-[#282D37] bg-[#0C0E12] text-white"
+                  placeholder="Descripción del trabajo realizado en el estudio..."
+                  className="w-full p-2.5 border border-[#171513]/20 bg-[#EFEAE1] text-[#171513]"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3 pt-1">
-                <label className="flex items-center gap-2 p-2.5 rounded-lg border border-[#282D37] bg-[#0C0E12] cursor-pointer">
+                <label className="flex items-center gap-2 p-2.5 border border-[#171513]/15 bg-[#EFEAE1] cursor-pointer">
                   <input
                     type="checkbox"
                     checked={photoHideBuyButton}
@@ -2504,29 +2525,29 @@ export const AdminPage: React.FC = () => {
                   />
                   <span>Ocultar botón Reservar</span>
                 </label>
-                <label className="flex items-center gap-2 p-2.5 rounded-lg border border-[#282D37] bg-[#0C0E12] cursor-pointer">
+                <label className="flex items-center gap-2 p-2.5 border border-[#171513]/15 bg-[#EFEAE1] cursor-pointer">
                   <input
                     type="checkbox"
                     checked={photoHidePrice}
                     onChange={(e) => setPhotoHidePrice(e.target.checked)}
                   />
-                  <span>Ocultar precio en foto</span>
+                  <span>Ocultar valor en foto</span>
                 </label>
               </div>
 
-              <div className="pt-4 border-t border-[#1E222B] flex items-center justify-end gap-3">
+              <div className="pt-4 border-t border-[#171513]/12 flex items-center justify-end gap-3">
                 <button
                   type="button"
                   onClick={() => setIsUploadModalOpen(false)}
-                  className="px-4 py-2 text-xs font-mono border border-[#282D37] rounded-lg text-zinc-400 hover:text-white cursor-pointer"
+                  className="px-4 py-2 text-xs font-mono border border-[#171513]/20 text-[#575049] hover:text-[#171513] cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2.5 text-xs font-mono font-black uppercase tracking-wider bg-[#F59E0B] text-zinc-950 rounded-lg cursor-pointer"
+                  className="px-5 py-2.5 text-xs font-mono uppercase tracking-wider bg-[#171513] text-[#F7F4EE] hover:bg-[#96734E] cursor-pointer"
                 >
-                  Publicar Foto Ahora
+                  Publicar Obra Ahora
                 </button>
               </div>
             </form>
@@ -2538,15 +2559,16 @@ export const AdminPage: React.FC = () => {
       {/* MODAL: SERVICE CREATE / EDIT                                                */}
       {/* =========================================================================== */}
       {isNewServiceModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-xs">
-          <div className="w-full max-w-lg bg-[#111318] border border-[#282D37] text-white rounded-2xl p-6 max-h-[90vh] overflow-y-auto shadow-2xl">
-            <div className="flex items-center justify-between pb-4 mb-4 border-b border-[#1E222B]">
-              <h3 className="font-display text-xl font-bold">
-                {editingService ? 'Editar Servicio' : 'Nuevo Servicio'}
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#171513]/75 backdrop-blur-xs">
+          <div className="w-full max-w-lg bg-[#F7F4EE] border border-[#171513]/20 text-[#171513] p-6 sm:p-8 max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div className="flex items-center justify-between pb-4 mb-4 border-b border-[#171513]/12">
+              <h3 className="font-display text-2xl font-medium">
+                {editingService ? 'Editar Servicio del Catálogo' : 'Nuevo Servicio del Catálogo'}
               </h3>
               <button
+                type="button"
                 onClick={() => setIsNewServiceModalOpen(false)}
-                className="p-1 text-zinc-400 hover:text-white"
+                className="p-1 text-[#655E57] hover:text-[#171513]"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -2554,8 +2576,8 @@ export const AdminPage: React.FC = () => {
 
             <div className="space-y-4 text-xs font-mono">
               <div>
-                <label className="block text-zinc-400 mb-1 font-semibold">
-                  Nombre del Corte / Servicio *
+                <label className="block text-[#4A443E] mb-1 font-semibold">
+                  Nombre del Servicio *
                 </label>
                 <input
                   type="text"
@@ -2563,16 +2585,14 @@ export const AdminPage: React.FC = () => {
                   onChange={(e) =>
                     setServiceFormData((prev) => ({ ...prev, name: e.target.value }))
                   }
-                  placeholder="Ej. Taper Fade & Line Up"
-                  className="w-full h-10 px-3 rounded-lg border border-[#282D37] bg-[#0C0E12] text-white text-sm"
+                  placeholder="Ej. Corte de Autor / Clásico"
+                  className="w-full h-10 px-3 border border-[#171513]/20 bg-[#EFEAE1] text-[#171513] text-sm"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-zinc-400 mb-1 font-semibold">
-                    Categoría
-                  </label>
+                  <label className="block text-[#4A443E] mb-1 font-semibold">Categoría</label>
                   <select
                     value={serviceFormData.category || 'Fades & Cortes'}
                     onChange={(e) =>
@@ -2581,7 +2601,7 @@ export const AdminPage: React.FC = () => {
                         category: e.target.value as StudioService['category'],
                       }))
                     }
-                    className="w-full h-10 px-3 rounded-lg border border-[#282D37] bg-[#0C0E12] text-white"
+                    className="w-full h-10 px-3 border border-[#171513]/20 bg-[#EFEAE1] text-[#171513]"
                   >
                     <option value="Fades & Cortes">Fades &amp; Cortes</option>
                     <option value="Corte & Barba">Corte &amp; Barba</option>
@@ -2591,27 +2611,27 @@ export const AdminPage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-zinc-400 mb-1 font-semibold">
+                  <label className="block text-[#4A443E] mb-1 font-semibold">
                     Duración (minutos) *
                   </label>
                   <input
                     type="number"
                     step={5}
-                    value={serviceFormData.durationMinutes || 40}
+                    value={serviceFormData.durationMinutes || 45}
                     onChange={(e) =>
                       setServiceFormData((prev) => ({
                         ...prev,
                         durationMinutes: Number(e.target.value),
                       }))
                     }
-                    className="w-full h-10 px-3 rounded-lg border border-[#282D37] bg-[#0C0E12] text-white"
+                    className="w-full h-10 px-3 border border-[#171513]/20 bg-[#EFEAE1] text-[#171513]"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-zinc-400 mb-1 font-semibold">
-                  Precio en ARS ($) *
+                <label className="block text-[#4A443E] mb-1 font-semibold">
+                  Precio en Pesos (ARS) *
                 </label>
                 <input
                   type="number"
@@ -2623,30 +2643,13 @@ export const AdminPage: React.FC = () => {
                       price: Number(e.target.value),
                     }))
                   }
-                  className="w-full h-10 px-3 rounded-lg border border-[#282D37] bg-[#0C0E12] text-white"
+                  className="w-full h-10 px-3 border border-[#171513]/20 bg-[#EFEAE1] text-[#171513]"
                 />
               </div>
 
               <div>
-                <label className="block text-zinc-400 mb-1 font-semibold">
-                  Descripción Breve
-                </label>
-                <textarea
-                  rows={2}
-                  value={serviceFormData.shortDescription || ''}
-                  onChange={(e) =>
-                    setServiceFormData((prev) => ({
-                      ...prev,
-                      shortDescription: e.target.value,
-                    }))
-                  }
-                  className="w-full p-2.5 rounded-lg border border-[#282D37] bg-[#0C0E12] text-white text-xs"
-                />
-              </div>
-
-              <div>
-                <label className="block text-zinc-400 mb-1 font-semibold">
-                  Herramientas / Productos
+                <label className="block text-[#4A443E] mb-1 font-semibold">
+                  Elementos Incluidos ("Incluye:")
                 </label>
                 <input
                   type="text"
@@ -2657,62 +2660,67 @@ export const AdminPage: React.FC = () => {
                       productsUsed: e.target.value,
                     }))
                   }
-                  className="w-full h-10 px-3 rounded-lg border border-[#282D37] bg-[#0C0E12] text-white"
+                  className="w-full h-10 px-3 border border-[#171513]/20 bg-[#EFEAE1] text-[#171513]"
                 />
               </div>
-            </div>
 
-            <div className="pt-5 mt-5 border-t border-[#1E222B] flex items-center justify-end gap-3">
-              <button
-                onClick={() => setIsNewServiceModalOpen(false)}
-                className="px-4 py-2 text-xs font-mono border border-[#282D37] rounded-lg text-zinc-400 hover:text-white"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={() => {
-                  if (!serviceFormData.name?.trim()) {
-                    triggerToast('Especificá el nombre del corte o servicio');
-                    return;
+              <div>
+                <label className="block text-[#4A443E] mb-1 font-semibold">
+                  Descripción en el Catálogo
+                </label>
+                <textarea
+                  rows={3}
+                  value={serviceFormData.shortDescription || ''}
+                  onChange={(e) =>
+                    setServiceFormData((prev) => ({
+                      ...prev,
+                      shortDescription: e.target.value,
+                    }))
                   }
-                  if (editingService) {
-                    updateService(editingService.id, serviceFormData);
-                    triggerToast('Servicio actualizado con éxito');
-                  } else {
-                    const newSrv: StudioService = {
-                      id: `srv-custom-${Date.now()}`,
-                      index: String(services.length + 1).padStart(2, '0'),
-                      category:
-                        (serviceFormData.category as StudioService['category']) ||
-                        'Fades & Cortes',
-                      name: serviceFormData.name.trim(),
-                      durationMinutes: Number(serviceFormData.durationMinutes) || 40,
-                      price: Number(serviceFormData.price) || 12000,
-                      shortDescription:
-                        serviceFormData.shortDescription ||
-                        'Servicio personalizado de autor en Venado Tuerto.',
-                      preparation: serviceFormData.preparation || [
-                        'Venir con el cabello limpio',
-                      ],
-                      executionSteps: serviceFormData.executionSteps || [
-                        'Diagnóstico',
-                        'Ejecución técnica a máquina y tijera',
-                        'Acabado',
-                      ],
-                      aftercare:
-                        serviceFormData.aftercare || 'Control recomendado cada 15 días.',
-                      productsUsed:
-                        serviceFormData.productsUsed || 'Línea Profesional Rodrigo Cutsss',
-                    };
-                    addService(newSrv);
-                    triggerToast('Nuevo servicio añadido a la carta');
-                  }
-                  setIsNewServiceModalOpen(false);
-                }}
-                className="px-5 py-2.5 text-xs font-mono font-bold uppercase tracking-wider bg-[#F59E0B] text-zinc-950 rounded-lg cursor-pointer"
-              >
-                Guardar Servicio
-              </button>
+                  className="w-full p-2.5 border border-[#171513]/20 bg-[#EFEAE1] text-[#171513]"
+                />
+              </div>
+
+              <div className="pt-4 border-t border-[#171513]/12 flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsNewServiceModalOpen(false)}
+                  className="px-4 py-2 text-xs font-mono border border-[#171513]/20 text-[#575049] cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!serviceFormData.name) return;
+                    if (editingService) {
+                      updateService(editingService.id, serviceFormData);
+                      triggerToast('Servicio actualizado en el catálogo y turnero');
+                    } else {
+                      addService({
+                        id: `srv-${Date.now()}`,
+                        index: String(services.length + 1).padStart(2, '0'),
+                        category:
+                          (serviceFormData.category as StudioService['category']) ||
+                          'Fades & Cortes',
+                        name: serviceFormData.name,
+                        durationMinutes: serviceFormData.durationMinutes || 45,
+                        price: serviceFormData.price || 12000,
+                        shortDescription: serviceFormData.shortDescription || '',
+                        preparation: serviceFormData.preparation || [],
+                        executionSteps: serviceFormData.executionSteps || [],
+                        aftercare: serviceFormData.aftercare || '',
+                        productsUsed: serviceFormData.productsUsed || '',
+                      });
+                      triggerToast('Nuevo servicio publicado en el catálogo');
+                    }
+                    setIsNewServiceModalOpen(false);
+                  }}
+                  className="px-5 py-2 text-xs font-mono uppercase tracking-wider bg-[#171513] text-[#F7F4EE] hover:bg-[#96734E] cursor-pointer"
+                >
+                  Guardar Servicio
+                </button>
+              </div>
             </div>
           </div>
         </div>

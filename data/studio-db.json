@@ -1,6 +1,6 @@
 {
-  "version": 4,
-  "updatedAt": "2026-11-07T15:07:37.037Z",
+  "version": 5,
+  "updatedAt": "2026-11-07T15:54:13.306Z",
   "config": {
     "authorName": "Rodrigo",
     "studioTitle": "Rodrigo Estudio",
@@ -51,9 +51,9 @@
       "location"
     ],
     "urbanTheme": "amber",
-    "showPromoBanner": false,
+    "showPromoBanner": true,
     "promoBannerText": "Atención personalizada uno a uno en Vuelta de Obligado 931, Venado Tuerto",
-    "enableDripTrail": false,
+    "enableDripTrail": true,
     "enableParallax": true,
     "showHeroSection": true,
     "showServicesSection": true,
@@ -354,71 +354,85 @@
   "reviews": [
     {
       "id": "rev-seed-1",
-      "clientName": "Thiago Benítez",
-      "serviceName": "Corte de Pelo (Corte de Autor & Fade)",
+      "clientName": "Martín Salvatierra",
+      "serviceName": "Corte de Autor / Clásico",
       "price": "$12.000 ARS",
       "rating": 5,
-      "date": "Hace 2 días",
+      "date": "Hace 3 días",
       "city": "Venado Tuerto",
       "verified": true,
-      "comment": "Encontrar un estudio que entienda de fades urbanos y visagismo real en Venado Tuerto es oro puro. Rodrigo trabaja 1 a 1 sin apuros, puntual al minuto en Vuelta de Obligado 931.",
-      "createdAtISO": "2026-11-05T15:03:21.997Z"
+      "comment": "Una experiencia completamente distinta en Venado Tuerto. Sin ruidos ni gente esperando encima tuyo: llegás a tu hora en Vuelta de Obligado 931, te reciben con un café y Rodrigo se toma todo el tiempo para lograr exactamente el corte que buscás.",
+      "createdAtISO": "2026-11-04T15:42:37.037Z"
     },
     {
       "id": "rev-seed-2",
-      "clientName": "Lucas Santoro",
-      "serviceName": "Taper Fade & Contornos a Trimmer",
-      "price": "$12.000 ARS",
+      "clientName": "Agustín Pellegrini",
+      "serviceName": "Corte + Perfilado de Barba",
+      "price": "$17.000 ARS",
       "rating": 5,
-      "date": "Hace 4 días",
+      "date": "Hace 5 días",
       "city": "Venado Tuerto",
       "verified": true,
-      "comment": "Tengo rulos y el Low Taper que me hace Rodrigo respeta la caída natural y me dura prolijo casi un mes. La atención privada 1 a 1 sin fila de espera marca toda la diferencia.",
-      "createdAtISO": "2026-11-03T15:03:21.997Z"
+      "comment": "La precisión con la tijera y el cuidado en el perfilado de barba con toalla tibia son de otro nivel. El corte crece prolijo durante semanas sin perder la forma.",
+      "createdAtISO": "2026-11-02T15:42:37.037Z"
     },
     {
       "id": "rev-seed-3",
-      "clientName": "Nahuel Rossi",
-      "serviceName": "Corte de Pelo + Color / Platinado Global",
+      "clientName": "Federico Ledesma",
+      "serviceName": "Coloración / Iluminación",
       "price": "$28.000 ARS",
       "rating": 5,
       "date": "Hace 1 semana",
       "city": "Venado Tuerto",
       "verified": true,
-      "comment": "Me hice el platinado global ceniza y quedó impecable cuidando el cuero cabelludo. El pulido con shaver de titanio 0.0mm y el polvo texturizante mate son de primer nivel.",
-      "createdAtISO": "2026-10-31T15:03:21.997Z"
+      "comment": "Buscaba unos reflejos muy sutiles que no dañaran el pelo y el resultado superó lo que imaginaba. Ambiente tranquilo, trato personalizado y productos de primera línea.",
+      "createdAtISO": "2026-10-31T15:42:37.037Z"
     },
     {
       "id": "rev-seed-4",
-      "clientName": "Facundo Morán",
-      "serviceName": "Corte de Pelo + Perfilado de Barba Completo",
-      "price": "$17.000 ARS",
+      "clientName": "Nicolás Bertero",
+      "serviceName": "Lavado Premium y Nutrición Capilar",
+      "price": "$9.500 ARS",
       "rating": 5,
       "date": "Hace 2 semanas",
       "city": "Venado Tuerto",
       "verified": true,
-      "comment": "El perfilado de barba con trimmer en T, shaver de titanio y toalla caliente al vapor deja cero irritación. Reservás desde el celular y te sentás a la hora exacta.",
-      "createdAtISO": "2026-10-24T15:03:21.997Z"
+      "comment": "Reservar desde el celular es comodísimo y la puntualidad es total. El lavado nutritivo con masaje capilar al final del corte hace que salgas renovado.",
+      "createdAtISO": "2026-10-24T15:42:37.037Z"
     }
   ],
   "auditLogs": [
     {
-      "id": "audit-1794064057037",
-      "timestamp": "2026-11-07T15:07:37.037Z",
+      "id": "audit-1794066853306",
+      "timestamp": "2026-11-07T15:54:13.306Z",
       "action": "CONFIG_UPDATED",
       "actor": "admin",
-      "details": "Configuración actualizada (openDays)."
+      "details": "Configuración actualizada (authorName, instagram, phoneDisplay, whatsappRaw, studioTitle, brandKicker, tagline, address, neighborhood, transferAlias, mainPriceDisplay, heroSubtitle, bio, promoBannerText)."
     },
     {
-      "id": "audit-1794064056966",
-      "timestamp": "2026-11-07T15:07:36.966Z",
+      "id": "audit-1794066850087",
+      "timestamp": "2026-11-07T15:54:10.087Z",
       "action": "CONFIG_UPDATED",
       "actor": "admin",
-      "details": "Configuración actualizada (openDays)."
+      "details": "Configuración actualizada (authorName, instagram, phoneDisplay, whatsappRaw, studioTitle, brandKicker, tagline, address, neighborhood, transferAlias, mainPriceDisplay, heroSubtitle, bio, promoBannerText)."
+    },
+    {
+      "id": "audit-1794066847737",
+      "timestamp": "2026-11-07T15:54:07.737Z",
+      "action": "ADMIN_LOGIN_SUCCESS",
+      "actor": "admin",
+      "details": "Sesión administrativa iniciada correctamente."
+    },
+    {
+      "id": "audit-1794066750483",
+      "timestamp": "2026-11-07T15:52:30.483Z",
+      "action": "ADMIN_LOGIN_SUCCESS",
+      "actor": "admin",
+      "details": "Sesión administrativa iniciada correctamente."
     },
     {
       "id": "audit-init",
-      "timestamp": "2026-11-07T15:03:21.999Z",
+      "timestamp": "2026-11-07T15:42:37.039Z",
       "action": "SYSTEM_BOOT",
       "actor": "system",
       "details": "Motor backend de Rodrigo Estudio inicializado y sincronizado."

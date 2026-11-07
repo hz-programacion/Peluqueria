@@ -602,15 +602,39 @@ export const ThermalReceiptBooking: React.FC = () => {
               )}
             </motion.div>
           ) : confirmedTicket ? (
-            /* CONFIRMED BOOKING ELEGANT VOUCHER VIEW */
+            /* CONFIRMED BOOKING ELEGANT VOUCHER VIEW WITH EDITORIAL STAMP */
             <motion.div
               key="confirmed-voucher"
               initial={{ opacity: 0, scale: 0.98, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.28 }}
-              className="max-w-2xl mx-auto bg-[#F7F4EE] border border-[#171513]/15 p-8 sm:p-10 space-y-6 shadow-sm"
+              className="relative max-w-2xl mx-auto bg-[#F7F4EE] border border-[#171513]/15 p-8 sm:p-10 space-y-6 shadow-sm overflow-hidden"
             >
+              {/* Animated Circular Editorial Studio Seal ("Sello de Estudio") */}
+              <motion.div
+                initial={{ opacity: 0, scale: 1.5, rotate: -22 }}
+                animate={{ opacity: 1, scale: 1, rotate: -10 }}
+                transition={{
+                  type: 'spring',
+                  stiffness: 200,
+                  damping: 16,
+                  delay: 0.15,
+                }}
+                aria-hidden="true"
+                className="hidden sm:flex absolute top-6 right-6 w-24 h-24 rounded-full border-2 border-[#96734E]/45 text-[#96734E] flex-col items-center justify-center text-center p-2 pointer-events-none select-none"
+              >
+                <span className="text-[8px] font-mono uppercase tracking-widest leading-tight">
+                  Sello de Estudio
+                </span>
+                <span className="font-display italic text-xs font-semibold text-[#171513] my-0.5">
+                  Confirmado
+                </span>
+                <span className="text-[7px] font-mono uppercase tracking-wider text-[#655E57]">
+                  Venado Tuerto
+                </span>
+              </motion.div>
+
               <div className="text-center space-y-2 pb-6 border-b border-[#171513]/10">
                 <div className="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-[#3D4F43] font-semibold">
                   <CheckCircle2 className="w-4 h-4" />
@@ -934,15 +958,18 @@ export const ThermalReceiptBooking: React.FC = () => {
                           </p>
                         ) : (
                           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2.5">
-                            {slots.map((slot) => {
+                            {slots.map((slot, slotIdx) => {
                               const isSelected = selectedTime === slot.time;
                               return (
-                                <button
-                                  key={slot.time}
+                                <motion.button
+                                  key={`${selectedDate}-${slot.time}`}
+                                  initial={{ opacity: 0, y: 6 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  transition={{ duration: 0.18, delay: slotIdx * 0.014 }}
                                   type="button"
                                   disabled={!slot.available}
                                   onClick={() => setSelectedTime(slot.time)}
-                                  className={`py-3 px-2 font-mono text-xs transition-all tabular-nums ${
+                                  className={`py-3 px-2 font-mono text-xs transition-colors tabular-nums ${
                                     !slot.available
                                       ? 'bg-[#EFEAE1]/60 text-[#B0A79C] line-through cursor-not-allowed'
                                       : isSelected
@@ -951,7 +978,7 @@ export const ThermalReceiptBooking: React.FC = () => {
                                   }`}
                                 >
                                   {slot.time} hs
-                                </button>
+                                </motion.button>
                               );
                             })}
                           </div>

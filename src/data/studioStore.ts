@@ -119,10 +119,10 @@ export const INITIAL_STUDIO_CONFIG: StudioConfig = {
   layoutMode: 'landing',
   sectionOrder: DEFAULT_SECTION_ORDER,
   urbanTheme: 'amber',
-  showPromoBanner: false,
+  showPromoBanner: true,
   promoBannerText:
     'Atención personalizada uno a uno en Vuelta de Obligado 931, Venado Tuerto',
-  enableDripTrail: false,
+  enableDripTrail: true,
   enableParallax: true,
   showHeroSection: true,
   showServicesSection: true,
