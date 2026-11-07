@@ -33,6 +33,14 @@ export interface ValidationResult {
   errors: Record<string, string>;
 }
 
+export interface NextAvailableSlotInfo {
+  dateISO: string;
+  time: string;
+  isToday: boolean;
+  label: string;
+  freeCountToday: number;
+}
+
 /**
  * Returns YYYY-MM-DD in local time (never shifted to tomorrow or UTC).
  */
@@ -168,6 +176,107 @@ export function getAvailableTimeSlots(
   }
 
   return slots;
+}
+
+/**
+ * Calculates in real-time the next available slot today (or the next open day if today has none left).
+ */
+export function getNextAvailableSlotInfo(
+  appointments: AppointmentRecord[],
+  blockedSlots: BlockedTimeSlotDef[] = [],
+  openHour = 11,
+  closeHour = 21,
+  openDays: number[] = [1, 2, 3, 4, 5, 6],
+  requiredBlockMinutes = 50,
+  now: Date = new Date()
+): NextAvailableSlotInfo {
+  const todayISO = getTodayLocalISO(now);
+  const todaySlots = getAvailableTimeSlots(
+    todayISO,
+    requiredBlockMinutes,
+    appointments,
+    openHour,
+    closeHour,
+    blockedSlots,
+    openDays
+  );
+
+  const freeTodaySlots = todaySlots.filter((s) => s.available);
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+  // First check if there is a slot today that is >= current time (or any free slot today if outside open hours)
+  const upcomingTodaySlot =
+    freeTodaySlots.find((s) => timeToMinutes(s.time) >= currentMinutes) || freeTodaySlots[0];
+
+  if (upcomingTodaySlot) {
+    return {
+      dateISO: todayISO,
+      time: upcomingTodaySlot.time,
+      isToday: true,
+      label: `Próximo turno libre hoy: ${upcomingTodaySlot.time} hs`,
+      freeCountToday: freeTodaySlots.length,
+    };
+  }
+
+  // Otherwise check the next 5 days for the earliest open slot
+  for (let offset = 1; offset <= 5; offset++) {
+    const nextDateISO = getOffsetDateISO(offset, now);
+    const nextSlots = getAvailableTimeSlots(
+      nextDateISO,
+      requiredBlockMinutes,
+      appointments,
+      openHour,
+      closeHour,
+      blockedSlots,
+      openDays
+    );
+    const firstFree = nextSlots.find((s) => s.available);
+    if (firstFree) {
+      const dayLabel = offset === 1 ? 'mañana' : nextDateISO;
+      return {
+        dateISO: nextDateISO,
+        time: firstFree.time,
+        isToday: false,
+        label: `Próximo turno libre (${dayLabel}): ${firstFree.time} hs`,
+        freeCountToday: 0,
+      };
+    }
+  }
+
+  return {
+    dateISO: todayISO,
+    time: `${String(openHour).padStart(2, '0')}:00`,
+    isToday: false,
+    label: `Agenda abierta desde las ${String(openHour).padStart(2, '0')}:00 hs`,
+    freeCountToday: 0,
+  };
+}
+
+/**
+ * Finds active appointments by WhatsApp number (matching trailing digits) or client name / ticket ID.
+ */
+export function findAppointmentsByQuery(
+  query: string,
+  appointments: AppointmentRecord[]
+): AppointmentRecord[] {
+  const trimmed = (query || '').trim();
+  if (!trimmed) return [];
+
+  const queryDigits = trimmed.replace(/\D/g, '');
+  const queryLower = trimmed.toLowerCase();
+
+  return appointments.filter((app) => {
+    const appDigits = (app.whatsapp || '').replace(/\D/g, '');
+    // Match by last 6+ digits of WhatsApp number if digits were entered
+    if (queryDigits.length >= 6 && appDigits.length >= 6) {
+      const tail = queryDigits.slice(-6);
+      if (appDigits.includes(tail)) return true;
+    }
+    // Also match by Ticket ID or Client Name
+    if (app.id.toLowerCase().includes(queryLower)) return true;
+    if (app.clientName.toLowerCase().includes(queryLower)) return true;
+    return false;
+  });
 }
 
 /**
@@ -321,4 +430,3 @@ export function resolveWhatsAppInfo(
     display,
   };
 }
-

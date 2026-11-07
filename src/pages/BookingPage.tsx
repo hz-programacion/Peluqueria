@@ -6,29 +6,23 @@ export const BookingPage: React.FC = () => {
   const { config } = useStudio();
 
   return (
-    <div className="py-8 md:py-16 max-w-[1360px] mx-auto px-4 sm:px-6 space-y-10">
-      {/* Editorial Title */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-[#232730]">
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <span className="w-2 h-2 rounded-full bg-[#D4A373]" />
-            <span className="font-mono text-xs uppercase tracking-widest text-[#D4A373] font-bold">
-              DESPACHO AUTOMATIZADO 100% // {config.neighborhood.toUpperCase()}
-            </span>
+    <div className="py-12 md:py-20 max-w-[1320px] mx-auto px-5 sm:px-8 space-y-10">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-[#171513]/12">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-[#96734E] font-medium">
+            <span>Agenda en Vivo</span>
+            <span aria-hidden="true">·</span>
+            <span>{config.address}, {config.neighborhood}</span>
           </div>
-          <h1 className="font-display text-4xl md:text-5xl font-black text-white uppercase tracking-tight">
-            Emisión de Ticket &amp; Reserva
+          <h1 className="font-display text-4xl md:text-5xl font-medium text-[#171513]">
+            Reservá tu lugar en el estudio
           </h1>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="px-4 py-2 rounded-xl bg-[#111318] border border-[#D4A373]/40 text-xs font-mono font-bold text-[#D4A373] flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#D4A373]" />
-            <span>CORTE DE PELO: {config.mainPriceDisplay} · 1 A 1</span>
-          </div>
-        </div>
+        <p className="text-sm text-[#575049] max-w-md">
+          Seleccioná tu servicio, fecha y horario disponible en tres pasos simples.
+        </p>
       </div>
 
-      {/* Embedded Modern Thermal Booking Engine */}
       <ThermalReceiptBooking />
     </div>
   );

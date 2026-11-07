@@ -1,67 +1,115 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Check,
+  Calendar,
+  Clock,
+  MessageCircle,
+  Copy,
+  CheckCircle2,
+  MapPin,
+  Search,
+  Download,
+  CalendarPlus,
+  RefreshCw,
+  ArrowRight,
+  ArrowLeft,
+} from 'lucide-react';
 import { useStudio } from '../context/StudioContext';
 import {
   calculateBookingSummary,
   getAvailableTimeSlots,
   formatPriceARS,
+  timeToMinutes,
+  minutesToTime,
+  resolveWhatsAppInfo,
   getTodayLocalISO,
   getOffsetDateISO,
-  resolveWhatsAppInfo,
+  findAppointmentsByQuery,
 } from '../utils/bookingEngine';
 import {
-  Scissors,
-  MessageCircle,
-  Barcode,
-  ArrowRight,
-  RotateCcw,
-  CheckCircle2,
-  MapPin,
-  Clock,
-  ShieldCheck,
-} from 'lucide-react';
-import { playMechanicalHover, playMechanicalClick } from '../utils/audioFeedback';
+  downloadAppointmentICS,
+  downloadThermalTicketPNG,
+  generateGoogleCalendarUrl,
+  ExportableTicketData,
+} from '../utils/ticketExport';
+import { AppointmentRecord } from '../data/studioData';
+
+type BookingMode = 'new_booking' | 'lookup_ticket';
+type BookingStep = 1 | 2 | 3;
 
 export const ThermalReceiptBooking: React.FC = () => {
   const {
+    config,
     services,
-    selectedServiceIds,
-    toggleSelectService,
     appointments,
     blockedSlots,
     addAppointment,
-    cancelAppointment,
-    config,
+    rescheduleAppointment,
+    selectedServiceIds,
+    toggleSelectService,
+    setSelectedServiceIds,
+    preselectedSlot,
+    setPreselectedSlot,
   } = useStudio();
+
+  const [activeMode, setActiveMode] = useState<BookingMode>('new_booking');
+  const [currentStep, setCurrentStep] = useState<BookingStep>(1);
 
   const todayISO = getTodayLocalISO();
   const tomorrowISO = getOffsetDateISO(1);
   const dayAfterISO = getOffsetDateISO(2);
 
-  // Default date is strictly TODAY in local time
-  const [selectedDate, setSelectedDate] = useState<string>(() => getTodayLocalISO());
+  const [selectedDate, setSelectedDate] = useState<string>(todayISO);
   const [selectedTime, setSelectedTime] = useState<string>('');
   const [clientName, setClientName] = useState<string>('');
   const [whatsapp, setWhatsapp] = useState<string>('');
   const [paymentOption, setPaymentOption] = useState<'deposit' | 'commitment'>('deposit');
-  const [hasConfirmed, setHasConfirmed] = useState<boolean>(false);
-  const [confirmedTicket, setConfirmedTicket] = useState<{
-    id: string;
-    clientName: string;
-    whatsapp: string;
-    services: string[];
-    date: string;
-    time: string;
-    totalPrice: number;
-    depositAmount: number;
-    totalMinutes: number;
-    paymentOption: 'deposit' | 'commitment';
-    waMessage: string;
+  const [formError, setFormError] = useState<string>('');
+  const [confirmedTicket, setConfirmedTicket] = useState<ExportableTicketData | null>(null);
+  const [copiedAlias, setCopiedAlias] = useState<boolean>(false);
+  const [downloadedFeedback, setDownloadedFeedback] = useState<string>('');
+  const [isSubmittingBooking, setIsSubmittingBooking] = useState<boolean>(false);
+
+  // Lookup state
+  const [lookupQuery, setLookupQuery] = useState<string>('');
+  const [lookupSearched, setLookupSearched] = useState<boolean>(false);
+  const [reschedulingTicketId, setReschedulingTicketId] = useState<string | null>(null);
+  const [rescheduleDate, setRescheduleDate] = useState<string>(todayISO);
+  const [rescheduleTime, setRescheduleTime] = useState<string>('');
+  const [rescheduleFeedback, setRescheduleFeedback] = useState<{
+    type: 'ok' | 'err';
+    text: string;
   } | null>(null);
 
-  const visibleServices = services.filter((s) => !s.hidden);
-  const waInfo = resolveWhatsAppInfo(config.phoneDisplay, config.whatsappRaw);
+  // Listen for preselected slot from Hero availability indicator
+  useEffect(() => {
+    if (preselectedSlot) {
+      setActiveMode('new_booking');
+      setSelectedDate(preselectedSlot.date);
+      setSelectedTime(preselectedSlot.time);
+      setCurrentStep(2);
+      setPreselectedSlot(null);
+    }
+  }, [preselectedSlot, setPreselectedSlot]);
 
-  // Summary calculation with dynamic buffer and deposit percentage
+  // Listen for direct service selection from the Interactive Service Catalog
+  useEffect(() => {
+    const handleCatalogSelect = (e: Event) => {
+      const customEvent = e as CustomEvent<{ serviceId?: string }>;
+      if (customEvent.detail?.serviceId) {
+        setSelectedServiceIds([customEvent.detail.serviceId]);
+      }
+      setActiveMode('new_booking');
+      setConfirmedTicket(null);
+      setCurrentStep(2);
+    };
+    window.addEventListener('atelier-select-service', handleCatalogSelect);
+    return () => window.removeEventListener('atelier-select-service', handleCatalogSelect);
+  }, [setSelectedServiceIds]);
+
+  const visibleServices = services.filter((s) => !s.hidden);
+
   const summary = calculateBookingSummary(
     selectedServiceIds,
     visibleServices,
@@ -69,8 +117,7 @@ export const ThermalReceiptBooking: React.FC = () => {
     config.depositPercentage
   );
 
-  // Available Slots for date recalculated dynamically whenever appointments/blocks/services change
-  const availableSlots = getAvailableTimeSlots(
+  const slots = getAvailableTimeSlots(
     selectedDate,
     summary.totalBlockMinutes,
     appointments,
@@ -80,33 +127,72 @@ export const ThermalReceiptBooking: React.FC = () => {
     config.openDays
   );
 
-  const freeSlotsCount = availableSlots.filter((s) => s.available).length;
-  const busySlotsCount = availableSlots.length - freeSlotsCount;
+  const availableSlotsCount = slots.filter((s) => s.available).length;
+  const waInfo = resolveWhatsAppInfo(config.phoneDisplay, config.whatsappRaw);
 
-  // Automatically clear selectedTime if that slot was just booked/blocked or no longer fits
+  // Automatically pre-select first available time slot when entering Step 2 if none chosen
   useEffect(() => {
-    if (!selectedTime) return;
-    const stillAvailable = availableSlots.some((s) => s.time === selectedTime && s.available);
-    if (!stillAvailable) {
-      setSelectedTime('');
+    if (currentStep === 2 && !selectedTime) {
+      const firstOpen = slots.find((s) => s.available);
+      if (firstOpen) {
+        setSelectedTime(firstOpen.time);
+      }
     }
-  }, [availableSlots, selectedTime]);
+  }, [currentStep, selectedDate, slots, selectedTime]);
 
-  // Form Validation
-  const isFormValid =
-    summary.selectedServices.length > 0 &&
-    selectedDate.trim() !== '' &&
-    selectedTime.trim() !== '' &&
-    clientName.trim().length >= 2 &&
-    whatsapp.replace(/\D/g, '').length >= 8;
+  const handleCopyAlias = () => {
+    navigator.clipboard?.writeText(config.transferAlias || 'RODRIGO.CUTSSS');
+    setCopiedAlias(true);
+    setTimeout(() => setCopiedAlias(false), 2000);
+  };
 
-  const handleConfirmReservation = (e: React.FormEvent) => {
+  const handleAdvanceToStep2 = () => {
+    if (selectedServiceIds.length === 0) {
+      setFormError('Elegí al menos un servicio para continuar con la fecha y hora.');
+      return;
+    }
+    setFormError('');
+    setCurrentStep(2);
+  };
+
+  const handleAdvanceToStep3 = () => {
+    if (!selectedDate || !selectedTime) {
+      setFormError('Seleccioná un día y un horario disponible para avanzar.');
+      return;
+    }
+    setFormError('');
+    setCurrentStep(3);
+  };
+
+  const handleConfirmBooking = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isFormValid) return;
+    if (selectedServiceIds.length === 0) {
+      setFormError('Seleccioná al menos un servicio en el Paso 1.');
+      setCurrentStep(1);
+      return;
+    }
+    if (!selectedTime) {
+      setFormError('Seleccioná un horario disponible en el Paso 2.');
+      setCurrentStep(2);
+      return;
+    }
+    if (clientName.trim().length < 2) {
+      setFormError('Por favor ingresá tu nombre y apellido.');
+      return;
+    }
+    if (whatsapp.replace(/\D/g, '').length < 8) {
+      setFormError('Ingresá un número de WhatsApp válido (mínimo 8 dígitos).');
+      return;
+    }
 
-    const ticketId = `TK-${Math.floor(100000 + Math.random() * 900000)}`;
+    setFormError('');
+    setIsSubmittingBooking(true);
 
-    addAppointment({
+    const ticketId = `RC-${Math.floor(100000 + Math.random() * 900000)}`;
+    const endMinutes = timeToMinutes(selectedTime) + summary.totalBlockMinutes + 120;
+    const reviewTime = minutesToTime(endMinutes);
+
+    const newRecord: AppointmentRecord = {
       id: ticketId,
       date: selectedDate,
       startTime: selectedTime,
@@ -117,611 +203,1020 @@ export const ThermalReceiptBooking: React.FC = () => {
       serviceNames: summary.selectedServices.map((s) => s.name),
       paymentOption,
       status: 'confirmed',
-      reviewLoopScheduledAt: `${selectedDate} ${selectedTime}`,
-    });
+      reviewLoopScheduledAt: reviewTime,
+    };
 
-    const serviceListText = summary.selectedServices.map((s) => `• ${s.name}`).join('\n');
-    const waText = encodeURIComponent(
-      `Hola ${config.authorName}! Acabo de reservar mi turno en la web de ${config.studioTitle}:\n\n` +
-        `Ticket: #${ticketId}\n` +
-        `Cliente: ${clientName.trim()}\n` +
-        `Fecha: ${selectedDate}\n` +
-        `Horario: ${selectedTime} hs\n` +
-        `Servicios:\n${serviceListText}\n\n` +
-        `Total: ${formatPriceARS(summary.totalPrice)}\n` +
-        `Modalidad: ${
-          paymentOption === 'deposit'
-            ? `Seña del ${config.depositPercentage}% (${formatPriceARS(summary.depositAmount)}) a alias ${config.transferAlias}`
-            : 'Compromiso de asistencia (abono en el estudio)'
-        }\n\n` +
-        `Nos vemos en ${config.address}, ${config.neighborhood}!`
-    );
+    const result = await addAppointment(newRecord);
+    setIsSubmittingBooking(false);
+
+    if (!result.ok) {
+      setFormError(result.error || 'Ese horario acaba de ocuparse. Por favor elegí otro horario.');
+      return;
+    }
+
+    const saved = result.appointment || newRecord;
 
     setConfirmedTicket({
-      id: ticketId,
-      clientName: clientName.trim(),
-      whatsapp: whatsapp.trim(),
-      services: summary.selectedServices.map((s) => s.name),
-      date: selectedDate,
-      time: selectedTime,
+      id: saved.id,
+      clientName: saved.clientName,
+      whatsapp: saved.whatsapp,
+      date: saved.date,
+      time: saved.startTime,
+      services: saved.serviceNames,
+      totalMinutes: summary.totalBlockMinutes,
       totalPrice: summary.totalPrice,
-      depositAmount: summary.depositAmount,
-      totalMinutes: summary.serviceMinutes,
-      paymentOption,
-      waMessage: `${waInfo.url}?text=${waText}`,
+      paymentOption: saved.paymentOption,
+      studioTitle: config.studioTitle,
+      address: config.address,
+      neighborhood: config.neighborhood,
+      transferAlias: config.transferAlias,
     });
-
-    setHasConfirmed(true);
   };
 
-  if (hasConfirmed && confirmedTicket) {
-    return (
-      <div className="py-6 px-4 max-w-xl mx-auto">
-        <div className="bg-[#FAF8F5] text-zinc-950 p-6 sm:p-8 rounded-2xl shadow-2xl font-mono text-xs border border-zinc-300 relative overflow-hidden">
-          <div className="text-center pb-4 mb-4 border-b border-dashed border-zinc-400">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-900 font-bold text-[11px] mb-2">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
-              <span>Turno Reservado y Bloqueado en Agenda</span>
-            </div>
-            <div className="flex justify-center items-center gap-1 mb-1">
-              <Barcode className="w-48 h-10 text-zinc-800" />
-            </div>
-            <p className="text-[10px] font-bold tracking-widest text-zinc-600">
-              * {confirmedTicket.id} *
-            </p>
-            <h2 className="font-display font-black text-xl uppercase tracking-tight text-zinc-900 mt-2">
-              {config.studioTitle}
-            </h2>
-            <p className="text-[11px] text-zinc-700 font-bold">
-              {config.address} · {config.neighborhood}
-            </p>
-          </div>
+  const matchedAppointments = lookupQuery.trim()
+    ? findAppointmentsByQuery(lookupQuery, appointments)
+    : [];
 
-          <div className="space-y-3 mb-6">
-            <div className="flex justify-between">
-              <span className="text-zinc-600 font-semibold">FECHA TURNO:</span>
-              <span className="font-bold text-zinc-900 tabular-nums">{confirmedTicket.date}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-zinc-600 font-semibold">HORARIO EXACTO:</span>
-              <span className="font-bold text-zinc-900 text-sm bg-zinc-200 px-2 py-0.5 rounded tabular-nums">
-                {confirmedTicket.time} HS
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-zinc-600 font-semibold">CLIENTE:</span>
-              <span className="font-bold text-zinc-900 uppercase">{confirmedTicket.clientName}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-zinc-600 font-semibold">WHATSAPP:</span>
-              <span className="text-zinc-900 font-bold tabular-nums">{confirmedTicket.whatsapp}</span>
-            </div>
+  const handleLookupSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setLookupSearched(true);
+    setRescheduleFeedback(null);
+  };
 
-            <div className="pt-3 border-t border-dashed border-zinc-400">
-              <span className="text-zinc-600 font-semibold block mb-1">SERVICIOS SELECCIONADOS:</span>
-              {confirmedTicket.services.map((srv, idx) => (
-                <div key={idx} className="flex justify-between font-bold text-zinc-900 py-0.5">
-                  <span>{srv}</span>
-                </div>
-              ))}
-            </div>
+  const handleOpenReschedule = (app: AppointmentRecord) => {
+    setReschedulingTicketId(app.id);
+    setRescheduleDate(app.date);
+    setRescheduleTime(app.startTime);
+    setRescheduleFeedback(null);
+  };
 
-            <div className="pt-3 border-t border-zinc-900 flex justify-between items-baseline text-sm">
-              <span className="font-black text-zinc-900">TOTAL ARS:</span>
-              <span className="font-black text-base text-zinc-950 tabular-nums">
-                {formatPriceARS(confirmedTicket.totalPrice)}
-              </span>
-            </div>
+  const handleConfirmReschedule = async (app: AppointmentRecord) => {
+    if (!rescheduleDate || !rescheduleTime) return;
+    const res = await rescheduleAppointment(app.id, rescheduleDate, rescheduleTime);
+    if (!res.ok) {
+      setRescheduleFeedback({
+        type: 'err',
+        text: res.error || 'No se pudo reprogramar en ese horario.',
+      });
+    } else {
+      setRescheduleFeedback({
+        type: 'ok',
+        text: `Turno #${app.id} reprogramado con éxito para el ${rescheduleDate} a las ${rescheduleTime} hs.`,
+      });
+      setReschedulingTicketId(null);
+    }
+  };
 
-            <div className="text-[11px] text-zinc-800 bg-zinc-100 p-3.5 rounded-xl border border-zinc-300 leading-relaxed">
-              {confirmedTicket.paymentOption === 'deposit' ? (
-                <>
-                  <span className="font-bold block text-zinc-950 mb-0.5">
-                    MODALIDAD: SEÑA {config.depositPercentage}%
-                  </span>
-                  Alias para transferir:{' '}
-                  <strong className="text-zinc-950">{config.transferAlias}</strong> · Monto:{' '}
-                  <strong className="tabular-nums text-zinc-950">
-                    {formatPriceARS(confirmedTicket.depositAmount)}
-                  </strong>
-                </>
-              ) : (
-                <>
-                  <span className="font-bold block text-zinc-950 mb-0.5">
-                    MODALIDAD: COMPROMISO DE ASISTENCIA
-                  </span>
-                  Abonás el total en efectivo o transferencia al terminar tu corte en el estudio.
-                </>
-              )}
-            </div>
-          </div>
+  const buildTicketFromAppointment = (app: AppointmentRecord): ExportableTicketData => {
+    const matchedPrices = app.serviceNames.reduce((acc, sName) => {
+      const found = services.find((srv) => srv.name.toLowerCase() === sName.toLowerCase());
+      return acc + (found ? found.price : 12000);
+    }, 0);
 
-          <div className="space-y-2.5 pt-2">
-            <a
-              href={confirmedTicket.waMessage}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full py-3.5 px-4 bg-[#1E8E5A] text-white text-xs font-bold uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 hover:bg-[#19784C] transition-colors shadow-md cursor-pointer"
-            >
-              <MessageCircle className="w-4 h-4 fill-white" />
-              <span>Enviar Ticket a WhatsApp de {config.authorName}</span>
-            </a>
-
-            <div className="grid grid-cols-2 gap-2 pt-1">
-              <button
-                type="button"
-                onClick={() => {
-                  playMechanicalClick();
-                  setHasConfirmed(false);
-                  setConfirmedTicket(null);
-                  setSelectedTime('');
-                }}
-                className="py-2.5 px-3 rounded-xl border border-zinc-300 text-zinc-800 hover:bg-zinc-200 text-[11px] font-bold cursor-pointer"
-              >
-                Agendar otro turno
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  playMechanicalClick();
-                  cancelAppointment(confirmedTicket.id);
-                  setHasConfirmed(false);
-                  setConfirmedTicket(null);
-                  setSelectedTime('');
-                }}
-                className="py-2.5 px-3 rounded-xl border border-red-300 text-red-700 hover:bg-red-50 text-[11px] font-bold flex items-center justify-center gap-1 cursor-pointer"
-              >
-                <RotateCcw className="w-3 h-3" />
-                <span>Cancelar y liberar horario</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+    return {
+      id: app.id,
+      clientName: app.clientName,
+      whatsapp: app.whatsapp,
+      date: app.date,
+      time: app.startTime,
+      services: app.serviceNames,
+      totalMinutes: app.serviceMinutes + app.bufferMinutes,
+      totalPrice: matchedPrices,
+      paymentOption: app.paymentOption,
+      studioTitle: config.studioTitle,
+      address: config.address,
+      neighborhood: config.neighborhood,
+      transferAlias: config.transferAlias,
+    };
+  };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-      {/* Left Column: Interactive 3-Step Selector */}
-      <div className="lg:col-span-7 space-y-6">
-        {/* Step 1: Services Selector */}
-        <div className="bg-[#111318] border border-[#232730] rounded-2xl p-6 sm:p-7 shadow-xl">
-          <div className="flex items-center justify-between border-b border-[#1E222B] pb-4 mb-5">
-            <div className="flex items-center gap-2.5">
-              <span className="w-6 h-6 rounded-lg bg-[#D4A373] text-zinc-950 flex items-center justify-center font-mono text-xs font-black">
-                01
-              </span>
-              <h3 className="font-display text-lg font-bold text-white uppercase tracking-tight">
-                Seleccioná tus Servicios
-              </h3>
-            </div>
-            <span className="text-xs font-mono text-zinc-400 tabular-nums">
-              {summary.selectedServices.length} seleccionados
-            </span>
-          </div>
-
-          <div className="space-y-3">
-            {visibleServices.map((srv) => {
-              const isSelected = selectedServiceIds.includes(srv.id);
-              const showPrice = config.showServicePrice && !srv.hidePrice;
-              const showDuration = config.showServiceDuration;
-
-              return (
-                <div
-                  key={srv.id}
-                  onClick={() => {
-                    playMechanicalClick();
-                    toggleSelectService(srv.id);
-                  }}
-                  onMouseEnter={playMechanicalHover}
-                  className={`p-4 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-4 active:scale-[0.99] ${
-                    isSelected
-                      ? 'bg-[#171A21] border-[#D4A373] shadow-[0_4px_20px_rgba(212,163,115,0.12)]'
-                      : 'bg-[#0C0E12] border-[#1F232C] hover:border-[#D4A373]/40'
-                  }`}
-                >
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-display font-bold text-white text-sm sm:text-base truncate">
-                        {srv.name}
-                      </h4>
-                      {srv.popularTag && (
-                        <span className="text-[11px] font-mono font-semibold text-[#D4A373] shrink-0">
-                          · {srv.popularTag}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs text-zinc-400 font-mono">
-                      {srv.category}
-                      {showDuration ? ` · ${srv.durationMinutes} min` : ''}
-                    </p>
-                  </div>
-
-                  <div className="text-right shrink-0">
-                    {showPrice && (
-                      <span className="text-base font-mono font-black text-white block tabular-nums">
-                        {formatPriceARS(srv.price)}
-                      </span>
-                    )}
-                    <span
-                      className={`text-[11px] font-mono font-bold ${
-                        isSelected ? 'text-[#D4A373]' : 'text-zinc-500'
-                      }`}
-                    >
-                      {isSelected ? '✓ Seleccionado' : 'Elegir'}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Step 2: Date & Slot Selector */}
-        <div className="bg-[#111318] border border-[#232730] rounded-2xl p-6 sm:p-7 shadow-xl">
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#1E222B] pb-4 mb-5">
-            <div className="flex items-center gap-2.5">
-              <span className="w-6 h-6 rounded-lg bg-[#D4A373] text-zinc-950 flex items-center justify-center font-mono text-xs font-black">
-                02
-              </span>
-              <h3 className="font-display text-lg font-bold text-white uppercase tracking-tight">
-                Fecha &amp; Horario en Vivo
-              </h3>
-            </div>
-            <span className="text-xs font-mono text-zinc-400 tabular-nums">
-              {freeSlotsCount} libres · {busySlotsCount} ocupados
-            </span>
-          </div>
-
-          <div className="space-y-5">
-            <div>
-              <div className="flex flex-wrap items-center justify-between gap-2 mb-2.5">
-                <label
-                  htmlFor="booking-date-input"
-                  className="text-xs font-mono text-zinc-300 uppercase font-bold"
-                >
-                  Elegí el Día (Por defecto Hoy {todayISO}):
-                </label>
-
-                {/* Quick Day Buttons */}
-                <div className="inline-flex items-center gap-1.5">
-                  {[
-                    { label: 'Hoy', iso: todayISO },
-                    { label: 'Mañana', iso: tomorrowISO },
-                    { label: 'Pasado', iso: dayAfterISO },
-                  ].map((d) => (
-                    <button
-                      key={d.iso}
-                      type="button"
-                      onClick={() => {
-                        playMechanicalClick();
-                        setSelectedDate(d.iso);
-                        setSelectedTime('');
-                      }}
-                      className={`px-3 py-1 rounded-lg font-mono text-xs font-bold transition-colors cursor-pointer ${
-                        selectedDate === d.iso
-                          ? 'bg-[#D4A373] text-zinc-950'
-                          : 'bg-[#0C0E12] border border-[#232730] text-zinc-400 hover:text-white'
-                      }`}
-                    >
-                      {d.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <input
-                id="booking-date-input"
-                type="date"
-                min={todayISO}
-                value={selectedDate}
-                onChange={(e) => {
-                  setSelectedDate(e.target.value);
-                  setSelectedTime('');
-                }}
-                className="w-full bg-[#0C0E12] border border-[#282C37] rounded-xl px-4 py-3 text-white font-mono text-sm focus:outline-hidden focus:border-[#D4A373]"
-              />
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-2.5">
-                <span className="text-xs font-mono text-zinc-300 uppercase font-bold">
-                  Horarios para el {selectedDate}:
-                </span>
-                <span className="text-[11px] font-mono text-zinc-400">
-                  Actualización automática en vivo
-                </span>
-              </div>
-
-              {availableSlots.length === 0 ? (
-                <div className="p-5 bg-[#161922] border border-[#262B36] rounded-xl text-center text-xs font-mono text-zinc-300 space-y-2.5">
-                  <p>El estudio permanece cerrado en la fecha seleccionada ({selectedDate}).</p>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedDate(todayISO)}
-                    className="px-3.5 py-2 rounded-lg bg-[#D4A373] text-zinc-950 font-bold cursor-pointer"
-                  >
-                    Ver horarios de Hoy ({todayISO})
-                  </button>
-                </div>
-              ) : (
-                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                  {availableSlots.map((slot) => {
-                    const isSelected = selectedTime === slot.time && slot.available;
-                    return (
-                      <button
-                        key={slot.time}
-                        type="button"
-                        disabled={!slot.available}
-                        title={slot.reason || `Disponible a las ${slot.time} hs`}
-                        onClick={() => {
-                          playMechanicalClick();
-                          setSelectedTime(slot.time);
-                        }}
-                        onMouseEnter={slot.available ? playMechanicalHover : undefined}
-                        className={`py-2.5 px-3 rounded-xl font-mono text-xs font-bold transition-all tabular-nums ${
-                          !slot.available
-                            ? 'bg-[#090B0E] border border-[#191C24] text-zinc-600 line-through cursor-not-allowed'
-                            : isSelected
-                            ? 'bg-[#D4A373] text-zinc-950 shadow-md font-black cursor-pointer'
-                            : 'bg-[#0C0E12] border border-[#232730] text-zinc-200 hover:border-[#D4A373] hover:text-white cursor-pointer active:scale-95'
-                        }`}
-                      >
-                        <span>{slot.time} hs</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Step 3: Client Details */}
-        <div className="bg-[#111318] border border-[#232730] rounded-2xl p-6 sm:p-7 shadow-xl">
-          <div className="flex items-center gap-2.5 border-b border-[#1E222B] pb-4 mb-5">
-            <span className="w-6 h-6 rounded-lg bg-[#D4A373] text-zinc-950 flex items-center justify-center font-mono text-xs font-black">
-              03
-            </span>
-            <h3 className="font-display text-lg font-bold text-white uppercase tracking-tight">
-              Tus Datos de Contacto
-            </h3>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
-            <div>
-              <label className="text-xs font-mono text-zinc-300 uppercase block mb-1.5 font-bold">
-                Nombre y Apellido
-              </label>
-              <input
-                type="text"
-                placeholder="Ej. Lucas Santoro"
-                value={clientName}
-                onChange={(e) => setClientName(e.target.value)}
-                className="w-full bg-[#0C0E12] border border-[#282C37] rounded-xl px-4 py-3 text-white font-mono text-sm focus:outline-hidden focus:border-[#D4A373]"
-              />
-            </div>
-
-            <div>
-              <label className="text-xs font-mono text-zinc-300 uppercase block mb-1.5 font-bold">
-                WhatsApp (sin 0 ni 15)
-              </label>
-              <input
-                type="tel"
-                placeholder="Ej. 3462 554421"
-                value={whatsapp}
-                onChange={(e) => setWhatsapp(e.target.value)}
-                className="w-full bg-[#0C0E12] border border-[#282C37] rounded-xl px-4 py-3 text-white font-mono text-sm focus:outline-hidden focus:border-[#D4A373]"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="text-xs font-mono text-zinc-300 uppercase block mb-2 font-bold">
-              Modalidad de Reserva:
-            </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <label
-                onMouseEnter={playMechanicalHover}
-                className={`p-3.5 rounded-xl border cursor-pointer flex items-start gap-3 transition-colors ${
-                  paymentOption === 'deposit'
-                    ? 'bg-[#171A21] border-[#D4A373]'
-                    : 'bg-[#0C0E12] border-[#232730]'
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="payment"
-                  checked={paymentOption === 'deposit'}
-                  onChange={() => {
-                    playMechanicalClick();
-                    setPaymentOption('deposit');
-                  }}
-                  className="mt-1 accent-[#D4A373]"
-                />
-                <div className="text-xs">
-                  <span className="font-bold text-white block">
-                    Seña del {config.depositPercentage}%
-                  </span>
-                  <span className="text-zinc-400 text-[11px] leading-relaxed block mt-0.5">
-                    Transferencia a alias <strong className="text-zinc-200">{config.transferAlias}</strong> para asegurar el horario.
-                  </span>
-                </div>
-              </label>
-
-              <label
-                onMouseEnter={playMechanicalHover}
-                className={`p-3.5 rounded-xl border cursor-pointer flex items-start gap-3 transition-colors ${
-                  paymentOption === 'commitment'
-                    ? 'bg-[#171A21] border-[#D4A373]'
-                    : 'bg-[#0C0E12] border-[#232730]'
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="payment"
-                  checked={paymentOption === 'commitment'}
-                  onChange={() => {
-                    playMechanicalClick();
-                    setPaymentOption('commitment');
-                  }}
-                  className="mt-1 accent-[#D4A373]"
-                />
-                <div className="text-xs">
-                  <span className="font-bold text-white block">Compromiso de Asistencia</span>
-                  <span className="text-zinc-400 text-[11px] leading-relaxed block mt-0.5">
-                    Sin seña previa. Abonás el 100% en el estudio ({config.mainPriceDisplay}). Tolerancia {config.maxCourtesyMinutes} min.
-                  </span>
-                </div>
-              </label>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Right Column: Live Ticket Preview + Clear Information Card Below Ticket */}
-      <div className="lg:col-span-5 lg:sticky lg:top-24 space-y-4">
-        {/* Ticket Card */}
-        <div className="bg-[#FAF8F5] text-zinc-950 p-6 sm:p-7 rounded-2xl shadow-2xl font-mono text-xs border border-zinc-300">
-          <div className="text-center pb-4 mb-4 border-b border-dashed border-zinc-400">
-            <Barcode className="w-40 h-8 mx-auto text-zinc-800 mb-1" />
-            <span className="text-[10px] tracking-widest text-zinc-600 uppercase font-bold block">
-              {config.studioTitle} · TICKET EN VIVO
-            </span>
-            <p className="font-display font-black text-lg text-zinc-900 mt-1 uppercase">
-              {config.address} · {config.neighborhood}
-            </p>
-          </div>
-
-          <div className="space-y-3 mb-5">
-            <div className="flex justify-between">
-              <span className="text-zinc-600 font-semibold">FECHA:</span>
-              <span className="font-bold text-zinc-950 tabular-nums">
-                {selectedDate || todayISO}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-zinc-600 font-semibold">HORA:</span>
-              <span
-                className={`font-bold tabular-nums ${
-                  selectedTime ? 'text-zinc-950 bg-amber-100 px-2 py-0.5 rounded' : 'text-zinc-500'
-                }`}
-              >
-                {selectedTime ? `${selectedTime} HS` : 'Seleccionar horario'}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-zinc-600 font-semibold">CLIENTE:</span>
-              <span className="font-bold text-zinc-950 uppercase">
-                {clientName.trim() || 'Completar nombre'}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-zinc-600 font-semibold">DURACIÓN ESTIMADA:</span>
-              <span className="font-bold text-zinc-950 tabular-nums">
-                {summary.serviceMinutes} min
-              </span>
-            </div>
-
-            <div className="pt-3 border-t border-dashed border-zinc-400">
-              <span className="text-zinc-600 font-semibold block mb-1">SERVICIOS:</span>
-              {summary.selectedServices.length === 0 ? (
-                <p className="text-zinc-500 italic">No hay servicios seleccionados</p>
-              ) : (
-                summary.selectedServices.map((srv) => (
-                  <div key={srv.id} className="flex justify-between py-0.5">
-                    <span className="text-zinc-900 font-medium truncate max-w-[24ch]">{srv.name}</span>
-                    <span className="font-bold text-zinc-950 tabular-nums">
-                      {formatPriceARS(srv.price)}
-                    </span>
-                  </div>
-                ))
-              )}
-            </div>
-
-            <div className="pt-3 border-t border-zinc-900 flex justify-between items-baseline text-sm">
-              <span className="font-black text-zinc-900">TOTAL ARS:</span>
-              <span className="font-black text-lg text-zinc-950 tabular-nums">
-                {formatPriceARS(summary.totalPrice)}
-              </span>
-            </div>
-          </div>
+    <div className="bg-[#EFEAE1] border border-[#171513]/12 shadow-[0_20px_60px_rgba(23,21,19,0.06)]">
+      {/* Top Mode Bar: Reservar Lugar vs Consultar mi Turno */}
+      <div className="px-6 sm:px-10 py-5 border-b border-[#171513]/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#F7F4EE]">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setActiveMode('new_booking');
+              setConfirmedTicket(null);
+            }}
+            className={`px-4 py-2 text-xs font-medium tracking-wider uppercase transition-colors cursor-pointer whitespace-nowrap ${
+              activeMode === 'new_booking'
+                ? 'bg-[#171513] text-[#F7F4EE]'
+                : 'text-[#575049] hover:text-[#171513] border border-[#171513]/15'
+            }`}
+          >
+            Nueva Reserva
+          </button>
 
           <button
             type="button"
-            disabled={!isFormValid}
-            onClick={(e) => {
-              playMechanicalClick();
-              handleConfirmReservation(e);
-            }}
-            onMouseEnter={isFormValid ? playMechanicalHover : undefined}
-            className={`w-full py-4 text-xs font-mono font-black uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg active:scale-95 ${
-              isFormValid
-                ? 'bg-[#111318] text-[#D4A373] hover:bg-black hover:text-[#E2B687]'
-                : 'bg-zinc-200 text-zinc-600 border border-zinc-300 cursor-not-allowed'
+            onClick={() => setActiveMode('lookup_ticket')}
+            className={`px-4 py-2 text-xs font-medium tracking-wider uppercase transition-colors flex items-center gap-2 cursor-pointer whitespace-nowrap ${
+              activeMode === 'lookup_ticket'
+                ? 'bg-[#171513] text-[#F7F4EE]'
+                : 'text-[#575049] hover:text-[#171513] border border-[#171513]/15'
             }`}
           >
-            <Scissors className="w-4 h-4" />
-            <span>Confirmar Turno &amp; Emitir Ticket</span>
-            <ArrowRight className="w-4 h-4" />
+            <Search className="w-3.5 h-3.5" />
+            <span>Consultar mi turno</span>
           </button>
+        </div>
 
-          {!isFormValid && (
-            <div className="mt-3 p-3 rounded-xl bg-zinc-100 border border-zinc-300 text-[11px] text-zinc-800 font-sans font-medium text-center leading-relaxed">
-              Para activar el botón, elegí un <strong>horario libre</strong> ({selectedDate}) y completá tu <strong>nombre</strong> y <strong>WhatsApp</strong> en el Paso 03.
+        {/* Step Progress Indicator when in New Booking mode */}
+        {activeMode === 'new_booking' && !confirmedTicket && (
+          <div className="flex items-center gap-3 sm:gap-5 text-xs">
+            {[
+              { step: 1 as BookingStep, label: '01. Servicio' },
+              { step: 2 as BookingStep, label: '02. Fecha y hora' },
+              { step: 3 as BookingStep, label: '03. Tus datos' },
+            ].map((item, idx) => {
+              const isCurrent = currentStep === item.step;
+              const isCompleted = currentStep > item.step;
+              return (
+                <React.Fragment key={item.step}>
+                  <button
+                    type="button"
+                    onClick={() => setCurrentStep(item.step)}
+                    className={`flex items-center gap-1.5 font-medium transition-colors cursor-pointer whitespace-nowrap ${
+                      isCurrent
+                        ? 'text-[#171513] font-semibold border-b-2 border-[#96734E] pb-0.5'
+                        : isCompleted
+                        ? 'text-[#3D4F43]'
+                        : 'text-[#8C8379]'
+                    }`}
+                  >
+                    {isCompleted && <Check className="w-3.5 h-3.5 text-[#3D4F43]" />}
+                    <span>{item.label}</span>
+                  </button>
+                  {idx < 2 && <span className="text-[#C5BBAE]" aria-hidden="true">/</span>}
+                </React.Fragment>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Main Content Area with AnimatePresence */}
+      <div className="p-6 sm:p-10 lg:p-12">
+        <AnimatePresence mode="wait">
+          {activeMode === 'lookup_ticket' ? (
+            /* MODE B: CONSULTAR MI TURNO RESERVADO POR WHATSAPP */
+            <motion.div
+              key="lookup-mode"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.22 }}
+              className="max-w-3xl mx-auto space-y-6"
+            >
+              <div className="space-y-2">
+                <span className="text-xs uppercase tracking-widest text-[#96734E] font-medium block">
+                  Gestión de Reservas Activas
+                </span>
+                <h3 className="font-display text-3xl sm:text-4xl font-medium text-[#171513]">
+                  Consultá o reprogramá tu turno
+                </h3>
+                <p className="text-sm text-[#575049]">
+                  Ingresá tu número de WhatsApp, tu nombre o el código de tu comprobante para ver el
+                  detalle de tu reserva en {config.address}, Venado Tuerto.
+                </p>
+              </div>
+
+              <form onSubmit={handleLookupSubmit} className="flex flex-col sm:flex-row gap-3">
+                <div className="relative flex-1">
+                  <Search className="w-4 h-4 text-[#8C8379] absolute left-4 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={lookupQuery}
+                    onChange={(e) => {
+                      setLookupQuery(e.target.value);
+                      setLookupSearched(true);
+                    }}
+                    placeholder="Ej.: 3462 521984, Ignacio Varela o TK-841920"
+                    aria-label="Buscar turno por número de WhatsApp o nombre"
+                    className="w-full h-12 pl-11 pr-4 bg-[#F7F4EE] border border-[#171513]/20 text-[#171513] text-sm focus:outline-none focus:border-[#96734E]"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="h-12 px-6 bg-[#171513] hover:bg-[#96734E] text-[#F7F4EE] text-xs font-medium uppercase tracking-wider transition-colors cursor-pointer whitespace-nowrap"
+                >
+                  Buscar turno
+                </button>
+              </form>
+
+              <div className="flex flex-wrap items-center gap-2 text-xs text-[#655E57]">
+                <span>Consultas rápidas de ejemplo:</span>
+                {appointments.slice(0, 2).map((sample) => (
+                  <button
+                    key={sample.id}
+                    type="button"
+                    onClick={() => {
+                      setLookupQuery(sample.whatsapp);
+                      setLookupSearched(true);
+                    }}
+                    className="underline hover:text-[#171513] cursor-pointer"
+                  >
+                    {sample.clientName} ({sample.whatsapp})
+                  </button>
+                ))}
+              </div>
+
+              {lookupSearched && lookupQuery.trim() !== '' && (
+                <div className="space-y-4 pt-2">
+                  {matchedAppointments.length === 0 ? (
+                    <div className="p-6 bg-[#F7F4EE] border border-[#171513]/12 text-center space-y-3">
+                      <p className="text-sm font-medium text-[#171513]">
+                        No encontramos un turno activo con “{lookupQuery}”.
+                      </p>
+                      <p className="text-xs text-[#655E57]">
+                        Verificá los últimos dígitos de tu WhatsApp o reservá un nuevo horario en el
+                        estudio.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setActiveMode('new_booking')}
+                        className="px-5 py-2.5 bg-[#171513] text-[#F7F4EE] text-xs uppercase tracking-wider cursor-pointer"
+                      >
+                        Ir a reservar turno
+                      </button>
+                    </div>
+                  ) : (
+                    matchedAppointments.map((app) => {
+                      const ticketObj = buildTicketFromAppointment(app);
+                      const isReschedulingThis = reschedulingTicketId === app.id;
+                      const rescheduleSlots = isReschedulingThis
+                        ? getAvailableTimeSlots(
+                            rescheduleDate,
+                            app.serviceMinutes + app.bufferMinutes,
+                            appointments.filter((a) => a.id !== app.id),
+                            config.openingHour,
+                            config.closingHour,
+                            blockedSlots,
+                            config.openDays
+                          )
+                        : [];
+                      return (
+                        <div
+                          key={app.id}
+                          className="p-6 bg-[#F7F4EE] border border-[#171513]/15 space-y-5"
+                        >
+                          <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-[#171513]/10">
+                            <div className="flex items-center gap-3 text-xs text-[#3D4F43] font-medium">
+                              <CheckCircle2 className="w-4 h-4" />
+                              <span>Turno Confirmado</span>
+                              <span>·</span>
+                              <span className="font-mono text-[#171513]">#{app.id}</span>
+                            </div>
+                            <span className="text-xs text-[#655E57]">
+                              {config.address} · {config.neighborhood}
+                            </span>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+                            <div>
+                              <span className="text-xs text-[#655E57] block">Cliente</span>
+                              <span className="font-semibold text-[#171513] block mt-0.5">
+                                {app.clientName}
+                              </span>
+                              <span className="text-xs text-[#655E57] font-mono">
+                                {app.whatsapp}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-xs text-[#655E57] block">Fecha y horario</span>
+                              <span className="font-semibold text-[#96734E] font-mono block mt-0.5">
+                                {app.date} · {app.startTime} hs
+                              </span>
+                              <span className="text-xs text-[#655E57]">
+                                Duración: {app.serviceMinutes} min
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-xs text-[#655E57] block">Servicio</span>
+                              <span className="font-medium text-[#171513] block mt-0.5">
+                                {app.serviceNames.join(' + ')}
+                              </span>
+                            </div>
+                          </div>
+
+                          {rescheduleFeedback && (
+                            <div
+                              className={`p-3 text-xs border ${
+                                rescheduleFeedback.type === 'ok'
+                                  ? 'bg-[#3D4F43]/10 border-[#3D4F43] text-[#171513]'
+                                  : 'bg-[#A65D43]/10 border-[#A65D43] text-[#A65D43]'
+                              }`}
+                            >
+                              {rescheduleFeedback.text}
+                            </div>
+                          )}
+
+                          {isReschedulingThis && (
+                            <div className="p-4 bg-[#EFEAE1] border border-[#171513]/15 space-y-3 text-xs">
+                              <div className="flex items-center justify-between">
+                                <span className="font-semibold text-[#171513] uppercase tracking-wider">
+                                  Elegí nueva fecha y horario disponible
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => setReschedulingTicketId(null)}
+                                  className="text-[#655E57] hover:text-[#171513] cursor-pointer"
+                                >
+                                  Cancelar
+                                </button>
+                              </div>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                  <label className="block text-[#655E57] mb-1">Nueva Fecha</label>
+                                  <input
+                                    type="date"
+                                    value={rescheduleDate}
+                                    min={todayISO}
+                                    onChange={(e) => setRescheduleDate(e.target.value)}
+                                    className="w-full h-10 px-3 bg-[#F7F4EE] border border-[#171513]/20 text-[#171513]"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-[#655E57] mb-1">Nuevo Horario</label>
+                                  <select
+                                    value={rescheduleTime}
+                                    onChange={(e) => setRescheduleTime(e.target.value)}
+                                    className="w-full h-10 px-3 bg-[#F7F4EE] border border-[#171513]/20 text-[#171513]"
+                                  >
+                                    {rescheduleSlots
+                                      .filter((s) => s.available)
+                                      .map((s) => (
+                                        <option key={s.time} value={s.time}>
+                                          {s.time} hs (Disponible)
+                                        </option>
+                                      ))}
+                                  </select>
+                                </div>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleConfirmReschedule(app)}
+                                className="w-full py-2.5 bg-[#171513] hover:bg-[#96734E] text-[#F7F4EE] font-medium uppercase tracking-wider transition-colors cursor-pointer"
+                              >
+                                Confirmar nuevo horario
+                              </button>
+                            </div>
+                          )}
+
+                          <div className="pt-3 border-t border-[#171513]/10 flex flex-wrap items-center gap-2.5">
+                            <button
+                              type="button"
+                              onClick={() => downloadThermalTicketPNG(ticketObj)}
+                              className="px-3.5 py-2 bg-[#171513] hover:bg-[#96734E] text-[#F7F4EE] text-xs font-medium transition-colors flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <Download className="w-3.5 h-3.5" />
+                              <span>Guardar Comprobante PNG</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => downloadAppointmentICS(ticketObj)}
+                              className="px-3.5 py-2 border border-[#171513]/20 hover:border-[#171513] text-[#171513] text-xs font-medium transition-colors flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <CalendarPlus className="w-3.5 h-3.5 text-[#96734E]" />
+                              <span>Calendario (.ics)</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleOpenReschedule(app)}
+                              className="px-3.5 py-2 border border-[#171513]/20 hover:border-[#96734E] text-[#171513] text-xs font-medium transition-colors flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <RefreshCw className="w-3.5 h-3.5 text-[#96734E]" />
+                              <span>Cambiar Horario</span>
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              )}
+            </motion.div>
+          ) : confirmedTicket ? (
+            /* CONFIRMED BOOKING ELEGANT VOUCHER VIEW */
+            <motion.div
+              key="confirmed-voucher"
+              initial={{ opacity: 0, scale: 0.98, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.28 }}
+              className="max-w-2xl mx-auto bg-[#F7F4EE] border border-[#171513]/15 p-8 sm:p-10 space-y-6 shadow-sm"
+            >
+              <div className="text-center space-y-2 pb-6 border-b border-[#171513]/10">
+                <div className="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-[#3D4F43] font-semibold">
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>Reserva Confirmada · Atención Personalizada</span>
+                </div>
+                <h3 className="font-display text-3xl sm:text-4xl font-semibold text-[#171513]">
+                  Te esperamos, {confirmedTicket.clientName}
+                </h3>
+                <p className="text-xs text-[#655E57]">
+                  {confirmedTicket.address} · {confirmedTicket.neighborhood} · Código #
+                  {confirmedTicket.id}
+                </p>
+              </div>
+
+              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm py-2 border-b border-[#171513]/10 pb-6">
+                <div>
+                  <dt className="text-xs text-[#655E57] uppercase tracking-wider">Fecha y Hora</dt>
+                  <dd className="font-mono font-semibold text-base text-[#171513] mt-0.5 tabular-nums">
+                    {confirmedTicket.date} · {confirmedTicket.time} hs
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-[#655E57] uppercase tracking-wider">
+                    Duración Estimada
+                  </dt>
+                  <dd className="font-mono font-semibold text-base text-[#171513] mt-0.5 tabular-nums">
+                    {confirmedTicket.totalMinutes} minutos
+                  </dd>
+                </div>
+                <div className="sm:col-span-2">
+                  <dt className="text-xs text-[#655E57] uppercase tracking-wider">
+                    Servicios Seleccionados
+                  </dt>
+                  <dd className="font-medium text-[#171513] mt-0.5">
+                    {confirmedTicket.services.join(' + ')}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-[#655E57] uppercase tracking-wider">Modalidad</dt>
+                  <dd className="text-[#171513] mt-0.5">
+                    {confirmedTicket.paymentOption === 'deposit'
+                      ? `Seña 30% (Alias: ${confirmedTicket.transferAlias})`
+                      : 'Abono en el estudio al finalizar'}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-[#655E57] uppercase tracking-wider">Valor Total</dt>
+                  <dd className="font-mono font-semibold text-lg text-[#96734E] mt-0.5 tabular-nums">
+                    {formatPriceARS(confirmedTicket.totalPrice || summary.totalPrice)}
+                  </dd>
+                </div>
+              </dl>
+
+              {downloadedFeedback && (
+                <div className="p-3 bg-[#3D4F43]/10 border border-[#3D4F43]/30 text-[#3D4F43] text-xs text-center font-medium">
+                  {downloadedFeedback}
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    downloadThermalTicketPNG(confirmedTicket);
+                    setDownloadedFeedback('Comprobante descargado como imagen PNG.');
+                  }}
+                  className="py-3 px-4 bg-[#171513] hover:bg-[#96734E] text-[#F7F4EE] text-xs font-medium uppercase tracking-wider flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>Guardar Comprobante (PNG)</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    downloadAppointmentICS(confirmedTicket);
+                    setDownloadedFeedback('Archivo de calendario (.ics) descargado.');
+                  }}
+                  className="py-3 px-4 border border-[#171513]/25 hover:border-[#171513] text-[#171513] text-xs font-medium uppercase tracking-wider flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                >
+                  <CalendarPlus className="w-4 h-4 text-[#96734E]" />
+                  <span>Agendar en Calendario (.ics)</span>
+                </button>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+                <a
+                  href={generateGoogleCalendarUrl(confirmedTicket)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-[#575049] hover:text-[#171513] underline"
+                >
+                  Abrir directamente en Google Calendar
+                </a>
+
+                <a
+                  href={`${waInfo.url}?text=${encodeURIComponent(
+                    `Hola ${config.authorName}! Reservé mi turno (#${confirmedTicket.id}) para el ${confirmedTicket.date} a las ${confirmedTicket.time} hs (${confirmedTicket.services.join(' + ')}) a nombre de ${confirmedTicket.clientName}.`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#3D4F43] hover:bg-[#2F3E34] text-[#F7F4EE] text-xs font-medium uppercase tracking-wider transition-colors"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  <span>Enviar confirmación por WhatsApp</span>
+                </a>
+              </div>
+
+              <div className="pt-4 border-t border-[#171513]/10 text-center">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setConfirmedTicket(null);
+                    setSelectedTime('');
+                    setCurrentStep(1);
+                  }}
+                  className="text-xs text-[#655E57] hover:text-[#171513] underline cursor-pointer"
+                >
+                  Realizar otra reserva
+                </button>
+              </div>
+            </motion.div>
+          ) : (
+            /* 3-STEP WIZARD FLOW WITH ANIMATEPRESENCE */
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+              {/* Left 8 Cols: Active Step Viewport */}
+              <div className="lg:col-span-8">
+                <AnimatePresence mode="wait">
+                  {currentStep === 1 && (
+                    <motion.div
+                      key="step-1-services"
+                      initial={{ opacity: 0, x: -14 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 14 }}
+                      transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                      className="space-y-6"
+                    >
+                      <div className="space-y-1">
+                        <span className="text-xs uppercase tracking-widest text-[#96734E] font-medium block">
+                          Paso 01 de 03
+                        </span>
+                        <h3 className="font-display text-3xl sm:text-4xl font-medium text-[#171513]">
+                          Elegí tu servicio en el estudio
+                        </h3>
+                        <p className="text-sm text-[#575049]">
+                          Podés seleccionar un servicio individual o combinar, por ejemplo, tu corte
+                          con lavado y nutrición capilar.
+                        </p>
+                      </div>
+
+                      <div className="divide-y divide-[#171513]/12 border-t border-b border-[#171513]/12 bg-[#F7F4EE]">
+                        {visibleServices.map((service) => {
+                          const isSelected = selectedServiceIds.includes(service.id);
+                          return (
+                            <button
+                              key={service.id}
+                              type="button"
+                              onClick={() => toggleSelectService(service.id)}
+                              className={`w-full text-left p-5 sm:p-6 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer ${
+                                isSelected
+                                  ? 'bg-[#171513] text-[#F7F4EE]'
+                                  : 'hover:bg-[#EFEAE1]/70 text-[#171513]'
+                              }`}
+                            >
+                              <div className="space-y-1.5 pr-4">
+                                <div className="flex items-center gap-3">
+                                  <span
+                                    className={`font-mono text-xs ${
+                                      isSelected ? 'text-[#C8A97E]' : 'text-[#96734E]'
+                                    }`}
+                                  >
+                                    {service.index}.
+                                  </span>
+                                  <h4 className="font-display text-xl sm:text-2xl font-medium">
+                                    {service.name}
+                                  </h4>
+                                </div>
+                                <p
+                                  className={`text-xs sm:text-sm leading-relaxed max-w-xl ${
+                                    isSelected ? 'text-[#D8D0C5]' : 'text-[#575049]'
+                                  }`}
+                                >
+                                  {service.shortDescription}
+                                </p>
+                              </div>
+
+                              <div className="flex sm:flex-col items-center sm:items-end justify-between gap-2 shrink-0 border-t sm:border-t-0 pt-3 sm:pt-0 border-current/10">
+                                <div className="text-left sm:text-right">
+                                  <span
+                                    className={`font-mono text-base font-semibold block tabular-nums ${
+                                      isSelected ? 'text-[#F7F4EE]' : 'text-[#171513]'
+                                    }`}
+                                  >
+                                    {formatPriceARS(service.price)}
+                                  </span>
+                                  <span
+                                    className={`text-xs block tabular-nums ${
+                                      isSelected ? 'text-[#C8A97E]' : 'text-[#655E57]'
+                                    }`}
+                                  >
+                                    {service.durationMinutes} min
+                                  </span>
+                                </div>
+                                <span
+                                  className={`text-xs uppercase tracking-wider font-medium px-3 py-1 border ${
+                                    isSelected
+                                      ? 'border-[#C8A97E] text-[#C8A97E]'
+                                      : 'border-[#171513]/20 text-[#171513]'
+                                  }`}
+                                >
+                                  {isSelected ? 'Seleccionado ✓' : 'Seleccionar'}
+                                </span>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {formError && (
+                        <p className="text-xs text-[#A65D43] font-medium">{formError}</p>
+                      )}
+
+                      <div className="flex items-center justify-end pt-2">
+                        <button
+                          type="button"
+                          onClick={handleAdvanceToStep2}
+                          className="px-7 py-3.5 bg-[#171513] hover:bg-[#96734E] text-[#F7F4EE] text-xs font-medium uppercase tracking-wider flex items-center gap-2.5 transition-colors cursor-pointer"
+                        >
+                          <span>Continuar a fecha y hora</span>
+                          <ArrowRight className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {currentStep === 2 && (
+                    <motion.div
+                      key="step-2-datetime"
+                      initial={{ opacity: 0, x: 14 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -14 }}
+                      transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                      className="space-y-6"
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
+                        <div className="space-y-1">
+                          <span className="text-xs uppercase tracking-widest text-[#96734E] font-medium block">
+                            Paso 02 de 03
+                          </span>
+                          <h3 className="font-display text-3xl sm:text-4xl font-medium text-[#171513]">
+                            Elegí tu día y horario disponible
+                          </h3>
+                        </div>
+                        <span className="text-xs text-[#575049] font-mono tabular-nums">
+                          {availableSlotsCount} horarios disponibles para el {selectedDate}
+                        </span>
+                      </div>
+
+                      {/* Date Selection Bar */}
+                      <div className="p-5 bg-[#F7F4EE] border border-[#171513]/12 space-y-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                          <label
+                            htmlFor="atelier-booking-date"
+                            className="text-xs uppercase tracking-wider text-[#575049] font-medium flex items-center gap-2"
+                          >
+                            <Calendar className="w-4 h-4 text-[#96734E]" />
+                            <span>Fecha del turno:</span>
+                          </label>
+                          <div className="flex items-center gap-2">
+                            {[
+                              { label: 'Hoy', iso: todayISO },
+                              { label: 'Mañana', iso: tomorrowISO },
+                              { label: 'Pasado', iso: dayAfterISO },
+                            ].map((preset) => (
+                              <button
+                                key={preset.label}
+                                type="button"
+                                onClick={() => {
+                                  setSelectedDate(preset.iso);
+                                  setSelectedTime('');
+                                }}
+                                className={`px-3.5 py-1.5 text-xs font-medium transition-colors cursor-pointer ${
+                                  selectedDate === preset.iso
+                                    ? 'bg-[#171513] text-[#F7F4EE]'
+                                    : 'bg-[#EFEAE1] text-[#575049] hover:text-[#171513]'
+                                }`}
+                              >
+                                {preset.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <input
+                          id="atelier-booking-date"
+                          type="date"
+                          value={selectedDate}
+                          min={todayISO}
+                          onChange={(e) => {
+                            setSelectedDate(e.target.value);
+                            setSelectedTime('');
+                          }}
+                          className="w-full h-11 px-4 bg-[#EFEAE1]/60 border border-[#171513]/15 text-[#171513] font-mono text-sm focus:outline-none focus:border-[#96734E]"
+                        />
+                      </div>
+
+                      {/* Time Slot Grid */}
+                      <div className="p-5 bg-[#F7F4EE] border border-[#171513]/12 space-y-4">
+                        <div className="flex items-center justify-between text-xs text-[#575049]">
+                          <span className="uppercase tracking-wider font-medium flex items-center gap-2">
+                            <Clock className="w-4 h-4 text-[#96734E]" />
+                            <span>Horarios de atención uno a uno ({selectedDate}):</span>
+                          </span>
+                          <span>Bloque reservado: {summary.totalBlockMinutes} min</span>
+                        </div>
+
+                        {slots.length === 0 ? (
+                          <p className="text-sm text-[#A65D43] py-6 text-center">
+                            El estudio permanece cerrado en la fecha seleccionada (Atención de
+                            Martes a Sábados). Por favor elegí otro día.
+                          </p>
+                        ) : (
+                          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2.5">
+                            {slots.map((slot) => {
+                              const isSelected = selectedTime === slot.time;
+                              return (
+                                <button
+                                  key={slot.time}
+                                  type="button"
+                                  disabled={!slot.available}
+                                  onClick={() => setSelectedTime(slot.time)}
+                                  className={`py-3 px-2 font-mono text-xs transition-all tabular-nums ${
+                                    !slot.available
+                                      ? 'bg-[#EFEAE1]/60 text-[#B0A79C] line-through cursor-not-allowed'
+                                      : isSelected
+                                      ? 'bg-[#171513] text-[#F7F4EE] font-semibold shadow-sm cursor-pointer'
+                                      : 'bg-[#EFEAE1]/80 hover:bg-[#171513]/10 text-[#171513] border border-[#171513]/10 cursor-pointer'
+                                  }`}
+                                >
+                                  {slot.time} hs
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+
+                      {formError && (
+                        <p className="text-xs text-[#A65D43] font-medium">{formError}</p>
+                      )}
+
+                      <div className="flex items-center justify-between pt-2">
+                        <button
+                          type="button"
+                          onClick={() => setCurrentStep(1)}
+                          className="px-5 py-3 border border-[#171513]/20 hover:border-[#171513] text-[#171513] text-xs font-medium uppercase tracking-wider flex items-center gap-2 transition-colors cursor-pointer"
+                        >
+                          <ArrowLeft className="w-4 h-4" />
+                          <span>Volver a servicios</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={handleAdvanceToStep3}
+                          className="px-7 py-3.5 bg-[#171513] hover:bg-[#96734E] text-[#F7F4EE] text-xs font-medium uppercase tracking-wider flex items-center gap-2.5 transition-colors cursor-pointer"
+                        >
+                          <span>Continuar a tus datos</span>
+                          <ArrowRight className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {currentStep === 3 && (
+                    <motion.form
+                      key="step-3-client"
+                      onSubmit={handleConfirmBooking}
+                      initial={{ opacity: 0, x: 14 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -14 }}
+                      transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                      className="space-y-6"
+                    >
+                      <div className="space-y-1">
+                        <span className="text-xs uppercase tracking-widest text-[#96734E] font-medium block">
+                          Paso 03 de 03
+                        </span>
+                        <h3 className="font-display text-3xl sm:text-4xl font-medium text-[#171513]">
+                          Completá tus datos para confirmar
+                        </h3>
+                        <p className="text-sm text-[#575049]">
+                          Tu lugar quedará reservado para el{' '}
+                          <strong className="text-[#171513]">{selectedDate}</strong> a las{' '}
+                          <strong className="text-[#171513]">{selectedTime} hs</strong> en{' '}
+                          {config.address}.
+                        </p>
+                      </div>
+
+                      <div className="p-6 bg-[#F7F4EE] border border-[#171513]/12 space-y-5">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div>
+                            <label
+                              htmlFor="atelier-client-name"
+                              className="block text-xs uppercase tracking-wider text-[#575049] font-medium mb-2"
+                            >
+                              Tu Nombre y Apellido
+                            </label>
+                            <input
+                              id="atelier-client-name"
+                              type="text"
+                              required
+                              placeholder="Ej. Lucas Santoro"
+                              value={clientName}
+                              onChange={(e) => setClientName(e.target.value)}
+                              className="w-full h-11 px-4 bg-[#EFEAE1]/50 border border-[#171513]/20 text-[#171513] text-sm focus:outline-none focus:border-[#96734E]"
+                            />
+                          </div>
+                          <div>
+                            <label
+                              htmlFor="atelier-client-whatsapp"
+                              className="block text-xs uppercase tracking-wider text-[#575049] font-medium mb-2"
+                            >
+                              Tu WhatsApp (sin 0 ni 15)
+                            </label>
+                            <input
+                              id="atelier-client-whatsapp"
+                              type="tel"
+                              required
+                              placeholder="Ej. 3462 554421"
+                              value={whatsapp}
+                              onChange={(e) => setWhatsapp(e.target.value)}
+                              className="w-full h-11 px-4 bg-[#EFEAE1]/50 border border-[#171513]/20 text-[#171513] text-sm font-mono focus:outline-none focus:border-[#96734E]"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-2.5 pt-2 border-t border-[#171513]/10">
+                          <span className="block text-xs uppercase tracking-wider text-[#575049] font-medium">
+                            Modalidad de reserva:
+                          </span>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                            <label
+                              className={`p-4 border cursor-pointer transition-colors flex items-start gap-3 ${
+                                paymentOption === 'deposit'
+                                  ? 'bg-[#EFEAE1] border-[#171513]'
+                                  : 'bg-[#F7F4EE] border-[#171513]/15'
+                              }`}
+                            >
+                              <input
+                                type="radio"
+                                name="paymentOption"
+                                checked={paymentOption === 'deposit'}
+                                onChange={() => setPaymentOption('deposit')}
+                                className="mt-0.5 accent-[#171513]"
+                              />
+                              <div>
+                                <span className="font-semibold text-[#171513] block">
+                                  Seña del {config.depositPercentage}% (
+                                  {formatPriceARS(summary.depositAmount)})
+                                </span>
+                                <span className="text-[#575049] block mt-0.5">
+                                  Transferencia al alias{' '}
+                                  <strong className="text-[#171513]">{config.transferAlias}</strong>
+                                </span>
+                              </div>
+                            </label>
+
+                            <label
+                              className={`p-4 border cursor-pointer transition-colors flex items-start gap-3 ${
+                                paymentOption === 'commitment'
+                                  ? 'bg-[#EFEAE1] border-[#171513]'
+                                  : 'bg-[#F7F4EE] border-[#171513]/15'
+                              }`}
+                            >
+                              <input
+                                type="radio"
+                                name="paymentOption"
+                                checked={paymentOption === 'commitment'}
+                                onChange={() => setPaymentOption('commitment')}
+                                className="mt-0.5 accent-[#171513]"
+                              />
+                              <div>
+                                <span className="font-semibold text-[#171513] block">
+                                  Abonar en el estudio ({formatPriceARS(summary.totalPrice)})
+                                </span>
+                                <span className="text-[#575049] block mt-0.5">
+                                  Compromiso de asistencia puntual (tolerancia 10 min).
+                                </span>
+                              </div>
+                            </label>
+                          </div>
+
+                          {paymentOption === 'deposit' && (
+                            <div className="p-3 bg-[#EFEAE1]/70 border border-[#171513]/10 flex items-center justify-between text-xs">
+                              <span>
+                                Alias de transferencia:{' '}
+                                <strong className="font-mono text-[#171513]">
+                                  {config.transferAlias}
+                                </strong>
+                              </span>
+                              <button
+                                type="button"
+                                onClick={handleCopyAlias}
+                                className="inline-flex items-center gap-1 text-[#96734E] hover:text-[#171513] font-medium cursor-pointer"
+                              >
+                                <Copy className="w-3.5 h-3.5" />
+                                <span>{copiedAlias ? 'Copiado ✓' : 'Copiar alias'}</span>
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {formError && (
+                        <p className="text-xs text-[#A65D43] font-medium">{formError}</p>
+                      )}
+
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2">
+                        <button
+                          type="button"
+                          onClick={() => setCurrentStep(2)}
+                          className="px-5 py-3 border border-[#171513]/20 hover:border-[#171513] text-[#171513] text-xs font-medium uppercase tracking-wider flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                        >
+                          <ArrowLeft className="w-4 h-4" />
+                          <span>Cambiar horario</span>
+                        </button>
+
+                        <button
+                          type="submit"
+                          disabled={isSubmittingBooking}
+                          className="px-8 py-4 bg-[#171513] hover:bg-[#96734E] text-[#F7F4EE] text-xs font-medium uppercase tracking-wider flex items-center justify-center gap-2.5 transition-colors cursor-pointer disabled:opacity-50"
+                        >
+                          <Check className="w-4 h-4" />
+                          <span>
+                            {isSubmittingBooking
+                              ? 'Confirmando reserva...'
+                              : 'Confirmar reserva ahora'}
+                          </span>
+                        </button>
+                      </div>
+                    </motion.form>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Right 4 Cols: Live Summary Dossier */}
+              <aside className="lg:col-span-4 bg-[#F7F4EE] border border-[#171513]/12 p-6 sm:p-7 space-y-5">
+                <div className="pb-4 border-b border-[#171513]/10">
+                  <span className="text-[11px] uppercase tracking-widest text-[#96734E] font-medium block">
+                    Resumen de tu Reserva
+                  </span>
+                  <h4 className="font-display text-2xl font-medium text-[#171513] mt-0.5">
+                    {config.studioTitle}
+                  </h4>
+                  <p className="text-xs text-[#655E57] flex items-center gap-1.5 mt-1">
+                    <MapPin className="w-3.5 h-3.5 text-[#96734E]" />
+                    <span>
+                      {config.address}, {config.neighborhood}
+                    </span>
+                  </p>
+                </div>
+
+                <dl className="space-y-3 text-xs">
+                  <div className="flex items-start justify-between gap-4">
+                    <dt className="text-[#655E57]">Servicio(s):</dt>
+                    <dd className="text-right font-medium text-[#171513]">
+                      {summary.selectedServices.length > 0
+                        ? summary.selectedServices.map((s) => s.name).join(' + ')
+                        : 'Sin seleccionar'}
+                    </dd>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <dt className="text-[#655E57]">Fecha elegida:</dt>
+                    <dd className="font-mono text-[#171513] tabular-nums">{selectedDate}</dd>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <dt className="text-[#655E57]">Horario:</dt>
+                    <dd className="font-mono font-semibold text-[#96734E] tabular-nums">
+                      {selectedTime ? `${selectedTime} hs` : 'Por definir en Paso 02'}
+                    </dd>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <dt className="text-[#655E57]">Tiempo dedicado:</dt>
+                    <dd className="font-mono text-[#171513] tabular-nums">
+                      {summary.serviceMinutes} min
+                    </dd>
+                  </div>
+                </dl>
+
+                <div className="pt-4 border-t border-[#171513]/10 flex items-baseline justify-between">
+                  <span className="text-xs uppercase tracking-wider text-[#575049] font-medium">
+                    Valor estimado
+                  </span>
+                  <span className="font-mono text-2xl font-semibold text-[#171513] tabular-nums">
+                    {formatPriceARS(summary.totalPrice)}
+                  </span>
+                </div>
+
+                <p className="text-[11px] text-[#655E57] leading-relaxed pt-2 border-t border-[#171513]/10">
+                  Atención individual uno a uno sin demoras. Al confirmar recibís tu comprobante
+                  descargable y el recordatorio para tu calendario.
+                </p>
+              </aside>
             </div>
           )}
-        </div>
-
-        {/* Clean High-Contrast Info Panel Below the Ticket */}
-        <div className="bg-[#111318] border border-[#232730] rounded-2xl p-5 shadow-xl space-y-3 text-xs font-mono">
-          <div className="flex items-center justify-between pb-2.5 border-b border-[#1E222B]">
-            <span className="text-[#D4A373] font-bold uppercase tracking-wider flex items-center gap-1.5">
-              <ShieldCheck className="w-4 h-4 text-[#D4A373]" />
-              <span>Información del Turno 1 a 1</span>
-            </span>
-            <span className="text-zinc-400">{config.neighborhood}</span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-zinc-300">
-            <div className="p-3 rounded-xl bg-[#0C0E12] border border-[#1E222B]">
-              <span className="text-[10px] text-zinc-500 uppercase font-bold flex items-center gap-1 mb-0.5">
-                <MapPin className="w-3 h-3 text-[#D4A373]" />
-                Dirección del Estudio
-              </span>
-              <span className="text-white font-bold block">{config.address}</span>
-              <span className="text-[11px] text-zinc-400">Atención privada sin demoras</span>
-            </div>
-
-            <div className="p-3 rounded-xl bg-[#0C0E12] border border-[#1E222B]">
-              <span className="text-[10px] text-zinc-500 uppercase font-bold flex items-center gap-1 mb-0.5">
-                <Clock className="w-3 h-3 text-[#D4A373]" />
-                Tolerancia &amp; Alias
-              </span>
-              <span className="text-white font-bold block">Alias: {config.transferAlias}</span>
-              <span className="text-[11px] text-zinc-400">
-                Tolerancia: {config.maxCourtesyMinutes} min · Seña {config.depositPercentage}%
-              </span>
-            </div>
-          </div>
-
-          <div className="pt-1 flex items-center justify-between gap-2 text-[11px] text-zinc-400">
-            <span>¿Tenés dudas con un horario?</span>
-            <a
-              href={`${waInfo.url}?text=${encodeURIComponent(
-                `Hola ${config.authorName}! Estoy viendo los turnos en la web para el ${selectedDate} y te quería hacer una consulta.`
-              )}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[#D4A373] hover:underline font-bold inline-flex items-center gap-1"
-            >
-              <MessageCircle className="w-3.5 h-3.5" />
-              <span>Consultar por WhatsApp ({waInfo.display})</span>
-            </a>
-          </div>
-        </div>
+        </AnimatePresence>
       </div>
     </div>
   );

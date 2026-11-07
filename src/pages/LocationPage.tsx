@@ -18,7 +18,7 @@ export const LocationPage: React.FC = () => {
       {/* Title */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-[#232730]">
         <div>
-          <span className="font-mono text-xs uppercase tracking-widest text-[#D4A373] font-bold block mb-1">
+          <span className="font-mono text-xs uppercase tracking-widest text-[#F59E0B] font-bold block mb-1">
             LOCALIZACIÓN &amp; ATENCIÓN 1 A 1
           </span>
           <h1 className="font-display text-4xl md:text-5xl font-black text-white uppercase tracking-tight">
@@ -37,7 +37,7 @@ export const LocationPage: React.FC = () => {
           <div className="space-y-5">
             {/* Live Clock Card */}
             <div className="p-5 rounded-2xl border border-[#282D37] bg-[#111318] text-white shadow-lg">
-              <span className="font-mono text-xs uppercase text-[#D4A373] font-bold block">
+              <span className="font-mono text-xs uppercase text-[#F59E0B] font-bold block">
                 ESTADO DEL LOCAL EN VIVO
               </span>
               <h2 className="font-display text-2xl font-bold mt-1 mb-1">
@@ -58,7 +58,7 @@ export const LocationPage: React.FC = () => {
                 </div>
                 <div className="flex justify-between pb-2 border-b border-[#1E222B]">
                   <dt className="text-zinc-400">Sábados</dt>
-                  <dd className="font-bold text-[#D4A373]">10:00 – 20:00 hs</dd>
+                  <dd className="font-bold text-[#F59E0B]">10:00 – 20:00 hs</dd>
                 </div>
                 <div className="flex justify-between">
                   <dt className="text-zinc-400">Domingos</dt>
@@ -73,7 +73,7 @@ export const LocationPage: React.FC = () => {
                 Dirección
               </h3>
               <p className="font-display text-xl font-bold text-white">{config.address}</p>
-              <p className="text-xs font-mono text-[#D4A373] font-bold">
+              <p className="text-xs font-mono text-[#F59E0B] font-bold">
                 {config.neighborhood}
               </p>
               <p className="text-[11px] font-mono text-zinc-400">
@@ -88,7 +88,7 @@ export const LocationPage: React.FC = () => {
               target="_blank"
               rel="noopener noreferrer"
               onMouseEnter={playMechanicalHover}
-              className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 text-xs font-mono font-black uppercase tracking-wider bg-[#D4A373] text-zinc-950 rounded-xl hover:bg-[#C89562] transition-all shadow-sm active:scale-95"
+              className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 text-xs font-mono font-black uppercase tracking-wider bg-[#F59E0B] text-zinc-950 rounded-xl hover:bg-[#D97706] transition-all shadow-sm active:scale-95"
             >
               <MapPin className="w-4 h-4" />
               <span>Google Maps</span>
@@ -98,9 +98,9 @@ export const LocationPage: React.FC = () => {
               target="_blank"
               rel="noopener noreferrer"
               onMouseEnter={playMechanicalHover}
-              className="px-5 py-3 text-xs font-mono font-bold uppercase tracking-wider border border-[#282D37] bg-[#161920] text-zinc-200 hover:text-white hover:border-[#D4A373] rounded-xl transition-all active:scale-95"
+              className="px-5 py-3 text-xs font-mono font-bold uppercase tracking-wider border border-[#282D37] bg-[#161920] text-zinc-200 hover:text-white hover:border-[#F59E0B] rounded-xl transition-all active:scale-95"
             >
-              <Navigation className="w-4 h-4 text-[#D4A373]" />
+              <Navigation className="w-4 h-4 text-[#F59E0B]" />
               <span>Waze</span>
             </a>
           </div>
@@ -128,7 +128,7 @@ export const LocationPage: React.FC = () => {
                 y1="210"
                 x2="800"
                 y2="210"
-                stroke="#D4A373"
+                stroke="#F59E0B"
                 strokeWidth="2.5"
                 strokeOpacity="0.8"
               />
@@ -154,7 +154,7 @@ export const LocationPage: React.FC = () => {
               <text
                 x="65"
                 y="202"
-                fill="#D4A373"
+                fill="#F59E0B"
                 fontSize="11"
                 fontFamily="JetBrains Mono, monospace"
                 letterSpacing="2"
@@ -163,8 +163,8 @@ export const LocationPage: React.FC = () => {
                 CALLE VUELTA DE OBLIGADO (N° 931)
               </text>
 
-              <circle cx="370" cy="210" r="28" fill="#D4A373" fillOpacity="0.2" />
-              <circle cx="370" cy="210" r="9" fill="#D4A373" />
+              <circle cx="370" cy="210" r="28" fill="#F59E0B" fillOpacity="0.2" />
+              <circle cx="370" cy="210" r="9" fill="#F59E0B" />
               <circle cx="370" cy="210" r="3.5" fill="#0A0B0E" />
             </svg>
 
@@ -172,7 +172,7 @@ export const LocationPage: React.FC = () => {
               <span className="px-3 py-1.5 rounded-lg bg-[#0A0B0E]/90 border border-[#282D37] text-white font-bold">
                 VENADO TUERTO · SANTA FE
               </span>
-              <span className="px-3 py-1.5 rounded-lg bg-[#0A0B0E]/90 border border-[#D4A373]/40 text-[#D4A373] font-bold">
+              <span className="px-3 py-1.5 rounded-lg bg-[#0A0B0E]/90 border border-[#F59E0B]/40 text-[#F59E0B] font-bold">
                 {config.studioTitle.toUpperCase()}
               </span>
             </div>
@@ -184,7 +184,7 @@ export const LocationPage: React.FC = () => {
                   {config.neighborhood} · Atención exclusiva 1 a 1
                 </p>
               </div>
-              <span className="font-mono text-xs text-[#D4A373] font-bold">
+              <span className="font-mono text-xs text-[#F59E0B] font-bold">
                 -33.7456, -61.9688
               </span>
             </div>
@@ -195,7 +195,7 @@ export const LocationPage: React.FC = () => {
       {/* Studio Protocol Rules */}
       <div className="pt-4">
         <div className="mb-6">
-          <span className="font-mono text-xs uppercase text-[#D4A373] font-bold block mb-1">
+          <span className="font-mono text-xs uppercase text-[#F59E0B] font-bold block mb-1">
             REGLAS DEL LOCAL
           </span>
           <h2 className="font-display text-3xl font-extrabold text-white">
@@ -205,7 +205,7 @@ export const LocationPage: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="p-6 rounded-2xl border border-[#232730] bg-[#111318] space-y-2.5">
-            <span className="font-mono text-xs text-[#D4A373] font-bold">
+            <span className="font-mono text-xs text-[#F59E0B] font-bold">
               REGLA 01 · PUNTUALIDAD
             </span>
             <h3 className="font-display text-xl font-bold text-white">
@@ -217,7 +217,7 @@ export const LocationPage: React.FC = () => {
           </div>
 
           <div className="p-6 rounded-2xl border border-[#232730] bg-[#111318] space-y-2.5">
-            <span className="font-mono text-xs text-[#D4A373] font-bold">
+            <span className="font-mono text-xs text-[#F59E0B] font-bold">
               REGLA 02 · CANCELACIÓN
             </span>
             <h3 className="font-display text-xl font-bold text-white">Avisar con anticipación</h3>
@@ -227,7 +227,7 @@ export const LocationPage: React.FC = () => {
           </div>
 
           <div className="p-6 rounded-2xl border border-[#232730] bg-[#111318] space-y-2.5">
-            <span className="font-mono text-xs text-[#D4A373] font-bold">
+            <span className="font-mono text-xs text-[#F59E0B] font-bold">
               REGLA 03 · ESPACIO
             </span>
             <h3 className="font-display text-xl font-bold text-white">Atención 1 a 1</h3>

@@ -1,0 +1,427 @@
+{
+  "version": 4,
+  "updatedAt": "2026-11-07T15:07:37.037Z",
+  "config": {
+    "authorName": "Rodrigo",
+    "studioTitle": "Rodrigo Estudio",
+    "brandKicker": "Estudio de Corte & Autor · Venado Tuerto",
+    "tagline": "El oficio del corte a medida, en un espacio íntimo y sin prisa.",
+    "heroSubtitle": "Un espacio íntimo en Vuelta de Obligado 931, Venado Tuerto. Trabajamos cada corte, perfilado de barba y tratamiento capilar de manera personalizada, dedicando el tiempo necesario a cada detalle.",
+    "bio": "Estudio privado de atención personalizada uno a uno en Vuelta de Obligado 931, Venado Tuerto, Santa Fe. Dedicamos el tiempo necesario a escuchar, asesorar y lograr un corte que acompañe tus facciones y tu estilo diario.",
+    "mainPriceDisplay": "$12.000 ARS",
+    "address": "Vuelta de Obligado 931",
+    "neighborhood": "Venado Tuerto, Santa Fe",
+    "scheduleDisplay": "Martes a Sábados · 11:00 a 21:00 hs",
+    "phoneDisplay": "+54 9 3462 55-4421",
+    "whatsappRaw": "5493462554421",
+    "instagram": "@rodrigo.cutsss",
+    "tiktok": "@rodrigo.cutsss_vt",
+    "transferAlias": "RODRIGO.CUTSSS",
+    "spotifyPlaylistUrl": "https://open.spotify.com",
+    "currentVibeTrack": "Sesión Acústica & Jazz de Estudio",
+    "googleMapsUrl": "https://www.google.com/maps/search/?api=1&query=Vuelta+de+Obligado+931+Venado+Tuerto+Santa+Fe",
+    "wazeUrl": "https://waze.com/ul?q=Vuelta+de+Obligado+931+Venado+Tuerto+Santa+Fe",
+    "googleReviewShortlink": "https://g.page/r/RodrigoCutsss/review",
+    "heroImage": "/src/assets/images/hero_studio_portrait_1793889687375.jpg",
+    "spaceImage": "/src/assets/images/space_private_atelier_1793889688437.jpg",
+    "openingHour": 11,
+    "closingHour": 21,
+    "openDays": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "cleanBufferMinutes": 10,
+    "depositPercentage": 30,
+    "noticeHoursCancellation": 24,
+    "maxCourtesyMinutes": 10,
+    "walkInStatus": "available",
+    "adminPin": "1234",
+    "layoutMode": "landing",
+    "sectionOrder": [
+      "booking",
+      "services",
+      "beforeAfter",
+      "gallery",
+      "reviews",
+      "barber",
+      "location"
+    ],
+    "urbanTheme": "amber",
+    "showPromoBanner": false,
+    "promoBannerText": "Atención personalizada uno a uno en Vuelta de Obligado 931, Venado Tuerto",
+    "enableDripTrail": false,
+    "enableParallax": true,
+    "showHeroSection": true,
+    "showServicesSection": true,
+    "showBeforeAfterSection": true,
+    "showBookingSection": true,
+    "showGallerySection": true,
+    "showBarberSection": true,
+    "showReviewsSection": true,
+    "showLocationSection": true,
+    "showGalleryFilter": true,
+    "showGalleryBookingButton": true,
+    "showGalleryPriceBadge": true,
+    "showGalleryTechnicalSpec": true,
+    "showGalleryLikes": true,
+    "showGalleryTags": false,
+    "showServiceBookingButton": true,
+    "showServicePrice": true,
+    "showServiceProducts": true,
+    "showServiceDuration": true
+  },
+  "services": [
+    {
+      "id": "srv-01",
+      "index": "01",
+      "category": "Fades & Cortes",
+      "name": "Corte de Autor / Clásico",
+      "durationMinutes": 45,
+      "price": 12000,
+      "popularTag": "Esencial del Estudio",
+      "imageUrl": "/src/assets/images/lookbook_classic_scissoring_1793889690402.jpg",
+      "shortDescription": "Diagnóstico personalizado según tu estructura facial y remolinos, corte preciso a tijera o máquina graduada, lavado refrescante y peinado final con acabado orgánico.",
+      "preparation": [
+        "Asesoramiento inicial tranquilo para definir proporciones, caída natural y facilidad de peinado en tu día a día.",
+        "Adaptamos la técnica a cabellos lacios, ondulados o con rulos para que el crecimiento sea parejo."
+      ],
+      "executionSteps": [
+        "10 min · Conversación previa y estudio de facciones y textura capilar.",
+        "20 min · Arquitectura del corte con tijera de hoja japonesa y transiciones suaves a máquina.",
+        "10 min · Texturizado en seco para dar movimiento natural sin rigidez.",
+        "05 min · Peinado final con pomada mate al agua o arcilla botánica."
+      ],
+      "aftercare": "Mantiene su estructura y caída armónica entre 3 y 4 semanas sin perder prolijidad en nuca ni contornos.",
+      "productsUsed": "Tijeras de corte y esculpir · Máquina de precisión · Arcilla mate orgánica"
+    },
+    {
+      "id": "srv-02",
+      "index": "02",
+      "category": "Corte & Barba",
+      "name": "Corte + Perfilado de Barba",
+      "durationMinutes": 60,
+      "price": 17000,
+      "popularTag": "Servicio Integral",
+      "imageUrl": "/src/assets/images/lookbook_skin_fade_crop_1793889691565.jpg",
+      "shortDescription": "Servicio completo de cabello a medida integrado con el diseño, recorte volumétrico y perfilado de barba con compresa tibia aromática y bálsamo hidratante.",
+      "preparation": [
+        "Ideal para armonizar las líneas del cabello con el volumen mandibular en una sola sesión relajada.",
+        "Trabajamos con recortadoras hipoalergénicas de alta precisión para cuidar la piel sensible."
+      ],
+      "executionSteps": [
+        "30 min · Corte de cabello completo a tijera y máquina con unión limpia en patillas.",
+        "15 min · Esculpido de barba a peine y tijera equilibrando mentón y pómulos.",
+        "10 min · Compresa tibia aromática y definición suave de líneas en cuello y mejillas.",
+        "05 min · Hidratación con óleo de jojoba y cedro más peinado final."
+      ],
+      "aftercare": "Recomendamos aplicar 3 gotas de óleo nutritivo luego de la ducha para mantener la fibra suave.",
+      "productsUsed": "Tijera de autor · Recortadora de precisión · Óleo botánico de jojoba y cedro"
+    },
+    {
+      "id": "srv-03",
+      "index": "03",
+      "category": "Detalles & Barba",
+      "name": "Diseño y Perfilado de Barba",
+      "durationMinutes": 30,
+      "price": 8500,
+      "imageUrl": "/src/assets/images/hero_studio_portrait_1793889687375.jpg",
+      "shortDescription": "Recorte cuidadoso de longitud, definición natural de contornos en pómulos y cuello, toalla tibia relajante e hidratación profunda del vello facial y la piel.",
+      "preparation": [
+        "Venir con la barba seca y peinada en su dirección habitual para evaluar la densidad real."
+      ],
+      "executionSteps": [
+        "10 min · Rebaje progresivo de volumen y simetría mandibular.",
+        "10 min · Aplicación de toalla tibia para abrir poros y suavizar el vello.",
+        "05 min · Limpieza precisa de líneas superiores e inferiores sin irritación.",
+        "05 min · Cierre con tónico calmante y bálsamo nutritivo de absorción rápida."
+      ],
+      "aftercare": "Cepillar diariamente hacia abajo con cepillo de cerdas naturales para ordenar el crecimiento.",
+      "productsUsed": "Peine de madera antiestático · Tónico botánico calmante · Bálsamo hidratante"
+    },
+    {
+      "id": "srv-04",
+      "index": "04",
+      "category": "Color & Platinados",
+      "name": "Coloración / Iluminación",
+      "durationMinutes": 90,
+      "price": 28000,
+      "imageUrl": "/src/assets/images/lookbook_tonal_color_1793889692797.jpg",
+      "shortDescription": "Reflejos sutiles, desgaste natural, camuflaje de canas o color global trabajado con aditivos protectores que preservan la salud, el brillo y la suavidad del cabello.",
+      "preparation": [
+        "Si tenés una idea o referencia tonal, la evaluamos juntos antes de comenzar según la base natural de tu pelo."
+      ],
+      "executionSteps": [
+        "15 min · Diagnóstico de tono, prueba de elasticidad y preparación protectora.",
+        "45 min · Aplicación artesanal de iluminación, reflejos o coloración global con protector de enlaces.",
+        "15 min · Matizado personalizado para lograr tonos naturales, cálidos o fríos sin reflejos indeseados.",
+        "15 min · Lavado ácido sellador, baño nutritivo y corte o peinado de terminación."
+      ],
+      "aftercare": "Lavar con shampoo sin sulfatos y realizar una nutrición hidratante cada 15 días.",
+      "productsUsed": "Coloración profesional sin amoníaco · Protector de fibra Plex · Baño sellador pH ácido"
+    },
+    {
+      "id": "srv-05",
+      "index": "05",
+      "category": "Detalles & Barba",
+      "name": "Lavado Premium y Nutrición Capilar",
+      "durationMinutes": 30,
+      "price": 9500,
+      "imageUrl": "/src/assets/images/lookbook_long_layers_1793889692727.jpg",
+      "shortDescription": "Ritual de higiene oxigenante del cuero cabelludo, masaje descontracturante en lavacabezas y baño de crema restaurador con vapor suave para devolver cuerpo y brillo.",
+      "preparation": [
+        "Podés reservarlo como sesión individual de renovación o sumarlo a tu corte de cabello."
+      ],
+      "executionSteps": [
+        "10 min · Lavado purificante doble con masaje circular en sienes, nuca y cuero cabelludo.",
+        "12 min · Aplicación de máscara nutritiva rica en lípidos y aminoácidos con toalla tibia.",
+        "08 min · Enjuague templado estimulante y secado natural con protector térmico."
+      ],
+      "aftercare": "Deja el cabello dócil, luminoso y liviano desde el primer día.",
+      "productsUsed": "Shampoo botánico purificante · Máscara restauradora de aminoácidos · Bruma hidratante"
+    }
+  ],
+  "appointments": [
+    {
+      "id": "TK-841920",
+      "date": "2026-11-07",
+      "startTime": "13:00",
+      "serviceMinutes": 45,
+      "bufferMinutes": 10,
+      "clientName": "Ignacio Varela",
+      "whatsapp": "+54 9 3462 521984",
+      "serviceNames": [
+        "Corte de Autor / Clásico"
+      ],
+      "paymentOption": "commitment",
+      "status": "confirmed",
+      "reviewLoopScheduledAt": "16:00"
+    },
+    {
+      "id": "TK-904312",
+      "date": "2026-11-07",
+      "startTime": "17:00",
+      "serviceMinutes": 60,
+      "bufferMinutes": 10,
+      "clientName": "Lautaro Rossi",
+      "whatsapp": "+54 9 3462 609341",
+      "serviceNames": [
+        "Corte + Perfilado de Barba"
+      ],
+      "paymentOption": "deposit",
+      "status": "confirmed",
+      "reviewLoopScheduledAt": "20:10"
+    },
+    {
+      "id": "TK-773105",
+      "date": "2026-11-08",
+      "startTime": "12:00",
+      "serviceMinutes": 60,
+      "bufferMinutes": 10,
+      "clientName": "Santiago Romero",
+      "whatsapp": "+54 9 3462 489023",
+      "serviceNames": [
+        "Corte + Perfilado de Barba"
+      ],
+      "paymentOption": "deposit",
+      "status": "confirmed",
+      "reviewLoopScheduledAt": "15:20"
+    }
+  ],
+  "blockedSlots": [
+    {
+      "id": "block-1",
+      "date": "2026-11-07",
+      "startTime": "14:30",
+      "durationMinutes": 30,
+      "reason": "Pausa de mediodía y acondicionamiento del estudio"
+    },
+    {
+      "id": "block-2",
+      "date": "2026-11-08",
+      "startTime": "19:00",
+      "durationMinutes": 60,
+      "reason": "Sesión fotográfica de archivo editorial"
+    }
+  ],
+  "galleryItems": [
+    {
+      "id": "gal-1",
+      "title": "Corte a Tijera & Textura Orgánica",
+      "category": "Cortes & Fades",
+      "imageUrl": "/src/assets/images/lookbook_classic_scissoring_1793889690402.jpg",
+      "description": "Trabajo íntegro a tijera respetando los remolinos y la caída natural del cabello para lograr un estilo sobrio, versátil y fácil de peinar todos los días.",
+      "dateLabel": "Colección de Estudio",
+      "tags": [
+        "#CorteDeAutor",
+        "#Tijera",
+        "#VenadoTuerto"
+      ],
+      "technicalSpec": "Corte en capas suaves · Acabado mate natural",
+      "serviceId": "srv-01",
+      "priceLabel": "$12.000 ARS",
+      "likes": 194,
+      "featured": true
+    },
+    {
+      "id": "gal-2",
+      "title": "El Estudio en Vuelta de Obligado 931",
+      "category": "El Estudio & Local",
+      "imageUrl": "/src/assets/images/space_private_atelier_1793889688437.jpg",
+      "description": "Un refugio de calma en Venado Tuerto. Luz natural, materiales nobles, café de especialidad recién molido y un único sillón para atenderte sin interrupciones.",
+      "dateLabel": "El Espacio",
+      "tags": [
+        "#EstudioPrivado",
+        "#VueltaDeObligado931",
+        "#AtencionUnoAUno"
+      ],
+      "technicalSpec": "Atención exclusiva por turno · Café de cortesía · Vinilos & Jazz",
+      "likes": 238,
+      "featured": true
+    },
+    {
+      "id": "gal-3",
+      "title": "Corte Contemporáneo & Perfilado de Barba",
+      "category": "Cortes & Fades",
+      "imageUrl": "/src/assets/images/lookbook_skin_fade_crop_1793889691565.jpg",
+      "description": "Transición limpia en laterales combinada con longitud texturizada arriba y barba rebajada con precisión para enmarcar el rostro con naturalidad.",
+      "dateLabel": "Trabajo en Estudio",
+      "tags": [
+        "#CorteYBarba",
+        "#Visagismo",
+        "#VenadoTuerto"
+      ],
+      "technicalSpec": "Transición gradual · Barba hidratada con óleo botánico",
+      "serviceId": "srv-02",
+      "priceLabel": "$17.000 ARS",
+      "likes": 251
+    },
+    {
+      "id": "gal-4",
+      "title": "Herramientas de Precisión & Cuidado Artesanal",
+      "category": "Máquinas & Setup",
+      "imageUrl": "/src/assets/images/hero_studio_portrait_1793889687375.jpg",
+      "description": "Tijeras de aleación japonesa, peines de madera y carbono y productos botánicos seleccionados para cuidar el cuero cabelludo y la piel en cada visita.",
+      "dateLabel": "Oficio & Detalle",
+      "tags": [
+        "#Oficio",
+        "#TijeraJaponesa",
+        "#CuidadoCapilar"
+      ],
+      "technicalSpec": "Esterilización completa entre turnos · Cosmética botánica",
+      "serviceId": "srv-01",
+      "priceLabel": "$12.000 ARS",
+      "likes": 176
+    },
+    {
+      "id": "gal-5",
+      "title": "Iluminación Sutil & Reflejos Tono sobre Tono",
+      "category": "Color & Diseños",
+      "imageUrl": "/src/assets/images/lookbook_tonal_color_1793889692797.jpg",
+      "description": "Trabajo de iluminación dimensión cálida que aporta relieve al corte manteniendo la fibra sana, brillante y sedosa.",
+      "dateLabel": "Colorimetría",
+      "tags": [
+        "#Iluminacion",
+        "#ColorNatural",
+        "#CuidadoDeFibra"
+      ],
+      "technicalSpec": "Protector Plex · Matiz cálido natural · Baño de brillo",
+      "serviceId": "srv-04",
+      "priceLabel": "$28.000 ARS",
+      "likes": 215
+    },
+    {
+      "id": "gal-6",
+      "title": "Nutrición Profunda & Movimiento en Capas",
+      "category": "Cultura & Streetwear",
+      "imageUrl": "/src/assets/images/lookbook_long_layers_1793889692727.jpg",
+      "description": "Cabello tratado con nuestro ritual de lavado purificante y baño de crema de aminoácidos, logrando peso sano y brillo natural.",
+      "dateLabel": "Salud Capilar",
+      "tags": [
+        "#NutricionCapilar",
+        "#BrilloNatural",
+        "#VenadoTuerto"
+      ],
+      "technicalSpec": "Masaje capilar + Baño restaurador de lípidos",
+      "serviceId": "srv-05",
+      "priceLabel": "$9.500 ARS",
+      "likes": 189
+    }
+  ],
+  "reviews": [
+    {
+      "id": "rev-seed-1",
+      "clientName": "Thiago Benítez",
+      "serviceName": "Corte de Pelo (Corte de Autor & Fade)",
+      "price": "$12.000 ARS",
+      "rating": 5,
+      "date": "Hace 2 días",
+      "city": "Venado Tuerto",
+      "verified": true,
+      "comment": "Encontrar un estudio que entienda de fades urbanos y visagismo real en Venado Tuerto es oro puro. Rodrigo trabaja 1 a 1 sin apuros, puntual al minuto en Vuelta de Obligado 931.",
+      "createdAtISO": "2026-11-05T15:03:21.997Z"
+    },
+    {
+      "id": "rev-seed-2",
+      "clientName": "Lucas Santoro",
+      "serviceName": "Taper Fade & Contornos a Trimmer",
+      "price": "$12.000 ARS",
+      "rating": 5,
+      "date": "Hace 4 días",
+      "city": "Venado Tuerto",
+      "verified": true,
+      "comment": "Tengo rulos y el Low Taper que me hace Rodrigo respeta la caída natural y me dura prolijo casi un mes. La atención privada 1 a 1 sin fila de espera marca toda la diferencia.",
+      "createdAtISO": "2026-11-03T15:03:21.997Z"
+    },
+    {
+      "id": "rev-seed-3",
+      "clientName": "Nahuel Rossi",
+      "serviceName": "Corte de Pelo + Color / Platinado Global",
+      "price": "$28.000 ARS",
+      "rating": 5,
+      "date": "Hace 1 semana",
+      "city": "Venado Tuerto",
+      "verified": true,
+      "comment": "Me hice el platinado global ceniza y quedó impecable cuidando el cuero cabelludo. El pulido con shaver de titanio 0.0mm y el polvo texturizante mate son de primer nivel.",
+      "createdAtISO": "2026-10-31T15:03:21.997Z"
+    },
+    {
+      "id": "rev-seed-4",
+      "clientName": "Facundo Morán",
+      "serviceName": "Corte de Pelo + Perfilado de Barba Completo",
+      "price": "$17.000 ARS",
+      "rating": 5,
+      "date": "Hace 2 semanas",
+      "city": "Venado Tuerto",
+      "verified": true,
+      "comment": "El perfilado de barba con trimmer en T, shaver de titanio y toalla caliente al vapor deja cero irritación. Reservás desde el celular y te sentás a la hora exacta.",
+      "createdAtISO": "2026-10-24T15:03:21.997Z"
+    }
+  ],
+  "auditLogs": [
+    {
+      "id": "audit-1794064057037",
+      "timestamp": "2026-11-07T15:07:37.037Z",
+      "action": "CONFIG_UPDATED",
+      "actor": "admin",
+      "details": "Configuración actualizada (openDays)."
+    },
+    {
+      "id": "audit-1794064056966",
+      "timestamp": "2026-11-07T15:07:36.966Z",
+      "action": "CONFIG_UPDATED",
+      "actor": "admin",
+      "details": "Configuración actualizada (openDays)."
+    },
+    {
+      "id": "audit-init",
+      "timestamp": "2026-11-07T15:03:21.999Z",
+      "action": "SYSTEM_BOOT",
+      "actor": "system",
+      "details": "Motor backend de Rodrigo Estudio inicializado y sincronizado."
+    }
+  ]
+}

@@ -1,6 +1,29 @@
 import { AppointmentRecord, STUDIO_INFO } from './studioData';
 import { getTodayLocalISO, getOffsetDateISO } from '../utils/bookingEngine';
 
+export type HomeSectionId =
+  | 'booking'
+  | 'services'
+  | 'beforeAfter'
+  | 'gallery'
+  | 'reviews'
+  | 'barber'
+  | 'location';
+
+export type UrbanThemePreset = 'amber' | 'uv' | 'crimson' | 'volt';
+
+export type SiteLayoutMode = 'landing' | 'tabs';
+
+export const DEFAULT_SECTION_ORDER: HomeSectionId[] = [
+  'booking',
+  'services',
+  'beforeAfter',
+  'gallery',
+  'reviews',
+  'barber',
+  'location',
+];
+
 export interface StudioConfig {
   authorName: string;
   studioTitle: string;
@@ -33,15 +56,21 @@ export interface StudioConfig {
   maxCourtesyMinutes: number;
   walkInStatus: 'available' | 'booked_full';
   adminPin: string;
-  // Main Page Section Visibility Switches (controlled from Admin Portal)
+  layoutMode: SiteLayoutMode;
+  sectionOrder: HomeSectionId[];
+  urbanTheme: UrbanThemePreset;
+  showPromoBanner: boolean;
+  promoBannerText: string;
+  enableDripTrail: boolean;
+  enableParallax: boolean;
   showHeroSection: boolean;
   showServicesSection: boolean;
+  showBeforeAfterSection: boolean;
   showBookingSection: boolean;
   showGallerySection: boolean;
   showBarberSection: boolean;
   showReviewsSection: boolean;
   showLocationSection: boolean;
-  // Global Card Visibility Settings (controlled from Admin Portal)
   showGalleryFilter: boolean;
   showGalleryBookingButton: boolean;
   showGalleryPriceBadge: boolean;
@@ -60,7 +89,7 @@ export const INITIAL_STUDIO_CONFIG: StudioConfig = {
   brandKicker: STUDIO_INFO.brandKicker,
   tagline: STUDIO_INFO.tagline,
   heroSubtitle:
-    'Acá hacemos cortes, fades, color, barba y otros servicios con atención exclusiva 1 a 1 en Vuelta de Obligado 931, Venado Tuerto. Si venís con una idea, la sacamos; si no, la armamos juntos.',
+    'Un espacio íntimo en Vuelta de Obligado 931, Venado Tuerto. Trabajamos cada corte, perfilado de barba y tratamiento capilar de manera personalizada, dedicando el tiempo necesario a cada detalle.',
   bio: STUDIO_INFO.bio,
   mainPriceDisplay: '$12.000 ARS',
   address: STUDIO_INFO.address,
@@ -72,7 +101,7 @@ export const INITIAL_STUDIO_CONFIG: StudioConfig = {
   tiktok: '@rodrigo.cutsss_vt',
   transferAlias: 'RODRIGO.CUTSSS',
   spotifyPlaylistUrl: STUDIO_INFO.spotifyPlaylistUrl,
-  currentVibeTrack: 'Bienvenido · Voz de Rodrigo',
+  currentVibeTrack: 'Sesión Acústica & Jazz de Estudio',
   googleMapsUrl: STUDIO_INFO.googleMapsUrl,
   wazeUrl: STUDIO_INFO.wazeUrl,
   googleReviewShortlink: STUDIO_INFO.googleReviewShortlink,
@@ -87,15 +116,22 @@ export const INITIAL_STUDIO_CONFIG: StudioConfig = {
   maxCourtesyMinutes: 10,
   walkInStatus: 'available',
   adminPin: '1234',
-  // Main Page Section Visibility Switches
+  layoutMode: 'landing',
+  sectionOrder: DEFAULT_SECTION_ORDER,
+  urbanTheme: 'amber',
+  showPromoBanner: false,
+  promoBannerText:
+    'Atención personalizada uno a uno en Vuelta de Obligado 931, Venado Tuerto',
+  enableDripTrail: false,
+  enableParallax: true,
   showHeroSection: true,
   showServicesSection: true,
+  showBeforeAfterSection: true,
   showBookingSection: true,
   showGallerySection: true,
   showBarberSection: true,
   showReviewsSection: true,
   showLocationSection: true,
-  // Default Card Visibility Settings
   showGalleryFilter: true,
   showGalleryBookingButton: true,
   showGalleryPriceBadge: true,
@@ -117,14 +153,14 @@ export const INITIAL_BLOCKED_SLOTS = [
     date: todayISO,
     startTime: '14:30',
     durationMinutes: 30,
-    reason: 'Almuerzo / Esterilización UV de herramientas',
+    reason: 'Pausa de mediodía y acondicionamiento del estudio',
   },
   {
     id: 'block-2',
     date: tomorrowISO,
     startTime: '19:00',
     durationMinutes: 60,
-    reason: 'Grabación de contenido / Galería del Estudio',
+    reason: 'Sesión fotográfica de archivo editorial',
   },
 ];
 
@@ -133,11 +169,11 @@ export const INITIAL_APPOINTMENTS_STORE: AppointmentRecord[] = [
     id: 'TK-841920',
     date: todayISO,
     startTime: '13:00',
-    serviceMinutes: 40,
+    serviceMinutes: 45,
     bufferMinutes: 10,
     clientName: 'Ignacio Varela',
     whatsapp: '+54 9 3462 521984',
-    serviceNames: ['Corte de Pelo (Corte de Autor & Fade)'],
+    serviceNames: ['Corte de Autor / Clásico'],
     paymentOption: 'commitment',
     status: 'confirmed',
     reviewLoopScheduledAt: '16:00',
@@ -146,11 +182,11 @@ export const INITIAL_APPOINTMENTS_STORE: AppointmentRecord[] = [
     id: 'TK-904312',
     date: todayISO,
     startTime: '17:00',
-    serviceMinutes: 40,
+    serviceMinutes: 60,
     bufferMinutes: 10,
     clientName: 'Lautaro Rossi',
     whatsapp: '+54 9 3462 609341',
-    serviceNames: ['Taper Fade & Contornos a Trimmer'],
+    serviceNames: ['Corte + Perfilado de Barba'],
     paymentOption: 'deposit',
     status: 'confirmed',
     reviewLoopScheduledAt: '20:10',
@@ -163,7 +199,7 @@ export const INITIAL_APPOINTMENTS_STORE: AppointmentRecord[] = [
     bufferMinutes: 10,
     clientName: 'Santiago Romero',
     whatsapp: '+54 9 3462 489023',
-    serviceNames: ['Corte de Pelo + Perfilado de Barba Completo'],
+    serviceNames: ['Corte + Perfilado de Barba'],
     paymentOption: 'deposit',
     status: 'confirmed',
     reviewLoopScheduledAt: '15:20',

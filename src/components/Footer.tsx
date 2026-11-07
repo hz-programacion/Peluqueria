@@ -1,263 +1,173 @@
 import React from 'react';
 import { useStudio } from '../context/StudioContext';
-import {
-  MapPin,
-  Navigation,
-  ArrowUp,
-  MessageCircle,
-  Lock,
-  Instagram,
-  ExternalLink,
-} from 'lucide-react';
+import { MapPin, Navigation, ArrowUp, MessageCircle, Lock, Instagram } from 'lucide-react';
 import { resolveInstagramInfo, resolveWhatsAppInfo } from '../utils/bookingEngine';
-import { playMechanicalHover, playMechanicalClick } from '../utils/audioFeedback';
 
 export const Footer: React.FC = () => {
   const { config, navigateTo } = useStudio();
 
   const igInfo = resolveInstagramInfo(config.instagram);
   const waInfo = resolveWhatsAppInfo(config.phoneDisplay, config.whatsappRaw);
-  const tiktokClean = (config.tiktok || '@rodrigo.cutsss_vt').replace(/^@/, '');
-  const tiktokDisplay = (config.tiktok || '@rodrigo.cutsss_vt').startsWith('@')
-    ? config.tiktok || '@rodrigo.cutsss_vt'
-    : `@${config.tiktok}`;
 
   const scrollToTop = () => {
-    playMechanicalClick();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const scrollToSection = (sectionId: string) => {
+    const el = document.getElementById(sectionId);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      navigateTo('home', sectionId);
+    }
+  };
+
   return (
-    <footer className="border-t border-[#232730] bg-[#0A0B0E] pt-16 pb-24 md:pb-16 text-zinc-300 transition-colors">
-      <div className="max-w-[1360px] mx-auto px-6">
-        {/* Top Footer Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 pb-12 border-b border-[#1E222B]">
-          {/* Brand & Author Info */}
+    <footer className="border-t border-[#171513]/12 bg-[#171513] text-[#EFEAE1] pt-14 pb-10">
+      <div className="max-w-[1320px] mx-auto px-5 sm:px-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 pb-12 border-b border-[#F7F4EE]/12">
+          {/* Brand & Manifesto Summary */}
           <div className="lg:col-span-5 space-y-4">
-            <div className="flex items-center gap-2.5">
-              <span className="w-7 h-7 rounded-lg bg-[#D4A373] text-zinc-950 font-extrabold flex items-center justify-center text-[10px] font-mono shadow-sm">
-                RC
-              </span>
-              <span className="font-display text-2xl font-black tracking-tight text-white uppercase">
-                {config.authorName.toUpperCase()}{' '}
-                <span className="text-[#D4A373]">CUTSSS</span>
-              </span>
-            </div>
-            <p className="text-xs uppercase tracking-widest font-mono text-[#D4A373] font-bold">
-              Cortes Masculinos &amp; Tapers de Autor · 1 a 1
+            <span className="font-display text-3xl font-medium tracking-tight text-[#F7F4EE] block">
+              {config.studioTitle || 'Rodrigo Estudio'}
+            </span>
+            <p className="text-xs uppercase tracking-widest text-[#C8A97E]">
+              Estudio de Corte &amp; Autor · Atención Personalizada
             </p>
-            <p className="text-sm text-zinc-400 max-w-[46ch] leading-relaxed">
-              Estudio privado de barbería para hombres en{' '}
-              <strong className="text-zinc-200">{config.neighborhood}</strong>. Atención dedicada sin salas de espera repletas ni barberos apurados. Servicio principal:{' '}
-              {config.mainPriceDisplay} en{' '}
-              <strong className="text-zinc-200">{config.address}</strong>.
+            <p className="text-sm text-[#B8AFA6] max-w-[44ch] leading-relaxed">
+              Un espacio privado pensado para el cuidado del detalle, el trato uno a uno y la calma
+              en <strong className="text-[#F7F4EE] font-medium">{config.address}</strong>,{' '}
+              {config.neighborhood}.
             </p>
           </div>
 
-          {/* Site Navigation */}
+          {/* Curated Navigation */}
           <div className="lg:col-span-3 space-y-3">
-            <p className="font-mono text-xs uppercase text-zinc-500 tracking-wider mb-4">
-              Mapa del Sitio
-            </p>
-            <ul className="space-y-2 text-xs tracking-wider uppercase font-semibold text-zinc-400">
+            <p className="text-xs uppercase tracking-widest text-[#C8A97E]">Recorrido</p>
+            <ul className="space-y-2.5 text-sm text-[#D8D0C5]">
               <li>
                 <button
-                  onClick={() => {
-                    playMechanicalClick();
-                    navigateTo('home');
-                  }}
-                  onMouseEnter={playMechanicalHover}
-                  className="hover:text-[#D4A373] transition-colors cursor-pointer"
+                  type="button"
+                  onClick={() => scrollToSection('estudio')}
+                  className="hover:text-[#C8A97E] transition-colors cursor-pointer"
                 >
-                  Inicio &amp; Módulos
+                  El Estudio &amp; Manifiesto
                 </button>
               </li>
               <li>
                 <button
-                  onClick={() => {
-                    playMechanicalClick();
-                    navigateTo('services');
-                  }}
-                  onMouseEnter={playMechanicalHover}
-                  className="hover:text-[#D4A373] transition-colors cursor-pointer"
+                  type="button"
+                  onClick={() => scrollToSection('servicios')}
+                  className="hover:text-[#C8A97E] transition-colors cursor-pointer"
                 >
-                  Carta de Cortes &amp; Fades
+                  Catálogo de Servicios
                 </button>
               </li>
               <li>
                 <button
-                  onClick={() => {
-                    playMechanicalClick();
-                    navigateTo('lookbook');
-                  }}
-                  onMouseEnter={playMechanicalHover}
-                  className="hover:text-[#D4A373] transition-colors cursor-pointer"
+                  type="button"
+                  onClick={() => scrollToSection('obras')}
+                  className="hover:text-[#C8A97E] transition-colors cursor-pointer"
                 >
-                  Galería de Fotos
+                  Obras &amp; Crónicas
                 </button>
               </li>
               <li>
                 <button
-                  onClick={() => {
-                    playMechanicalClick();
-                    navigateTo('experience');
-                  }}
-                  onMouseEnter={playMechanicalHover}
-                  className="hover:text-[#D4A373] transition-colors cursor-pointer"
+                  type="button"
+                  onClick={() => scrollToSection('turnero')}
+                  className="hover:text-[#C8A97E] transition-colors cursor-pointer font-medium text-[#F7F4EE]"
                 >
-                  El Barbero &amp; Equipamiento
+                  Reservá tu lugar online
                 </button>
               </li>
               <li>
                 <button
-                  onClick={() => {
-                    playMechanicalClick();
-                    navigateTo('location');
-                  }}
-                  onMouseEnter={playMechanicalHover}
-                  className="hover:text-[#D4A373] transition-colors cursor-pointer"
+                  type="button"
+                  onClick={() => scrollToSection('ubicacion')}
+                  className="hover:text-[#C8A97E] transition-colors cursor-pointer"
                 >
-                  Ubicación {config.neighborhood}
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => {
-                    playMechanicalClick();
-                    navigateTo('booking');
-                  }}
-                  onMouseEnter={playMechanicalHover}
-                  className="hover:text-[#D4A373] transition-colors cursor-pointer text-white font-bold"
-                >
-                  Reservar Turno Online ({config.mainPriceDisplay})
+                  Ubicación &amp; Horarios
                 </button>
               </li>
             </ul>
           </div>
 
-          {/* Contact & Map Links */}
-          <div className="lg:col-span-4 space-y-4">
-            <p className="font-mono text-xs uppercase text-zinc-500 tracking-wider mb-4">
-              Local &amp; Contacto Directo
+          {/* Direct Local Contact in Venado Tuerto */}
+          <div className="lg:col-span-4 space-y-3">
+            <p className="text-xs uppercase tracking-widest text-[#C8A97E]">
+              Ubicación &amp; Contacto
             </p>
-            <div className="space-y-1 text-xs font-mono text-zinc-300">
-              <p className="font-bold text-sm text-white">{config.address}</p>
-              <p className="text-zinc-400">{config.neighborhood}</p>
-              <p className="text-zinc-400 mt-2">WhatsApp: {waInfo.display}</p>
-              <p className="text-zinc-400">Instagram: {igInfo.handle}</p>
-              <p className="text-zinc-500 text-[11px]">{config.scheduleDisplay}</p>
+            <div className="space-y-1 text-sm text-[#D8D0C5]">
+              <p className="font-medium text-[#F7F4EE]">{config.address}</p>
+              <p className="text-[#B8AFA6]">{config.neighborhood}</p>
+              <p className="text-[#B8AFA6] pt-1">{config.scheduleDisplay}</p>
+              <p className="font-mono text-xs text-[#C8A97E] pt-1">WhatsApp: {waInfo.display}</p>
             </div>
 
-            <div className="pt-2 flex flex-wrap gap-2">
+            <div className="pt-2 flex flex-wrap gap-2.5">
+              <a
+                href={waInfo.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 border border-[#F7F4EE]/20 hover:border-[#C8A97E] text-xs text-[#F7F4EE] transition-colors"
+              >
+                <MessageCircle className="w-3.5 h-3.5 text-[#C8A97E]" />
+                <span>WhatsApp</span>
+              </a>
+              <a
+                href={igInfo.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 border border-[#F7F4EE]/20 hover:border-[#C8A97E] text-xs text-[#F7F4EE] transition-colors"
+              >
+                <Instagram className="w-3.5 h-3.5 text-[#C8A97E]" />
+                <span>{igInfo.handle}</span>
+              </a>
               <a
                 href={config.googleMapsUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                onMouseEnter={playMechanicalHover}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#282D37] bg-[#111318] text-xs font-mono text-zinc-300 hover:text-white hover:border-[#D4A373] transition-colors"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 border border-[#F7F4EE]/20 hover:border-[#C8A97E] text-xs text-[#F7F4EE] transition-colors"
               >
-                <MapPin className="w-3.5 h-3.5 text-[#D4A373]" />
-                <span>Maps</span>
+                <MapPin className="w-3.5 h-3.5 text-[#C8A97E]" />
+                <span>Google Maps</span>
               </a>
               <a
                 href={config.wazeUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                onMouseEnter={playMechanicalHover}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#282D37] bg-[#111318] text-xs font-mono text-zinc-300 hover:text-white hover:border-[#D4A373] transition-colors"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 border border-[#F7F4EE]/20 hover:border-[#C8A97E] text-xs text-[#F7F4EE] transition-colors"
               >
-                <Navigation className="w-3.5 h-3.5 text-[#D4A373]" />
+                <Navigation className="w-3.5 h-3.5 text-[#C8A97E]" />
                 <span>Waze</span>
               </a>
-              <a
-                href={waInfo.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                onMouseEnter={playMechanicalHover}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#282D37] bg-[#111318] text-xs font-mono text-zinc-300 hover:text-white hover:border-[#D4A373] transition-colors"
-              >
-                <MessageCircle className="w-3.5 h-3.5 text-[#D4A373]" />
-                <span>WhatsApp</span>
-              </a>
-            </div>
-
-            {/* Direct Barbero Admin Gateway */}
-            <div className="pt-3 border-t border-[#1E222B]">
-              <button
-                onClick={() => {
-                  playMechanicalClick();
-                  navigateTo('admin');
-                }}
-                onMouseEnter={playMechanicalHover}
-                className="inline-flex items-center gap-1.5 text-xs font-mono text-zinc-400 hover:text-[#D4A373] transition-colors cursor-pointer"
-              >
-                <Lock className="w-3.5 h-3.5 text-[#D4A373]" />
-                <span>Panel del Barbero / Admin</span>
-              </button>
             </div>
           </div>
         </div>
 
-        {/* Dynamic Social Media Connection Bar */}
-        <div className="py-6 border-b border-[#1E222B] flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <span className="w-2 h-2 rounded-full bg-[#D4A373]" />
-            <span className="font-mono text-xs font-bold text-zinc-200 uppercase tracking-wider">
-              Comunidad &amp; Historias Diarias:
-            </span>
-            <span className="hidden sm:inline text-xs text-zinc-500 font-mono">
-              Fotos reales de cortes, disponibilidad de turnos y novedades
-            </span>
-          </div>
-
-          <div className="flex items-center gap-3">
-            {/* Instagram Link */}
-            <a
-              href={igInfo.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              onMouseEnter={playMechanicalHover}
-              onClick={playMechanicalClick}
-              aria-label={`Instagram ${igInfo.handle}`}
-              className="group flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#111318] border border-[#282D37] hover:border-[#D4A373] text-xs font-mono font-bold transition-all active:scale-95"
-            >
-              <Instagram className="w-4 h-4 text-[#D4A373]" />
-              <span className="text-zinc-200 group-hover:text-white">
-                {igInfo.handle} (DM Directo)
-              </span>
-              <ExternalLink className="w-3 h-3 text-zinc-500 group-hover:text-[#D4A373]" />
-            </a>
-
-            {/* TikTok Link */}
-            <a
-              href={`https://tiktok.com/@${tiktokClean}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              onMouseEnter={playMechanicalHover}
-              onClick={playMechanicalClick}
-              aria-label={`TikTok ${tiktokDisplay}`}
-              className="group flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#111318] border border-[#282D37] hover:border-[#D4A373] text-xs font-mono font-bold transition-all active:scale-95"
-            >
-              <span className="text-zinc-200 group-hover:text-white">{tiktokDisplay}</span>
-              <ExternalLink className="w-3 h-3 text-zinc-500 group-hover:text-[#D4A373]" />
-            </a>
-          </div>
-        </div>
-
-        {/* Bottom Strip */}
-        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono text-zinc-500">
+        {/* Quiet Bottom Strip */}
+        <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#9E958B]">
           <p>
-            © {new Date().getFullYear()} {config.studioTitle.toUpperCase()}. Barbería contemporánea masculina en {config.neighborhood}.
+            © {new Date().getFullYear()} {config.studioTitle}. Estudio de corte y cuidado capilar en{' '}
+            {config.neighborhood}.
           </p>
-          <div className="flex items-center gap-4">
-            <span>{config.address}</span>
+          <div className="flex items-center gap-6">
             <button
-              onClick={scrollToTop}
-              onMouseEnter={playMechanicalHover}
-              className="inline-flex items-center gap-1 text-zinc-400 hover:text-[#D4A373] transition-colors cursor-pointer"
+              type="button"
+              onClick={() => navigateTo('admin')}
+              className="inline-flex items-center gap-1.5 hover:text-[#F7F4EE] transition-colors cursor-pointer"
             >
-              <span>Subir</span>
-              <ArrowUp className="w-3 h-3" />
+              <Lock className="w-3 h-3 text-[#C8A97E]" />
+              <span>Gestión del Estudio</span>
+            </button>
+            <button
+              type="button"
+              onClick={scrollToTop}
+              className="inline-flex items-center gap-1 hover:text-[#F7F4EE] transition-colors cursor-pointer"
+            >
+              <span>Volver arriba</span>
+              <ArrowUp className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>

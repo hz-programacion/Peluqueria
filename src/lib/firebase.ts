@@ -1,31 +1,46 @@
-import { initializeApp, getApps, getApp } from 'firebase/app';
+import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getAnalytics, isSupported, Analytics } from 'firebase/analytics';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, Firestore } from 'firebase/firestore';
+
+/**
+ * Firebase configuration loaded strictly from environment variables (VITE_FIREBASE_*).
+ * Never hardcode API keys or secrets in source files so repository secret scanners stay clean.
+ */
+const env = (import.meta as unknown as { env?: Record<string, string | undefined> }).env || {};
 
 export const firebaseConfig = {
-  apiKey: "AIzaSyCk3j4_BXc6jg6DGmrWwCAZGge6zVkleZk",
-  authDomain: "peluqueria-4817c.firebaseapp.com",
-  projectId: "peluqueria-4817c",
-  storageBucket: "peluqueria-4817c.firebasestorage.app",
-  messagingSenderId: "748862779869",
-  appId: "1:748862779869:web:226bcec353d0d09cfcc634",
-  measurementId: "G-24HBE1R252"
+  apiKey: env.VITE_FIREBASE_API_KEY || '',
+  authDomain: env.VITE_FIREBASE_AUTH_DOMAIN || '',
+  projectId: env.VITE_FIREBASE_PROJECT_ID || '',
+  storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET || '',
+  messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
+  appId: env.VITE_FIREBASE_APP_ID || '',
+  measurementId: env.VITE_FIREBASE_MEASUREMENT_ID || '',
 };
 
-// Initialize Firebase app singleton
-export const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
-export const db = getFirestore(app);
+export const isFirebaseConfigured = Boolean(
+  firebaseConfig.apiKey &&
+    firebaseConfig.apiKey !== 'YOUR_FIREBASE_API_KEY' &&
+    firebaseConfig.projectId
+);
 
-// Safe Analytics initialization for browser context
+export const app: FirebaseApp | null = isFirebaseConfigured
+  ? getApps().length === 0
+    ? initializeApp(firebaseConfig)
+    : getApp()
+  : null;
+
+export const db: Firestore | null = app ? getFirestore(app) : null;
+
 export let analytics: Analytics | null = null;
-if (typeof window !== 'undefined') {
+if (typeof window !== 'undefined' && app) {
   isSupported()
     .then((supported) => {
-      if (supported) {
+      if (supported && app) {
         analytics = getAnalytics(app);
       }
     })
     .catch(() => {
-      // Graceful fallback
+      // Graceful fallback when analytics is blocked or unsupported
     });
 }

@@ -38,7 +38,7 @@ export const UrbanBoombox: React.FC = () => {
         <div className="mb-3 w-80 sm:w-88 bg-[#12141A]/95 border border-[#282C37] rounded-2xl p-4 shadow-2xl backdrop-blur-xl">
           <div className="flex items-center justify-between border-b border-[#20242E] pb-2.5 mb-3">
             <div className="flex items-center gap-2">
-              <Headphones className="w-4 h-4 text-[#D4A373]" />
+              <Headphones className="w-4 h-4 text-[#F59E0B]" />
               <span className="text-xs font-mono font-bold text-zinc-100">
                 Bienvenido · {config.authorName}
               </span>
@@ -89,7 +89,7 @@ export const UrbanBoombox: React.FC = () => {
                 <span
                   key={i}
                   className={`flex-1 rounded-full transition-all duration-150 ${
-                    isPassed ? 'bg-[#D4A373]' : 'bg-[#252934]'
+                    isPassed ? 'bg-[#F59E0B]' : 'bg-[#252934]'
                   }`}
                   style={{ height: `${barHeight}%` }}
                 />
@@ -107,7 +107,7 @@ export const UrbanBoombox: React.FC = () => {
                   welcomeAudio.togglePlay();
                 }}
                 onMouseEnter={playMechanicalHover}
-                className="h-9 px-3.5 rounded-xl bg-[#D4A373] hover:bg-[#E0B083] text-zinc-950 text-xs font-mono font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm"
+                className="h-9 px-3.5 rounded-xl bg-[#F59E0B] hover:bg-[#E0B083] text-zinc-950 text-xs font-mono font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm"
               >
                 {audioState.isPlaying ? (
                   <>
@@ -151,7 +151,7 @@ export const UrbanBoombox: React.FC = () => {
                 {audioState.isMuted ? (
                   <VolumeX className="w-4 h-4 text-amber-400" />
                 ) : (
-                  <Volume2 className="w-4 h-4 text-[#D4A373]" />
+                  <Volume2 className="w-4 h-4 text-[#F59E0B]" />
                 )}
               </button>
               <input
@@ -162,7 +162,7 @@ export const UrbanBoombox: React.FC = () => {
                 aria-label="Volumen de bienvenida"
                 value={audioState.isMuted ? 0 : audioState.volume}
                 onChange={(e) => welcomeAudio.setVolume(parseFloat(e.target.value))}
-                className="w-full accent-[#D4A373] h-1.5 bg-[#252934] rounded-lg cursor-pointer"
+                className="w-full accent-[#F59E0B] h-1.5 bg-[#252934] rounded-lg cursor-pointer"
               />
             </div>
           </div>
@@ -170,7 +170,7 @@ export const UrbanBoombox: React.FC = () => {
       )}
 
       {/* Floating Launcher Pill: Exact label "Bienvenido" */}
-      <div className="flex items-center gap-2 bg-[#12141A]/95 border border-[#2A2E39] backdrop-blur-md px-3.5 py-2 rounded-full shadow-2xl hover:border-[#D4A373]/70 transition-colors">
+      <div className="flex items-center gap-2 bg-[#12141A]/95 border border-[#2A2E39] backdrop-blur-md px-3.5 py-2 rounded-full shadow-2xl hover:border-[#F59E0B]/70 transition-colors">
         <button
           type="button"
           onClick={() => {
@@ -182,12 +182,12 @@ export const UrbanBoombox: React.FC = () => {
         >
           <Headphones
             className={`w-4 h-4 ${
-              audioState.isPlaying ? 'text-[#D4A373]' : 'text-zinc-300'
+              audioState.isPlaying ? 'text-[#F59E0B]' : 'text-zinc-300'
             }`}
           />
           <div className="text-xs font-mono font-bold text-zinc-100 whitespace-nowrap">
             {audioState.isPlaying ? (
-              <span className="text-[#D4A373] tabular-nums">
+              <span className="text-[#F59E0B] tabular-nums">
                 Bienvenido · {formatSeconds(audioState.currentTime)}
               </span>
             ) : (
@@ -208,7 +208,7 @@ export const UrbanBoombox: React.FC = () => {
             welcomeAudio.togglePlay();
           }}
           onMouseEnter={playMechanicalHover}
-          className="w-7 h-7 rounded-full bg-[#D4A373] hover:bg-[#E0B083] text-zinc-950 flex items-center justify-center hover:scale-105 active:scale-95 transition-transform cursor-pointer shadow-sm"
+          className="w-7 h-7 rounded-full bg-[#F59E0B] hover:bg-[#E0B083] text-zinc-950 flex items-center justify-center hover:scale-105 active:scale-95 transition-transform cursor-pointer shadow-sm"
           aria-label={
             audioState.isPlaying
               ? 'Pausar bienvenida'

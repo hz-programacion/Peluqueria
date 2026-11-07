@@ -12,7 +12,7 @@ export const ExperiencePage: React.FC = () => {
       {/* Title & Philosophy */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-[#232730]">
         <div>
-          <span className="font-mono text-xs uppercase tracking-widest text-[#D4A373] font-bold block mb-1">
+          <span className="font-mono text-xs uppercase tracking-widest text-[#F59E0B] font-bold block mb-1">
             CONCEPTO &amp; CULTURA DE ESTUDIO // ATENCIÓN 1 A 1
           </span>
           <h1 className="font-display text-4xl md:text-5xl font-black text-white uppercase tracking-tight">
@@ -40,7 +40,7 @@ export const ExperiencePage: React.FC = () => {
             Acá la experiencia es 1 a 1 real: llegás a {config.address} y el espacio es 100% tuyo durante tu turno. Trabajamos con clippers profesionales, trimmers de precisión (cuchilla T), tijeras de esculpir y shaver de lámina de titanio 0.0 mm hipoalergénica, cuidando tu piel y logrando degradés perfectos por {config.mainPriceDisplay}.
           </p>
 
-          <div className="pt-2 flex flex-wrap items-center gap-3 text-xs font-mono text-[#D4A373]">
+          <div className="pt-2 flex flex-wrap items-center gap-3 text-xs font-mono text-[#F59E0B]">
             <span className="bg-[#111318] px-3 py-1.5 rounded-lg border border-[#232730]">
               {config.address.toUpperCase()}
             </span>
@@ -60,7 +60,7 @@ export const ExperiencePage: React.FC = () => {
               className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-700"
             />
             <div className="absolute top-4 left-4 bg-[#0A0B0E]/90 border border-[#282D37] backdrop-blur-md px-3 py-1.5 rounded-lg text-left shadow-lg">
-              <span className="text-[10px] font-mono font-bold text-[#D4A373] block">
+              <span className="text-[10px] font-mono font-bold text-[#F59E0B] block">
                 PULSO &amp; TECNOLOGÍA
               </span>
               <span className="text-[10px] font-mono text-zinc-300">
@@ -68,7 +68,7 @@ export const ExperiencePage: React.FC = () => {
               </span>
             </div>
             <div className="absolute inset-x-0 bottom-0 p-6 bg-gradient-to-t from-[#0A0B0E] via-[#0A0B0E]/80 to-transparent text-white font-mono text-xs">
-              <span className="text-[#D4A373] font-bold block mb-1">
+              <span className="text-[#F59E0B] font-bold block mb-1">
                 EQUIPAMIENTO &amp; ATMÓSFERA
               </span>
               <p className="text-zinc-300">
@@ -82,10 +82,10 @@ export const ExperiencePage: React.FC = () => {
       {/* The 3 Urban Pillars */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="p-6 md:p-8 rounded-2xl border border-[#232730] bg-[#111318] space-y-3">
-          <div className="w-10 h-10 rounded-xl bg-[#D4A373]/15 border border-[#D4A373]/40 text-[#D4A373] flex items-center justify-center font-bold">
+          <div className="w-10 h-10 rounded-xl bg-[#F59E0B]/15 border border-[#F59E0B]/40 text-[#F59E0B] flex items-center justify-center font-bold">
             <Zap className="w-5 h-5 stroke-[2.5]" />
           </div>
-          <span className="font-mono text-[11px] uppercase text-[#D4A373] font-bold block">
+          <span className="font-mono text-[11px] uppercase text-[#F59E0B] font-bold block">
             Pilar 01
           </span>
           <h3 className="font-display text-xl font-bold text-white">
@@ -97,10 +97,10 @@ export const ExperiencePage: React.FC = () => {
         </div>
 
         <div className="p-6 md:p-8 rounded-2xl border border-[#232730] bg-[#111318] space-y-3">
-          <div className="w-10 h-10 rounded-xl bg-[#D4A373]/15 border border-[#D4A373]/40 text-[#D4A373] flex items-center justify-center font-bold">
+          <div className="w-10 h-10 rounded-xl bg-[#F59E0B]/15 border border-[#F59E0B]/40 text-[#F59E0B] flex items-center justify-center font-bold">
             <Volume2 className="w-5 h-5 stroke-[2.5]" />
           </div>
-          <span className="font-mono text-[11px] uppercase text-[#D4A373] font-bold block">
+          <span className="font-mono text-[11px] uppercase text-[#F59E0B] font-bold block">
             Pilar 02
           </span>
           <h3 className="font-display text-xl font-bold text-white">Vibe &amp; Cero Teléfonos</h3>
@@ -110,10 +110,10 @@ export const ExperiencePage: React.FC = () => {
         </div>
 
         <div className="p-6 md:p-8 rounded-2xl border border-[#232730] bg-[#111318] space-y-3">
-          <div className="w-10 h-10 rounded-xl bg-[#D4A373]/15 border border-[#D4A373]/40 text-[#D4A373] flex items-center justify-center font-bold">
+          <div className="w-10 h-10 rounded-xl bg-[#F59E0B]/15 border border-[#F59E0B]/40 text-[#F59E0B] flex items-center justify-center font-bold">
             <Beer className="w-5 h-5 stroke-[2.5]" />
           </div>
-          <span className="font-mono text-[11px] uppercase text-[#D4A373] font-bold block">
+          <span className="font-mono text-[11px] uppercase text-[#F59E0B] font-bold block">
             Pilar 03
           </span>
           <h3 className="font-display text-xl font-bold text-white">Comodidad Total</h3>
@@ -127,7 +127,7 @@ export const ExperiencePage: React.FC = () => {
       <div className="p-6 md:p-10 rounded-2xl border border-[#232730] bg-[#111318] space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <span className="font-mono text-xs uppercase text-[#D4A373] font-bold">
+            <span className="font-mono text-xs uppercase text-[#F59E0B] font-bold">
               GOOGLE MAPS VERIFIED (5.0 ★)
             </span>
             <h3 className="font-display text-2xl font-bold text-white mt-1">
@@ -139,7 +139,7 @@ export const ExperiencePage: React.FC = () => {
             target="_blank"
             rel="noopener noreferrer"
             onMouseEnter={playMechanicalHover}
-            className="px-4 py-2 text-xs font-mono font-bold rounded-xl border border-[#282D37] bg-[#161920] text-zinc-200 hover:text-white hover:border-[#D4A373] transition-colors"
+            className="px-4 py-2 text-xs font-mono font-bold rounded-xl border border-[#282D37] bg-[#161920] text-zinc-200 hover:text-white hover:border-[#F59E0B] transition-colors"
           >
             Ver Todas las Reseñas
           </a>
@@ -158,7 +158,7 @@ export const ExperiencePage: React.FC = () => {
                     {rev.relativeDate} · {rev.serviceTag}
                   </p>
                 </div>
-                <div className="flex text-[#D4A373]">
+                <div className="flex text-[#F59E0B]">
                   {[...Array(rev.rating)].map((_, i) => (
                     <Star key={i} className="w-3.5 h-3.5 fill-current" />
                   ))}
@@ -192,7 +192,7 @@ export const ExperiencePage: React.FC = () => {
             navigateTo('booking');
           }}
           onMouseEnter={playMechanicalHover}
-          className="px-8 py-3.5 bg-[#D4A373] text-zinc-950 text-xs uppercase tracking-wider font-black rounded-xl hover:bg-[#C89562] transition-all cursor-pointer inline-flex items-center gap-2 shadow-md active:scale-95"
+          className="px-8 py-3.5 bg-[#F59E0B] text-zinc-950 text-xs uppercase tracking-wider font-black rounded-xl hover:bg-[#D97706] transition-all cursor-pointer inline-flex items-center gap-2 shadow-md active:scale-95"
         >
           <span>Ir a Reservar Turno</span>
           <ArrowRight className="w-4 h-4 stroke-[3]" />

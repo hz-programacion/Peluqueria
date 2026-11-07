@@ -15,8 +15,8 @@ export const LookbookPage: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-[#232730]">
         <div>
           <div className="flex items-center gap-2 mb-1.5 font-mono text-xs">
-            <span className="w-2 h-2 bg-[#D4A373] rounded-full" />
-            <span className="font-mono text-xs uppercase tracking-widest text-[#D4A373] font-bold">
+            <span className="w-2 h-2 bg-[#F59E0B] rounded-full" />
+            <span className="font-mono text-xs uppercase tracking-widest text-[#F59E0B] font-bold">
               GALERÍA DEL ESTUDIO // CORTES, LOCAL, MÁQUINAS Y CULTURA
             </span>
             <span className="text-zinc-600">·</span>
@@ -37,9 +37,9 @@ export const LookbookPage: React.FC = () => {
             rel="noopener noreferrer"
             onMouseEnter={playMechanicalHover}
             onClick={playMechanicalClick}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#111318] border border-[#282D37] hover:border-[#D4A373] text-xs font-mono font-bold text-white transition-all active:scale-95 whitespace-nowrap"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#111318] border border-[#282D37] hover:border-[#F59E0B] text-xs font-mono font-bold text-white transition-all active:scale-95 whitespace-nowrap"
           >
-            <Instagram className="w-4 h-4 text-[#D4A373]" />
+            <Instagram className="w-4 h-4 text-[#F59E0B]" />
             <span>{igInfo.handle}</span>
             <ExternalLink className="w-3.5 h-3.5 opacity-70" />
           </a>

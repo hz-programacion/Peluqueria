@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useStudio } from '../context/StudioContext';
+import { useStudio, normalizeSectionOrder } from '../context/StudioContext';
 import {
   Shield,
   LogOut,
@@ -22,8 +22,25 @@ import {
   Sliders,
   LayoutGrid,
   UserCheck,
+  ArrowUp,
+  ArrowDown,
+  RotateCcw,
+  Palette,
+  Sparkles,
+  Download,
+  Search,
+  Settings,
+  TrendingUp,
 } from 'lucide-react';
-import { StudioService, GalleryItemCategory } from '../data/studioData';
+import {
+  StudioService,
+  GalleryItemCategory,
+} from '../data/studioData';
+import {
+  HomeSectionId,
+  UrbanThemePreset,
+  DEFAULT_SECTION_ORDER,
+} from '../data/studioStore';
 import {
   formatPriceARS,
   timeToMinutes,
@@ -61,6 +78,68 @@ const compressImageFile = (file: File): Promise<string> => {
   });
 };
 
+const SECTION_ADMIN_META: Record<
+  HomeSectionId,
+  {
+    key:
+      | 'showBookingSection'
+      | 'showServicesSection'
+      | 'showBeforeAfterSection'
+      | 'showGallerySection'
+      | 'showReviewsSection'
+      | 'showBarberSection'
+      | 'showLocationSection';
+    label: string;
+    description: string;
+  }
+> = {
+  booking: {
+    key: 'showBookingSection',
+    label: 'Reserva de Turnos & Consulta por WhatsApp (#reservar)',
+    description: 'Turnero interactivo en vivo, consulta de ticket por WhatsApp y descarga PNG/ICS.',
+  },
+  services: {
+    key: 'showServicesSection',
+    label: 'Carta de Servicios, Fades & Precios (#servicios)',
+    description: 'Tarjetas de cortes, barba y colorimetría con tiempos reales y reserva en 1 clic.',
+  },
+  beforeAfter: {
+    key: 'showBeforeAfterSection',
+    label: 'Comparador Interactivo "Antes / Después" Aerosol (#transformaciones)',
+    description: 'Slider interactivo con línea divisoria de spray para comparar cambios de look.',
+  },
+  gallery: {
+    key: 'showGallerySection',
+    label: 'Galería de Creaciones Reales & Lookbook (#galeria)',
+    description: 'Mural de trabajos reales en el estudio con filtros por categoría y zoom.',
+  },
+  reviews: {
+    key: 'showReviewsSection',
+    label: 'Reseñas Verificadas de Clientes (#opiniones)',
+    description: 'Carrusel de opiniones verificadas (5.0★) y formulario para dejar reseña.',
+  },
+  barber: {
+    key: 'showBarberSection',
+    label: 'Presentación del Barbero & Equipamiento (#barbero)',
+    description: 'Filosofía 1 a 1, máquinas clipper/trimmer/shaver 0.0mm y contacto directo.',
+  },
+  location: {
+    key: 'showLocationSection',
+    label: 'Ubicación, Mapa Urbano & Horarios (#ubicacion)',
+    description: 'Dirección Vuelta de Obligado 931, accesos a Google Maps / Waze y alias.',
+  },
+};
+
+const WEEKDAYS_LIST = [
+  { day: 1, short: 'Lun', full: 'Lunes' },
+  { day: 2, short: 'Mar', full: 'Martes' },
+  { day: 3, short: 'Mié', full: 'Miércoles' },
+  { day: 4, short: 'Jue', full: 'Jueves' },
+  { day: 5, short: 'Vie', full: 'Viernes' },
+  { day: 6, short: 'Sáb', full: 'Sábado' },
+  { day: 0, short: 'Dom', full: 'Domingo' },
+];
+
 export const AdminPage: React.FC = () => {
   const {
     isAdminAuthenticated,
@@ -68,6 +147,8 @@ export const AdminPage: React.FC = () => {
     logoutAdmin,
     config,
     updateConfig,
+    moveSectionInOrder,
+    bulkAdjustServicePrices,
     services,
     addService,
     updateService,
@@ -84,14 +165,25 @@ export const AdminPage: React.FC = () => {
     addBlockedSlot,
     deleteBlockedSlot,
     navigateTo,
+    backendConnected,
+    backendMetrics,
+    auditLogs,
+    refreshBackendState,
   } = useStudio();
 
   const [pinInput, setPinInput] = useState('');
   const [pinError, setPinError] = useState('');
   const [activeTab, setActiveTab] = useState<
-    'sections_profile' | 'appointments' | 'gallery' | 'services' | 'calendar'
+    | 'sections_profile'
+    | 'business_rules'
+    | 'appointments'
+    | 'gallery'
+    | 'services'
+    | 'calendar'
+    | 'server_audit'
   >('sections_profile');
   const [appointmentFilter, setAppointmentFilter] = useState<'all' | 'today'>('today');
+  const [appointmentSearch, setAppointmentSearch] = useState('');
   const [saveToast, setSaveToast] = useState('');
 
   // Form state for Barber Name, Instagram Link/Handle, and WhatsApp Link/Number
@@ -106,6 +198,11 @@ export const AdminPage: React.FC = () => {
   const [mainPriceForm, setMainPriceForm] = useState(config.mainPriceDisplay);
   const [heroSubtitleForm, setHeroSubtitleForm] = useState(config.heroSubtitle);
   const [bioForm, setBioForm] = useState(config.bio);
+  const [promoBannerTextForm, setPromoBannerTextForm] = useState(
+    config.promoBannerText || ''
+  );
+  const [scheduleDisplayForm, setScheduleDisplayForm] = useState(config.scheduleDisplay);
+  const [adminPinForm, setAdminPinForm] = useState(config.adminPin || '1234');
 
   // Sync local form state whenever config changes externally
   useEffect(() => {
@@ -120,6 +217,9 @@ export const AdminPage: React.FC = () => {
     setMainPriceForm(config.mainPriceDisplay);
     setHeroSubtitleForm(config.heroSubtitle);
     setBioForm(config.bio);
+    setPromoBannerTextForm(config.promoBannerText || '');
+    setScheduleDisplayForm(config.scheduleDisplay);
+    setAdminPinForm(config.adminPin || '1234');
   }, [
     config.authorName,
     config.instagram,
@@ -132,6 +232,9 @@ export const AdminPage: React.FC = () => {
     config.mainPriceDisplay,
     config.heroSubtitle,
     config.bio,
+    config.promoBannerText,
+    config.scheduleDisplay,
+    config.adminPin,
   ]);
 
   // Editing state for Services
@@ -160,7 +263,7 @@ export const AdminPage: React.FC = () => {
   const [manualTime, setManualTime] = useState('17:00');
   const [manualClientName, setManualClientName] = useState('');
   const [manualClientWhatsapp, setManualClientWhatsapp] = useState('');
-  const [manualServiceId] = useState(services[0]?.id || 'srv-01');
+  const [manualServiceId, setManualServiceId] = useState(services[0]?.id || 'srv-01');
 
   // New Blocked Slot Form
   const [newBlockedDate, setNewBlockedDate] = useState(todayStr);
@@ -204,7 +307,10 @@ export const AdminPage: React.FC = () => {
 
     const cleanName = barberNameForm.trim() || 'Rodrigo';
     const cleanIg = instagramForm.trim() || '@rodrigo.cutsss';
-    const resolvedWa = resolveWhatsAppInfo(whatsappDisplayForm, whatsappRawForm || whatsappDisplayForm);
+    const resolvedWa = resolveWhatsAppInfo(
+      whatsappDisplayForm,
+      whatsappRawForm || whatsappDisplayForm
+    );
 
     updateConfig({
       authorName: cleanName,
@@ -218,6 +324,7 @@ export const AdminPage: React.FC = () => {
       mainPriceDisplay: mainPriceForm.trim() || config.mainPriceDisplay,
       heroSubtitle: heroSubtitleForm.trim() || config.heroSubtitle,
       bio: bioForm.trim() || config.bio,
+      promoBannerText: promoBannerTextForm.trim(),
     });
 
     triggerToast(
@@ -225,6 +332,43 @@ export const AdminPage: React.FC = () => {
         whatsappDisplayForm.trim() || resolvedWa.display
       }`
     );
+  };
+
+  const handleExportAppointmentsCSV = () => {
+    playMechanicalClick();
+    const headers = [
+      'ID',
+      'Fecha',
+      'Horario',
+      'Cliente',
+      'WhatsApp',
+      'Servicios',
+      'Minutos',
+      'Modalidad Pago',
+      'Estado',
+    ];
+    const rows = appointments.map((a) => [
+      a.id,
+      a.date,
+      a.startTime,
+      `"${a.clientName.replace(/"/g, '""')}"`,
+      `"${a.whatsapp}"`,
+      `"${a.serviceNames.join(' + ')}"`,
+      String(a.serviceMinutes),
+      a.paymentOption === 'deposit' ? 'Seña Transferencia' : 'Pago en Estudio',
+      a.status,
+    ]);
+    const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `agenda-rodrigo-cutsss-${todayStr}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    triggerToast('Agenda exportada en archivo CSV');
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -250,7 +394,7 @@ export const AdminPage: React.FC = () => {
 
     addGalleryItem({
       id: `gal-admin-${Date.now()}`,
-      title: photoTitle.trim() || `Trabajo en el Estudio · ${config. studioTitle}`,
+      title: photoTitle.trim() || `Trabajo en el Estudio · ${config.studioTitle}`,
       category: photoCategory || 'General',
       imageUrl: photoPreviewUrl.trim(),
       description:
@@ -284,132 +428,107 @@ export const AdminPage: React.FC = () => {
 
   const igInfo = resolveInstagramInfo(config.instagram);
   const waInfo = resolveWhatsAppInfo(config.phoneDisplay, config.whatsappRaw);
-
-  // Main page section switches configuration
-  const MAIN_SECTION_SWITCHES = [
-    {
-      key: 'showHeroSection' as const,
-      label: 'Sección de Presentación Principal (Portada)',
-      description: 'Muestra u oculta el bloque inicial con titular, precio destacado y accesos rápidos.',
-    },
-    {
-      key: 'showServicesSection' as const,
-      label: 'Sección de Servicios y Precios',
-      description: 'Muestra u oculta la carta de cortes, fades, barba y platinados en la página principal.',
-    },
-    {
-      key: 'showBookingSection' as const,
-      label: 'Sección de Reserva de Turnos y Ticket en Vivo',
-      description: 'Muestra u oculta el turnero interactivo y el ticket térmico en la página principal.',
-    },
-    {
-      key: 'showGallerySection' as const,
-      label: 'Sección de Galería de Fotos',
-      description: 'Muestra u oculta el mural de fotos de trabajos y del local en la página principal.',
-    },
-    {
-      key: 'showBarberSection' as const,
-      label: `Sección de ${config.authorName} y El Estudio`,
-      description: 'Muestra u oculta la presentación personal del barbero, pilares y equipamiento.',
-    },
-    {
-      key: 'showReviewsSection' as const,
-      label: 'Sección de Opiniones de Clientes (Client Voices)',
-      description: 'Muestra u oculta el carrusel de reseñas verificadas de clientes.',
-    },
-    {
-      key: 'showLocationSection' as const,
-      label: 'Sección de Ubicación y Horarios',
-      description: 'Muestra u oculta el bloque de dirección, Google Maps y horarios en la portada.',
-    },
-  ];
+  const normalizedOrder = normalizeSectionOrder(config.sectionOrder);
 
   // If not authenticated, render refined PIN screen
   if (!isAdminAuthenticated) {
     return (
-      <div className="py-16 md:py-28 px-4 flex items-center justify-center min-h-[70vh]">
-        <div className="w-full max-w-md p-6 md:p-8 rounded-2xl border border-[#232730] bg-[#111318] text-white shadow-2xl">
-          <div className="w-12 h-12 rounded-xl bg-[#D4A373] text-zinc-950 flex items-center justify-center font-bold text-xl mb-5 shadow-md">
-            <Lock className="w-6 h-6 stroke-[2.5]" />
-          </div>
-
-          <span className="font-mono text-xs uppercase text-[#D4A373] font-bold block mb-1">
-            PORTAL DEL BARBERO · CONTROL TOTAL
-          </span>
-          <h1 className="font-display text-2xl md:text-3xl font-extrabold mb-2">
-            Acceso Privado de Estudio
-          </h1>
-          <p className="text-xs text-zinc-400 leading-relaxed mb-6">
-            Ingresá tu PIN para actualizar enlaces de Instagram/WhatsApp y nombre del barbero, mostrar u ocultar secciones de la página principal con switches, subir fotos o gestionar turnos.
-          </p>
-
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <label
-                htmlFor="admin-pin"
-                className="block text-xs font-mono uppercase text-zinc-400 mb-1.5 font-semibold"
-              >
-                PIN de Seguridad
-              </label>
-              <input
-                id="admin-pin"
-                type="password"
-                maxLength={8}
-                value={pinInput}
-                onChange={(e) => {
-                  setPinInput(e.target.value);
-                  setPinError('');
-                }}
-                placeholder="1234"
-                className="w-full h-12 px-3.5 text-center tracking-[0.4em] text-xl font-mono font-bold rounded-xl border border-[#282D37] bg-[#0C0E12] text-white focus:border-[#D4A373] focus:outline-none"
-                autoFocus
-              />
-              {pinError && <p className="text-xs text-red-400 mt-2 font-mono">{pinError}</p>}
+      <div className="py-16 md:py-24 px-4 flex items-center justify-center min-h-[70vh]">
+        <div className="w-full max-w-md p-6 md:p-8 rounded-2xl border border-[#232730] bg-[#111318] text-white shadow-2xl concrete-overlay">
+          <div className="relative z-10">
+            <div className="w-12 h-12 rounded-xl bg-[#F59E0B] text-zinc-950 flex items-center justify-center font-bold text-xl mb-5 shadow-md">
+              <Lock className="w-6 h-6 stroke-[2.5]" />
             </div>
 
-            <button
-              type="submit"
-              onClick={playMechanicalClick}
-              onMouseEnter={playMechanicalHover}
-              className="w-full h-12 uppercase font-black text-xs tracking-wider bg-[#D4A373] text-zinc-950 rounded-xl hover:bg-[#C89562] transition-all cursor-pointer shadow-lg active:scale-95"
-            >
-              Entrar al Panel de Control
-            </button>
-          </form>
-
-          <div className="mt-6 pt-5 border-t border-[#1E222B] text-center">
-            <p className="text-xs font-mono text-zinc-500">
-              PIN maestro por defecto:{' '}
-              <strong className="text-[#D4A373]">{config.adminPin || '1234'}</strong>
+            <span className="font-mono text-xs uppercase text-[#F59E0B] font-bold block mb-1">
+              PORTAL DEL BARBERO · CONTROL TOTAL
+            </span>
+            <h1 className="font-display text-2xl md:text-3xl font-extrabold mb-2">
+              Acceso Privado de Estudio
+            </h1>
+            <p className="text-xs text-zinc-400 leading-relaxed mb-6">
+              Ingresá tu PIN para ordenar secciones, elegir paleta urbana, ajustar precios masivos, configurar horarios o gestionar turnos en vivo.
             </p>
-            <button
-              onClick={() => {
-                playMechanicalClick();
-                navigateTo('home');
-              }}
-              onMouseEnter={playMechanicalHover}
-              className="text-xs text-zinc-400 hover:text-white mt-2.5 underline cursor-pointer"
-            >
-              Volver a la portada del cliente
-            </button>
+
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div>
+                <label
+                  htmlFor="admin-pin"
+                  className="block text-xs font-mono uppercase text-zinc-400 mb-1.5 font-semibold"
+                >
+                  PIN de Seguridad
+                </label>
+                <input
+                  id="admin-pin"
+                  type="password"
+                  maxLength={8}
+                  value={pinInput}
+                  onChange={(e) => {
+                    setPinInput(e.target.value);
+                    setPinError('');
+                  }}
+                  placeholder="1234"
+                  className="w-full h-12 px-3.5 text-center tracking-[0.4em] text-xl font-mono font-bold rounded-xl border border-[#282D37] bg-[#0C0E12] text-white focus:border-[#F59E0B] focus:outline-none"
+                  autoFocus
+                />
+                {pinError && <p className="text-xs text-red-400 mt-2 font-mono">{pinError}</p>}
+              </div>
+
+              <button
+                type="submit"
+                onClick={playMechanicalClick}
+                onMouseEnter={playMechanicalHover}
+                className="w-full h-12 uppercase font-black text-xs tracking-wider bg-[#F59E0B] text-zinc-950 rounded-xl hover:bg-[#D97706] transition-all cursor-pointer shadow-lg active:scale-95"
+              >
+                Entrar al Panel de Control
+              </button>
+            </form>
+
+            <div className="mt-6 pt-5 border-t border-[#1E222B] text-center">
+              <p className="text-xs font-mono text-zinc-500">
+                PIN maestro por defecto:{' '}
+                <strong className="text-[#F59E0B]">{config.adminPin || '1234'}</strong>
+              </p>
+              <button
+                onClick={() => {
+                  playMechanicalClick();
+                  navigateTo('home');
+                }}
+                onMouseEnter={playMechanicalHover}
+                className="text-xs text-zinc-400 hover:text-white mt-2.5 underline cursor-pointer"
+              >
+                Volver a la portada del cliente
+              </button>
+            </div>
           </div>
         </div>
       </div>
     );
   }
 
-  const displayedAppointments =
-    appointmentFilter === 'today'
-      ? appointments.filter((a) => a.date === todayStr)
-      : appointments;
+  const displayedAppointments = appointments
+    .filter((a) => (appointmentFilter === 'today' ? a.date === todayStr : true))
+    .filter((a) => {
+      if (!appointmentSearch.trim()) return true;
+      const q = appointmentSearch.toLowerCase();
+      return (
+        a.clientName.toLowerCase().includes(q) ||
+        a.whatsapp.toLowerCase().includes(q) ||
+        a.serviceNames.join(' ').toLowerCase().includes(q)
+      );
+    });
+
+  const visibleSectionsCount =
+    (config.showHeroSection !== false ? 1 : 0) +
+    normalizedOrder.filter((id) => config[SECTION_ADMIN_META[id].key] !== false).length;
 
   return (
-    <div className="py-8 md:py-14 px-4 sm:px-6 max-w-[1380px] mx-auto min-h-screen text-white space-y-8">
+    <div className="py-8 md:py-12 px-4 sm:px-6 max-w-[1380px] mx-auto text-white space-y-8">
       {/* Toast Notification */}
       {saveToast && (
         <div
           role="status"
-          className="fixed bottom-6 right-6 z-50 px-4 py-3 bg-[#D4A373] text-zinc-950 font-bold rounded-xl shadow-2xl text-xs font-mono flex items-center gap-2"
+          className="fixed bottom-6 right-6 z-50 px-4 py-3 bg-[#F59E0B] text-zinc-950 font-bold rounded-xl shadow-2xl text-xs font-mono flex items-center gap-2"
         >
           <CheckCircle2 className="w-4 h-4 stroke-[2.5]" />
           <span>{saveToast}</span>
@@ -419,12 +538,12 @@ export const AdminPage: React.FC = () => {
       {/* Top Bar for Admin */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-[#232730]">
         <div>
-          <div className="flex items-center gap-2 text-xs font-mono text-[#D4A373] font-bold mb-1">
+          <div className="flex items-center gap-2 text-xs font-mono text-[#F59E0B] font-bold mb-1">
             <Shield className="w-3.5 h-3.5" />
-            <span>MODO ADMINISTRADOR ACTIVO · {config.authorName.toUpperCase()}</span>
+            <span>CENTRO DE MANDO DEL ESTUDIO · {config.authorName.toUpperCase()}</span>
           </div>
           <h1 className="font-display text-3xl md:text-4xl font-black uppercase">
-            Panel de Control del Estudio
+            Panel de Control Total
           </h1>
         </div>
 
@@ -434,7 +553,7 @@ export const AdminPage: React.FC = () => {
               playMechanicalClick();
               setIsUploadModalOpen(true);
             }}
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-mono font-black uppercase bg-[#D4A373] text-zinc-950 rounded-xl shadow-sm hover:bg-[#C89562] cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-mono font-black uppercase bg-[#F59E0B] text-zinc-950 rounded-xl shadow-sm hover:bg-[#D97706] cursor-pointer"
           >
             <Camera className="w-3.5 h-3.5" />
             <span>+ Subir Foto a Galería</span>
@@ -442,7 +561,7 @@ export const AdminPage: React.FC = () => {
 
           <button
             onClick={() => navigateTo('home')}
-            className="px-4 py-2 text-xs font-mono font-bold rounded-xl border border-[#282D37] bg-[#161920] hover:border-[#D4A373] transition-colors cursor-pointer"
+            className="px-4 py-2 text-xs font-mono font-bold rounded-xl border border-[#282D37] bg-[#161920] hover:border-[#F59E0B] transition-colors cursor-pointer"
           >
             Ver Sitio Público
           </button>
@@ -458,32 +577,33 @@ export const AdminPage: React.FC = () => {
 
       {/* Barbero Quick KPI Strip */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-4 rounded-xl border border-[#232730] bg-[#111318]">
+        <div className="p-4 rounded-xl border border-[#232730] bg-[#111318] distressed-surface">
           <span className="text-[10px] font-mono font-bold uppercase text-zinc-500 block">
             Turnos de Hoy ({todayStr})
           </span>
           <p className="font-display text-2xl font-black text-white mt-0.5">
             {todayAppointments.length} Turnos Hoy
           </p>
-          <p className="text-[11px] font-mono text-[#D4A373] mt-0.5">
-            {appointments.length} turnos totales en agenda
+          <p className="text-[11px] font-mono text-[#F59E0B] mt-0.5">
+            {appointments.length} turnos totales · {formatPriceARS(totalRevenueEst)} est.
           </p>
         </div>
 
-        <div className="p-4 rounded-xl border border-[#232730] bg-[#111318]">
+        <div className="p-4 rounded-xl border border-[#232730] bg-[#111318] distressed-surface">
           <span className="text-[10px] font-mono font-bold uppercase text-zinc-500 block">
-            Secciones Visibles en Portada
+            Ocupación &amp; Servicio Top (Backend)
           </span>
-          <p className="font-display text-2xl font-black text-[#D4A373] mt-0.5">
-            {MAIN_SECTION_SWITCHES.filter((s) => config[s.key] !== false).length} de{' '}
-            {MAIN_SECTION_SWITCHES.length}
+          <p className="font-display text-2xl font-black text-[#00F0FF] mt-0.5 tabular-nums">
+            {backendMetrics ? `${backendMetrics.todayOccupancyPercentage}% Ocupado` : `${visibleSectionsCount}/8 Activas`}
           </p>
-          <p className="text-[11px] font-mono text-zinc-400 mt-0.5">
-            Controladas mediante switches sin borrar datos
+          <p className="text-[11px] font-mono text-zinc-400 mt-0.5 truncate">
+            {backendMetrics
+              ? `Top: ${backendMetrics.topServiceName}`
+              : `Modo: ${config.layoutMode === 'tabs' ? 'Pestañas Individuales' : 'Flujo Completo'}`}
           </p>
         </div>
 
-        <div className="p-4 rounded-xl border border-[#232730] bg-[#111318]">
+        <div className="p-4 rounded-xl border border-[#232730] bg-[#111318] distressed-surface">
           <span className="text-[10px] font-mono font-bold uppercase text-zinc-500 block">
             Barbero &amp; Redes Activas
           </span>
@@ -495,7 +615,7 @@ export const AdminPage: React.FC = () => {
           </p>
         </div>
 
-        <div className="p-4 rounded-xl border border-[#232730] bg-[#111318]">
+        <div className="p-4 rounded-xl border border-[#232730] bg-[#111318] distressed-surface">
           <span className="text-[10px] font-mono font-bold uppercase text-zinc-500 block">
             Estado de la Agenda Hoy
           </span>
@@ -512,9 +632,9 @@ export const AdminPage: React.FC = () => {
                 }`
               );
             }}
-            className="text-[11px] font-mono text-[#D4A373] hover:underline mt-0.5 cursor-pointer"
+            className="text-[11px] font-mono text-[#F59E0B] hover:underline mt-0.5 cursor-pointer"
           >
-            Cambiar estado ({formatPriceARS(totalRevenueEst)} est.) &rarr;
+            Cambiar disponibilidad en vivo &rarr;
           </button>
         </div>
       </div>
@@ -524,13 +644,23 @@ export const AdminPage: React.FC = () => {
         {[
           {
             id: 'sections_profile',
-            label: 'Perfil, Enlaces & Switches de Secciones',
+            label: 'Arquitectura, Orden de Secciones & Perfil',
             icon: Sliders,
           },
+          {
+            id: 'business_rules',
+            label: 'Horarios, Reglas & Diseño Urbano',
+            icon: Settings,
+          },
           { id: 'appointments', label: `Turnos en Vivo (${appointments.length})`, icon: Calendar },
+          { id: 'services', label: `Servicios & Precios (${services.length})`, icon: DollarSign },
           { id: 'gallery', label: `Galería de Fotos (${galleryItems.length})`, icon: Camera },
-          { id: 'services', label: `Servicios y Tarjetas (${services.length})`, icon: DollarSign },
           { id: 'calendar', label: `Bloqueos de Horario (${blockedSlots.length})`, icon: Clock },
+          {
+            id: 'server_audit',
+            label: `Servidor, Métricas & Auditoría (${auditLogs.length})`,
+            icon: Shield,
+          },
         ].map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -540,7 +670,7 @@ export const AdminPage: React.FC = () => {
               onClick={() => setActiveTab(tab.id as typeof activeTab)}
               className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs uppercase tracking-wider font-mono font-bold transition-colors cursor-pointer ${
                 isActive
-                  ? 'bg-[#D4A373] text-zinc-950 shadow-sm'
+                  ? 'bg-[#F59E0B] text-zinc-950 shadow-sm'
                   : 'bg-[#111318] border border-[#232730] text-zinc-400 hover:text-white hover:border-zinc-500'
               }`}
             >
@@ -552,26 +682,248 @@ export const AdminPage: React.FC = () => {
       </div>
 
       {/* =========================================================================== */}
-      {/* TAB 0: PERFIL (BARBERO, INSTAGRAM, WHATSAPP) & SWITCHES DE SECCIONES        */}
+      {/* TAB 0: ARQUITECTURA, ORDEN DE SECCIONES, SWITCHES & PERFIL                  */}
       {/* =========================================================================== */}
       {activeTab === 'sections_profile' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Left Column: Form to update Barber Name, Instagram Link & WhatsApp Link */}
+          {/* Left Column: Live Section Reordering & Layout Architecture */}
+          <div className="lg:col-span-6 space-y-6">
+            <div className="p-6 rounded-2xl border border-[#232730] bg-[#111318] space-y-5 shadow-xl">
+              <div className="border-b border-[#1E222B] pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2 text-[11px] font-mono uppercase text-[#F59E0B] font-bold mb-1">
+                    <LayoutGrid className="w-3.5 h-3.5" />
+                    <span>ARQUITECTURA Y JERARQUÍA DEL SITIO WEB</span>
+                  </div>
+                  <h2 className="font-display text-2xl font-bold text-white">
+                    Orden de Secciones &amp; Switches
+                  </h2>
+                  <p className="text-xs text-zinc-400 font-mono mt-1">
+                    Subí o bajá cada sección para decidir qué ven primero tus clientes (por ejemplo: Sacar Turno arriba y Reseñas antes que Ubicación).
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    playMechanicalClick();
+                    updateConfig({ sectionOrder: [...DEFAULT_SECTION_ORDER] });
+                    triggerToast('Orden recomendado restaurado (Sacar Turno #1, Reseñas arriba)');
+                  }}
+                  className="px-3 py-2 rounded-xl border border-[#282D37] bg-[#161920] hover:border-[#F59E0B] text-[11px] font-mono font-bold text-zinc-300 hover:text-white flex items-center gap-1.5 cursor-pointer shrink-0"
+                >
+                  <RotateCcw className="w-3.5 h-3.5 text-[#F59E0B]" />
+                  <span>Orden Recomendado</span>
+                </button>
+              </div>
+
+              {/* Site Layout Mode Selector */}
+              <div className="p-4 rounded-xl bg-[#0C0E14] border border-[#232836] space-y-2.5">
+                <span className="font-mono text-[11px] uppercase text-[#00F0FF] font-bold block">
+                  Modo de Estructura Principal del Sitio:
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playMechanicalClick();
+                      updateConfig({ layoutMode: 'landing' });
+                      triggerToast('Estructura cambiada a Flujo Completo Optimizado (Landing)');
+                    }}
+                    className={`p-3 rounded-xl border text-left font-mono text-xs transition-all cursor-pointer ${
+                      (config.layoutMode || 'landing') === 'landing'
+                        ? 'border-[#F59E0B] bg-[#F59E0B]/15 text-white font-bold'
+                        : 'border-[#232730] bg-[#111318] text-zinc-400 hover:text-white'
+                    }`}
+                  >
+                    <span className="block font-black text-[#F59E0B]">
+                      1. Landing de Flujo Completo
+                    </span>
+                    <span className="text-[11px] text-zinc-400 block mt-0.5">
+                      Muestra todas las secciones activas en el orden exacto de abajo.
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playMechanicalClick();
+                      updateConfig({ layoutMode: 'tabs' });
+                      triggerToast('Estructura cambiada a Vista por Pestañas Individuales');
+                    }}
+                    className={`p-3 rounded-xl border text-left font-mono text-xs transition-all cursor-pointer ${
+                      config.layoutMode === 'tabs'
+                        ? 'border-[#00F0FF] bg-[#00F0FF]/15 text-white font-bold'
+                        : 'border-[#232730] bg-[#111318] text-zinc-400 hover:text-white'
+                    }`}
+                  >
+                    <span className="block font-black text-[#00F0FF]">
+                      2. Sitio por Pestañas Individuales
+                    </span>
+                    <span className="text-[11px] text-zinc-400 block mt-0.5">
+                      Muestra una sola sección enfocada a la vez sin scroll largo.
+                    </span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Fixed Portada Switch */}
+              <div className="p-4 rounded-xl border border-[#282D37] bg-[#161920] flex items-center justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded bg-[#F59E0B]/20 text-[#F59E0B] font-mono text-[10px] font-black">
+                      PORTADA
+                    </span>
+                    <span className="font-mono text-xs font-bold text-white">
+                      Presentación Principal &amp; Próximo Turno Libre (#inicio)
+                    </span>
+                  </div>
+                  <p className="text-[11px] font-mono text-zinc-400 mt-1">
+                    Cabecera principal con mural graffiti, indicador de próximo turno hoy y accesos rápidos.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={config.showHeroSection !== false}
+                  aria-label="Mostrar u ocultar Portada Principal"
+                  onClick={() => {
+                    playMechanicalClick();
+                    const nextVal = config.showHeroSection === false;
+                    updateConfig({ showHeroSection: nextVal });
+                    triggerToast(
+                      `Portada Principal: ${nextVal ? 'Visible' : 'Oculta'}`
+                    );
+                  }}
+                  className={`relative inline-flex h-7 w-13 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
+                    config.showHeroSection !== false ? 'bg-[#F59E0B]' : 'bg-[#252934]'
+                  }`}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-zinc-950 transition ${
+                      config.showHeroSection !== false
+                        ? 'translate-x-6'
+                        : 'translate-x-0 bg-zinc-400'
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {/* Reorderable Dynamic Sections */}
+              <div className="space-y-2.5">
+                {normalizedOrder.map((secId, index) => {
+                  const meta = SECTION_ADMIN_META[secId];
+                  const isEnabled = config[meta.key] !== false;
+                  return (
+                    <div
+                      key={secId}
+                      className={`p-4 rounded-xl border transition-all flex items-center justify-between gap-3 ${
+                        isEnabled
+                          ? 'bg-[#161920] border-[#282D37]'
+                          : 'bg-[#0C0E12] border-[#1E222B] opacity-70'
+                      }`}
+                    >
+                      {/* Up / Down Order Controls */}
+                      <div className="flex flex-col gap-1 shrink-0">
+                        <button
+                          type="button"
+                          disabled={index === 0}
+                          onClick={() => {
+                            playMechanicalClick();
+                            moveSectionInOrder(secId, 'up');
+                            triggerToast(`"${meta.label}" subida a posición #${index}`);
+                          }}
+                          title="Subir sección"
+                          className="w-7 h-7 rounded-lg border border-[#2C3240] bg-[#0C0E12] hover:border-[#F59E0B] text-zinc-300 hover:text-[#F59E0B] flex items-center justify-center disabled:opacity-30 cursor-pointer"
+                        >
+                          <ArrowUp className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          disabled={index === normalizedOrder.length - 1}
+                          onClick={() => {
+                            playMechanicalClick();
+                            moveSectionInOrder(secId, 'down');
+                            triggerToast(`"${meta.label}" bajada a posición #${index + 2}`);
+                          }}
+                          title="Bajar sección"
+                          className="w-7 h-7 rounded-lg border border-[#2C3240] bg-[#0C0E12] hover:border-[#F59E0B] text-zinc-300 hover:text-[#F59E0B] flex items-center justify-center disabled:opacity-30 cursor-pointer"
+                        >
+                          <ArrowDown className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="px-2 py-0.5 rounded bg-[#00F0FF]/15 text-[#00F0FF] font-mono text-[10px] font-black">
+                            #{index + 1}
+                          </span>
+                          <span className="font-mono text-xs font-bold text-white">
+                            {meta.label}
+                          </span>
+                          <span
+                            className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded ${
+                              isEnabled
+                                ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
+                                : 'bg-zinc-800 text-zinc-400 border border-zinc-700'
+                            }`}
+                          >
+                            {isEnabled ? 'Visible' : 'Oculta'}
+                          </span>
+                        </div>
+                        <p className="text-[11px] font-mono text-zinc-400 mt-1">
+                          {meta.description}
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={isEnabled}
+                        aria-label={`Mostrar u ocultar ${meta.label}`}
+                        onClick={() => {
+                          playMechanicalClick();
+                          updateConfig({ [meta.key]: !isEnabled });
+                          triggerToast(
+                            `${meta.label}: ${
+                              !isEnabled ? 'Visible en portada' : 'Ocultada en portada'
+                            }`
+                          );
+                        }}
+                        className={`relative inline-flex h-7 w-13 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                          isEnabled ? 'bg-[#F59E0B]' : 'bg-[#252934]'
+                        }`}
+                      >
+                        <span
+                          className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-zinc-950 shadow-md ring-0 transition duration-200 ease-in-out ${
+                            isEnabled ? 'translate-x-6' : 'translate-x-0 bg-zinc-400'
+                          }`}
+                        />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column: Form to update Barber Name, Instagram Link, WhatsApp Link & Card Switches */}
           <div className="lg:col-span-6 space-y-6">
             <form
               onSubmit={handleSaveProfileAndLinks}
               className="p-6 rounded-2xl border border-[#232730] bg-[#111318] space-y-5 shadow-xl"
             >
               <div className="border-b border-[#1E222B] pb-4">
-                <div className="flex items-center gap-2 text-[11px] font-mono uppercase text-[#D4A373] font-bold mb-1">
+                <div className="flex items-center gap-2 text-[11px] font-mono uppercase text-[#F59E0B] font-bold mb-1">
                   <UserCheck className="w-3.5 h-3.5" />
                   <span>FORMULARIO DE IDENTIDAD Y CONTACTO GLOBAL</span>
                 </div>
                 <h2 className="font-display text-2xl font-bold text-white">
-                  Barbero, Instagram &amp; WhatsApp
+                  Barbero, Instagram, WhatsApp &amp; Banner
                 </h2>
                 <p className="text-xs text-zinc-400 font-mono mt-1">
-                  Actualizá el nombre del barbero y los enlaces/usuarios de Instagram y WhatsApp. Los cambios se guardan en el contexto global de toda la aplicación.
+                  Actualizá el nombre del barbero, enlaces de Instagram/WhatsApp, alias y anuncio superior.
                 </p>
               </div>
 
@@ -591,7 +943,7 @@ export const AdminPage: React.FC = () => {
                     value={barberNameForm}
                     onChange={(e) => setBarberNameForm(e.target.value)}
                     placeholder="Ej. Rodrigo"
-                    className="w-full h-11 px-3.5 text-sm font-mono rounded-xl border border-[#282D37] bg-[#0C0E12] text-white focus:border-[#D4A373] focus:outline-none"
+                    className="w-full h-11 px-3.5 text-sm font-mono rounded-xl border border-[#282D37] bg-[#0C0E12] text-white focus:border-[#F59E0B] focus:outline-none"
                   />
                 </div>
 
@@ -602,18 +954,16 @@ export const AdminPage: React.FC = () => {
                   >
                     Enlace o Usuario de Instagram *
                   </label>
-                  <div className="relative">
-                    <input
-                      id="admin-instagram-link"
-                      name="instagram"
-                      type="text"
-                      required
-                      value={instagramForm}
-                      onChange={(e) => setInstagramForm(e.target.value)}
-                      placeholder="@rodrigo.cutsss o https://instagram.com/rodrigo.cutsss"
-                      className="w-full h-11 px-3.5 text-sm font-mono rounded-xl border border-[#282D37] bg-[#0C0E12] text-white focus:border-[#D4A373] focus:outline-none"
-                    />
-                  </div>
+                  <input
+                    id="admin-instagram-link"
+                    name="instagram"
+                    type="text"
+                    required
+                    value={instagramForm}
+                    onChange={(e) => setInstagramForm(e.target.value)}
+                    placeholder="@rodrigo.cutsss o https://instagram.com/rodrigo.cutsss"
+                    className="w-full h-11 px-3.5 text-sm font-mono rounded-xl border border-[#282D37] bg-[#0C0E12] text-white focus:border-[#F59E0B] focus:outline-none"
+                  />
                   <span className="text-[11px] font-mono text-zinc-500 block mt-1">
                     Enlace activo:{' '}
                     <strong className="text-zinc-300">
@@ -645,7 +995,7 @@ export const AdminPage: React.FC = () => {
                         }
                       }}
                       placeholder="+54 9 3462 55-4421"
-                      className="w-full h-11 px-3.5 text-sm font-mono rounded-xl border border-[#282D37] bg-[#0C0E12] text-white focus:border-[#D4A373] focus:outline-none"
+                      className="w-full h-11 px-3.5 text-sm font-mono rounded-xl border border-[#282D37] bg-[#0C0E12] text-white focus:border-[#F59E0B] focus:outline-none"
                     />
                   </div>
 
@@ -663,7 +1013,7 @@ export const AdminPage: React.FC = () => {
                       value={whatsappRawForm}
                       onChange={(e) => setWhatsappRawForm(e.target.value.replace(/\D/g, ''))}
                       placeholder="5493462554421"
-                      className="w-full h-11 px-3.5 text-sm font-mono rounded-xl border border-[#282D37] bg-[#0C0E12] text-white focus:border-[#D4A373] focus:outline-none"
+                      className="w-full h-11 px-3.5 text-sm font-mono rounded-xl border border-[#282D37] bg-[#0C0E12] text-white focus:border-[#F59E0B] focus:outline-none"
                     />
                   </div>
                 </div>
@@ -720,12 +1070,13 @@ export const AdminPage: React.FC = () => {
 
                 <div>
                   <label className="block text-xs font-mono text-zinc-400 mb-1 font-semibold">
-                    Frase / Lema Principal
+                    Texto del Banner Superior de Anuncio
                   </label>
                   <input
                     type="text"
-                    value={heroSubtitleForm}
-                    onChange={(e) => setHeroSubtitleForm(e.target.value)}
+                    value={promoBannerTextForm}
+                    onChange={(e) => setPromoBannerTextForm(e.target.value)}
+                    placeholder="Ej. AGENDA ABIERTA ESTA SEMANA · VUELTA DE OBLIGADO 931"
                     className="w-full h-10 px-3 text-xs font-mono rounded-xl border border-[#282D37] bg-[#0C0E12] text-white"
                   />
                 </div>
@@ -733,105 +1084,27 @@ export const AdminPage: React.FC = () => {
 
               <div className="pt-3 border-t border-[#1E222B] flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2 text-xs font-mono text-zinc-400">
-                  <Instagram className="w-3.5 h-3.5 text-[#D4A373]" />
+                  <Instagram className="w-3.5 h-3.5 text-[#F59E0B]" />
                   <span>{resolveInstagramInfo(instagramForm).handle}</span>
                   <span>·</span>
-                  <MessageCircle className="w-3.5 h-3.5 text-[#D4A373]" />
+                  <MessageCircle className="w-3.5 h-3.5 text-[#F59E0B]" />
                   <span>{whatsappDisplayForm}</span>
                 </div>
 
                 <button
                   type="submit"
-                  className="inline-flex items-center gap-2 px-6 py-3 text-xs font-mono font-black uppercase tracking-wider bg-[#D4A373] text-zinc-950 rounded-xl hover:bg-[#C89562] cursor-pointer shadow-md active:scale-95 transition-all"
+                  className="inline-flex items-center gap-2 px-6 py-3 text-xs font-mono font-black uppercase tracking-wider bg-[#F59E0B] text-zinc-950 rounded-xl hover:bg-[#D97706] cursor-pointer shadow-md active:scale-95 transition-all"
                 >
                   <Save className="w-4 h-4" />
                   <span>Guardar Perfil y Enlaces</span>
                 </button>
               </div>
             </form>
-          </div>
-
-          {/* Right Column: Switches to Hide or Show Main Page Sections & Card Elements */}
-          <div className="lg:col-span-6 space-y-6">
-            {/* Section Visibility Switches */}
-            <div className="p-6 rounded-2xl border border-[#232730] bg-[#111318] space-y-5 shadow-xl">
-              <div className="border-b border-[#1E222B] pb-4">
-                <div className="flex items-center gap-2 text-[11px] font-mono uppercase text-[#D4A373] font-bold mb-1">
-                  <LayoutGrid className="w-3.5 h-3.5" />
-                  <span>CONTROL DE ESTRUCTURA DE LA PÁGINA PRINCIPAL</span>
-                </div>
-                <h2 className="font-display text-2xl font-bold text-white">
-                  Switches de Secciones (Mostrar / Ocultar)
-                </h2>
-                <p className="text-xs text-zinc-400 font-mono mt-1">
-                  Activá o desactivá cualquier sección de la página principal sin eliminar su contenido ni configuración.
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                {MAIN_SECTION_SWITCHES.map((sec) => {
-                  const isEnabled = config[sec.key] !== false;
-                  return (
-                    <div
-                      key={sec.key}
-                      className={`p-4 rounded-xl border transition-colors flex items-center justify-between gap-4 ${
-                        isEnabled
-                          ? 'bg-[#161920] border-[#282D37]'
-                          : 'bg-[#0C0E12] border-[#1E222B] opacity-75'
-                      }`}
-                    >
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono text-xs font-bold text-white">
-                            {sec.label}
-                          </span>
-                          <span
-                            className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded ${
-                              isEnabled
-                                ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
-                                : 'bg-zinc-800 text-zinc-400 border border-zinc-700'
-                            }`}
-                          >
-                            {isEnabled ? 'Visible' : 'Oculta'}
-                          </span>
-                        </div>
-                        <p className="text-[11px] font-mono text-zinc-400 mt-1">
-                          {sec.description}
-                        </p>
-                      </div>
-
-                      <button
-                        type="button"
-                        role="switch"
-                        aria-checked={isEnabled}
-                        aria-label={`Mostrar u ocultar ${sec.label}`}
-                        onClick={() => {
-                          playMechanicalClick();
-                          updateConfig({ [sec.key]: !isEnabled });
-                          triggerToast(
-                            `${sec.label}: ${!isEnabled ? 'Visible en portada' : 'Ocultada en portada'}`
-                          );
-                        }}
-                        className={`relative inline-flex h-7 w-13 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                          isEnabled ? 'bg-[#D4A373]' : 'bg-[#252934]'
-                        }`}
-                      >
-                        <span
-                          className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-zinc-950 shadow-md ring-0 transition duration-200 ease-in-out ${
-                            isEnabled ? 'translate-x-6' : 'translate-x-0 bg-zinc-400'
-                          }`}
-                        />
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
 
             {/* Card Elements Visibility Switches */}
             <div className="p-6 rounded-2xl border border-[#232730] bg-[#111318] space-y-4 shadow-xl">
               <div className="border-b border-[#1E222B] pb-3">
-                <span className="text-[10px] font-mono uppercase text-[#D4A373] font-bold block">
+                <span className="text-[10px] font-mono uppercase text-[#F59E0B] font-bold block">
                   ELEMENTOS INTERNOS DE LAS TARJETAS
                 </span>
                 <h3 className="font-display text-xl font-bold text-white">
@@ -843,7 +1116,7 @@ export const AdminPage: React.FC = () => {
                 {[
                   {
                     key: 'showServiceBookingButton' as const,
-                    label: 'Botón "Seleccionar Turno" en Tarjetas de Servicios',
+                    label: 'Botón "Agendar Este Corte" en Tarjetas de Servicios',
                     desc: 'Desactivalo si querés que las tarjetas de servicios sean solo informativas',
                   },
                   {
@@ -890,7 +1163,7 @@ export const AdminPage: React.FC = () => {
                           triggerToast(`${item.label}: ${!enabled ? 'Activo' : 'Oculto'}`);
                         }}
                         className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
-                          enabled ? 'bg-[#D4A373]' : 'bg-[#252934]'
+                          enabled ? 'bg-[#F59E0B]' : 'bg-[#252934]'
                         }`}
                       >
                         <span
@@ -909,24 +1182,333 @@ export const AdminPage: React.FC = () => {
       )}
 
       {/* =========================================================================== */}
-      {/* TAB 1: APPOINTMENTS (LIVE SLOTS + INSTANT CANCELLATION + MANUAL BOOKING)    */}
+      {/* TAB 1: HORARIOS, REGLAS DE NEGOCIO, TEMAS URBANOS & EFECTOS VISUALES        */}
+      {/* =========================================================================== */}
+      {activeTab === 'business_rules' && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* Left: Business Rules, Opening/Closing Hours, Open Days, Buffer & PIN */}
+          <div className="lg:col-span-7 p-6 rounded-2xl border border-[#232730] bg-[#111318] space-y-6 shadow-xl">
+            <div className="border-b border-[#1E222B] pb-4">
+              <div className="flex items-center gap-2 text-[11px] font-mono uppercase text-[#F59E0B] font-bold mb-1">
+                <Settings className="w-3.5 h-3.5" />
+                <span>LÓGICA DE NEGOCIO Y MOTOR DE TURNOS</span>
+              </div>
+              <h2 className="font-display text-2xl font-bold text-white">
+                Horarios de Jornada, Días Abiertos, Señas y PIN
+              </h2>
+              <p className="text-xs text-zinc-400 font-mono mt-1">
+                Estos parámetros gobiernan automáticamente los horarios que se muestran disponibles en el turnero de la portada.
+              </p>
+            </div>
+
+            {/* Active Days of the Week */}
+            <div className="space-y-2">
+              <label className="block text-xs font-mono text-zinc-300 font-bold uppercase">
+                Días de Atención Activos en el Turnero:
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {WEEKDAYS_LIST.map((d) => {
+                  const isDayOpen = config.openDays.includes(d.day);
+                  return (
+                    <button
+                      key={d.day}
+                      type="button"
+                      onClick={() => {
+                        playMechanicalClick();
+                        const nextDays = isDayOpen
+                          ? config.openDays.filter((x) => x !== d.day)
+                          : [...config.openDays, d.day].sort();
+                        if (nextDays.length === 0) {
+                          triggerToast('Debe haber al menos 1 día activo en la semana');
+                          return;
+                        }
+                        updateConfig({ openDays: nextDays });
+                        triggerToast(`Día ${d.full}: ${isDayOpen ? 'Cerrado' : 'Abierto'}`);
+                      }}
+                      className={`px-3.5 py-2 rounded-xl font-mono text-xs font-bold border transition-all cursor-pointer ${
+                        isDayOpen
+                          ? 'bg-[#F59E0B] text-zinc-950 border-[#F59E0B]'
+                          : 'bg-[#0C0E12] text-zinc-400 border-[#282D37] hover:text-white'
+                      }`}
+                    >
+                      {d.full}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Opening Hour, Closing Hour, Buffer & Courtesy */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-mono">
+              <div>
+                <label className="block text-zinc-300 mb-1.5 font-bold uppercase">
+                  Hora de Apertura (Formato 24h)
+                </label>
+                <input
+                  type="number"
+                  min={7}
+                  max={20}
+                  value={config.openingHour}
+                  onChange={(e) => {
+                    const val = Math.max(7, Math.min(20, Number(e.target.value)));
+                    updateConfig({ openingHour: val });
+                  }}
+                  className="w-full h-11 px-3.5 rounded-xl border border-[#282D37] bg-[#0C0E12] text-white font-bold"
+                />
+              </div>
+
+              <div>
+                <label className="block text-zinc-300 mb-1.5 font-bold uppercase">
+                  Hora de Cierre (Formato 24h)
+                </label>
+                <input
+                  type="number"
+                  min={12}
+                  max={23}
+                  value={config.closingHour}
+                  onChange={(e) => {
+                    const val = Math.max(12, Math.min(23, Number(e.target.value)));
+                    updateConfig({ closingHour: val });
+                  }}
+                  className="w-full h-11 px-3.5 rounded-xl border border-[#282D37] bg-[#0C0E12] text-white font-bold"
+                />
+              </div>
+
+              <div>
+                <label className="block text-zinc-300 mb-1.5 font-bold uppercase">
+                  Buffer de Limpieza Entre Turnos (min)
+                </label>
+                <select
+                  value={config.cleanBufferMinutes}
+                  onChange={(e) => {
+                    updateConfig({ cleanBufferMinutes: Number(e.target.value) });
+                    triggerToast(`Buffer actualizado a ${e.target.value} min`);
+                  }}
+                  className="w-full h-11 px-3.5 rounded-xl border border-[#282D37] bg-[#0C0E12] text-white font-bold"
+                >
+                  <option value={0}>0 min (Sin pausa)</option>
+                  <option value={5}>5 min</option>
+                  <option value={10}>10 min (Recomendado)</option>
+                  <option value={15}>15 min</option>
+                  <option value={20}>20 min</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-zinc-300 mb-1.5 font-bold uppercase">
+                  Porcentaje de Seña por Transferencia (%)
+                </label>
+                <select
+                  value={config.depositPercentage}
+                  onChange={(e) => {
+                    updateConfig({ depositPercentage: Number(e.target.value) });
+                    triggerToast(`Porcentaje de seña: ${e.target.value}%`);
+                  }}
+                  className="w-full h-11 px-3.5 rounded-xl border border-[#282D37] bg-[#0C0E12] text-white font-bold"
+                >
+                  <option value={20}>20% de seña</option>
+                  <option value={30}>30% de seña (Recomendado)</option>
+                  <option value={50}>50% de seña</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-zinc-300 mb-1.5 font-bold uppercase">
+                  Texto Visible de Horarios
+                </label>
+                <input
+                  type="text"
+                  value={scheduleDisplayForm}
+                  onChange={(e) => setScheduleDisplayForm(e.target.value)}
+                  onBlur={() => updateConfig({ scheduleDisplay: scheduleDisplayForm })}
+                  className="w-full h-11 px-3.5 rounded-xl border border-[#282D37] bg-[#0C0E12] text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-zinc-300 mb-1.5 font-bold uppercase">
+                  PIN Maestro del Panel Admin
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    maxLength={8}
+                    value={adminPinForm}
+                    onChange={(e) => setAdminPinForm(e.target.value)}
+                    className="flex-1 h-11 px-3.5 rounded-xl border border-[#282D37] bg-[#0C0E12] text-[#F59E0B] font-bold"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!adminPinForm.trim()) return;
+                      updateConfig({ adminPin: adminPinForm.trim() });
+                      triggerToast(`Nuevo PIN guardado: ${adminPinForm.trim()}`);
+                    }}
+                    className="px-4 rounded-xl bg-[#F59E0B] text-zinc-950 font-black uppercase cursor-pointer"
+                  >
+                    Guardar PIN
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right: Urban Aesthetic Theme Preset & Visual Effects Controls */}
+          <div className="lg:col-span-5 p-6 rounded-2xl border border-[#232730] bg-[#111318] space-y-6 shadow-xl">
+            <div className="border-b border-[#1E222B] pb-4">
+              <div className="flex items-center gap-2 text-[11px] font-mono uppercase text-[#00F0FF] font-bold mb-1">
+                <Palette className="w-3.5 h-3.5" />
+                <span>DIRECCIÓN DE ARTE &amp; ESTÉTICA URBANA</span>
+              </div>
+              <h2 className="font-display text-2xl font-bold text-white">
+                Paleta de Colores &amp; Efectos
+              </h2>
+              <p className="text-xs text-zinc-400 font-mono mt-1">
+                Elegí la atmósfera cromática del sitio y controlá los efectos interactivos de aerosol y parallax.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {(
+                [
+                  {
+                    id: 'amber',
+                    name: 'Street Gold & Cyan',
+                    desc: 'Ámbar urbano, fuego y cian eléctrico',
+                    swatch: '#F59E0B',
+                  },
+                  {
+                    id: 'uv',
+                    name: 'UV Street Neon (Luz Negra)',
+                    desc: 'Cian fosforescente, ácido y magenta',
+                    swatch: '#00F0FF',
+                  },
+                  {
+                    id: 'crimson',
+                    name: 'Crimson Spray Atelier',
+                    desc: 'Rojo aerosol intenso, naranja y oro',
+                    swatch: '#F43F5E',
+                  },
+                  {
+                    id: 'volt',
+                    name: 'Acid Volt & Concrete',
+                    desc: 'Lima eléctrico, cian y hormigón',
+                    swatch: '#CCFF00',
+                  },
+                ] as { id: UrbanThemePreset; name: string; desc: string; swatch: string }[]
+              ).map((preset) => {
+                const active = (config.urbanTheme || 'amber') === preset.id;
+                return (
+                  <button
+                    key={preset.id}
+                    type="button"
+                    onClick={() => {
+                      playMechanicalClick();
+                      updateConfig({ urbanTheme: preset.id });
+                      triggerToast(`Tema urbano activado: ${preset.name}`);
+                    }}
+                    className={`p-3.5 rounded-xl border text-left font-mono transition-all cursor-pointer ${
+                      active
+                        ? 'border-white bg-[#191E2B] shadow-md'
+                        : 'border-[#252A36] bg-[#0C0E14] hover:border-zinc-500'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <span
+                        className="w-3.5 h-3.5 rounded-full shrink-0"
+                        style={{ backgroundColor: preset.swatch }}
+                      />
+                      <span className="text-xs font-black text-white">{preset.name}</span>
+                    </div>
+                    <p className="text-[11px] text-zinc-400">{preset.desc}</p>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="space-y-3 pt-2 border-t border-[#1E222B] text-xs font-mono">
+              {[
+                {
+                  key: 'showPromoBanner' as const,
+                  label: 'Banner Superior de Anuncio / Promo',
+                  desc: 'Muestra la barra superior con anuncio rápido y botón directo a reservar',
+                },
+                {
+                  key: 'enableParallax' as const,
+                  label: 'Efecto Parallax Urbano Multicapa',
+                  desc: 'Fondo arquitectónico y mural reactivo al movimiento del mouse y scroll',
+                },
+                {
+                  key: 'enableDripTrail' as const,
+                  label: 'Rastro de Aerosol (Graffiti Drip Trail)',
+                  desc: 'Efecto artístico de trazos de spray al desplazarse por la página',
+                },
+              ].map((fx) => {
+                const isOn = config[fx.key] !== false;
+                return (
+                  <div
+                    key={fx.key}
+                    className="p-3.5 rounded-xl border border-[#232730] bg-[#161920] flex items-center justify-between gap-3"
+                  >
+                    <div>
+                      <span className="font-bold text-white block">{fx.label}</span>
+                      <span className="text-[11px] text-zinc-400 block mt-0.5">{fx.desc}</span>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={isOn}
+                      onClick={() => {
+                        playMechanicalClick();
+                        updateConfig({ [fx.key]: !isOn });
+                        triggerToast(`${fx.label}: ${!isOn ? 'Activado' : 'Desactivado'}`);
+                      }}
+                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
+                        isOn ? 'bg-[#F59E0B]' : 'bg-[#252934]'
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-zinc-950 transition ${
+                          isOn ? 'translate-x-5' : 'translate-x-0 bg-zinc-400'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================================== */}
+      {/* TAB 2: APPOINTMENTS (LIVE SLOTS + CSV EXPORT + SEARCH + MANUAL BOOKING)     */}
       {/* =========================================================================== */}
       {activeTab === 'appointments' && (
         <div className="space-y-6">
           {/* Quick Manual Appointment Creator */}
           <div className="p-5 rounded-2xl border border-[#232730] bg-[#111318] space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <span className="text-[10px] font-mono uppercase text-[#D4A373] font-bold block">
+                <span className="text-[10px] font-mono uppercase text-[#F59E0B] font-bold block">
                   CARGA RÁPIDA DE TURNO (OCUPA EL HORARIO EN VIVO AL INSTANTE)
                 </span>
                 <h3 className="font-display text-lg font-bold text-white">
                   Agendar Turno Manual (Cliente por WhatsApp o Presencial)
                 </h3>
               </div>
+
+              <button
+                type="button"
+                onClick={handleExportAppointmentsCSV}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[#00F0FF]/50 bg-[#00F0FF]/10 hover:bg-[#00F0FF] text-[#00F0FF] hover:text-zinc-950 font-mono text-xs font-black uppercase tracking-wider transition-colors cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Exportar Agenda CSV</span>
+              </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-xs font-mono">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 text-xs font-mono">
               <div>
                 <label className="block text-zinc-400 mb-1">Fecha</label>
                 <input
@@ -944,6 +1526,20 @@ export const AdminPage: React.FC = () => {
                   onChange={(e) => setManualTime(e.target.value)}
                   className="w-full h-10 px-3 rounded-lg border border-[#282D37] bg-[#0C0E12] text-white"
                 />
+              </div>
+              <div>
+                <label className="block text-zinc-400 mb-1">Servicio</label>
+                <select
+                  value={manualServiceId}
+                  onChange={(e) => setManualServiceId(e.target.value)}
+                  className="w-full h-10 px-2.5 rounded-lg border border-[#282D37] bg-[#0C0E12] text-white"
+                >
+                  {services.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name} ({formatPriceARS(s.price)})
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="block text-zinc-400 mb-1">Cliente</label>
@@ -995,7 +1591,7 @@ export const AdminPage: React.FC = () => {
                     setManualClientWhatsapp('');
                     triggerToast(`Turno agendado para ${manualDate} a las ${manualTime} hs`);
                   }}
-                  className="w-full h-10 bg-[#D4A373] hover:bg-[#C89562] text-zinc-950 font-mono font-black uppercase text-xs rounded-lg cursor-pointer"
+                  className="w-full h-10 bg-[#F59E0B] hover:bg-[#D97706] text-zinc-950 font-mono font-black uppercase text-xs rounded-lg cursor-pointer"
                 >
                   + Ocupar Turno
                 </button>
@@ -1003,7 +1599,7 @@ export const AdminPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <h2 className="font-display text-2xl font-bold">Agenda de Turnos Confirmados</h2>
               <p className="text-xs font-mono text-zinc-400">
@@ -1011,12 +1607,23 @@ export const AdminPage: React.FC = () => {
               </p>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="relative">
+                <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={appointmentSearch}
+                  onChange={(e) => setAppointmentSearch(e.target.value)}
+                  placeholder="Buscar cliente o WhatsApp..."
+                  className="h-9 pl-8 pr-3 rounded-lg border border-[#282D37] bg-[#0C0E12] text-xs font-mono text-white focus:border-[#F59E0B] focus:outline-none"
+                />
+              </div>
+
               <button
                 onClick={() => setAppointmentFilter('today')}
                 className={`px-3 py-1.5 text-xs font-mono font-bold rounded-lg border transition-colors cursor-pointer ${
                   appointmentFilter === 'today'
-                    ? 'border-[#D4A373] bg-[#D4A373] text-zinc-950'
+                    ? 'border-[#F59E0B] bg-[#F59E0B] text-zinc-950'
                     : 'border-[#232730] bg-[#111318] text-zinc-400 hover:text-white'
                 }`}
               >
@@ -1026,7 +1633,7 @@ export const AdminPage: React.FC = () => {
                 onClick={() => setAppointmentFilter('all')}
                 className={`px-3 py-1.5 text-xs font-mono font-bold rounded-lg border transition-colors cursor-pointer ${
                   appointmentFilter === 'all'
-                    ? 'border-[#D4A373] bg-[#D4A373] text-zinc-950'
+                    ? 'border-[#F59E0B] bg-[#F59E0B] text-zinc-950'
                     : 'border-[#232730] bg-[#111318] text-zinc-400 hover:text-white'
                 }`}
               >
@@ -1062,7 +1669,7 @@ export const AdminPage: React.FC = () => {
                   >
                     <div className="space-y-1.5">
                       <div className="flex flex-wrap items-center gap-2 text-xs font-mono">
-                        <span className="px-2.5 py-0.5 rounded bg-[#D4A373] text-zinc-950 font-extrabold">
+                        <span className="px-2.5 py-0.5 rounded bg-[#F59E0B] text-zinc-950 font-extrabold">
                           {app.date}
                         </span>
                         <span className="font-bold text-white">
@@ -1137,7 +1744,7 @@ export const AdminPage: React.FC = () => {
                         className={`px-3 py-2 text-xs font-mono font-bold rounded-xl border transition-colors cursor-pointer ${
                           isFinished
                             ? 'border-zinc-700 text-zinc-400'
-                            : 'border-[#D4A373]/40 text-[#D4A373] bg-[#D4A373]/10'
+                            : 'border-[#F59E0B]/40 text-[#F59E0B] bg-[#F59E0B]/10'
                         }`}
                       >
                         {isFinished ? 'Reabrir' : 'Completado'}
@@ -1166,7 +1773,7 @@ export const AdminPage: React.FC = () => {
       )}
 
       {/* =========================================================================== */}
-      {/* TAB 2: GALLERY MANAGEMENT (ADMIN-ONLY UPLOAD + HIDE CARD ELEMENTS)          */}
+      {/* TAB 3: GALLERY MANAGEMENT (ADMIN-ONLY UPLOAD + HIDE CARD ELEMENTS)          */}
       {/* =========================================================================== */}
       {activeTab === 'gallery' && (
         <div className="space-y-6">
@@ -1182,7 +1789,7 @@ export const AdminPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsUploadModalOpen(true)}
-              className="inline-flex items-center gap-2 px-5 py-3 text-xs font-mono font-black uppercase tracking-wider bg-[#D4A373] text-zinc-950 rounded-xl hover:bg-[#C89562] cursor-pointer shadow-md"
+              className="inline-flex items-center gap-2 px-5 py-3 text-xs font-mono font-black uppercase tracking-wider bg-[#F59E0B] text-zinc-950 rounded-xl hover:bg-[#D97706] cursor-pointer shadow-md"
             >
               <Upload className="w-4 h-4" />
               <span>Subir Foto a la Galería</span>
@@ -1208,7 +1815,7 @@ export const AdminPage: React.FC = () => {
                     className="w-full h-full object-cover"
                   />
                   <div className="absolute top-3 left-3 flex items-center gap-1.5">
-                    <span className="px-2.5 py-1 bg-black/85 text-[#D4A373] font-mono text-[10px] font-bold rounded-lg border border-[#D4A373]/40">
+                    <span className="px-2.5 py-1 bg-black/85 text-[#F59E0B] font-mono text-[10px] font-bold rounded-lg border border-[#F59E0B]/40">
                       {item.category}
                     </span>
                     {item.hidden && (
@@ -1322,46 +1929,74 @@ export const AdminPage: React.FC = () => {
       )}
 
       {/* =========================================================================== */}
-      {/* TAB 3: SERVICES & PRICING (WITH PER-CARD HIDE BUY BUTTON / HIDE PRICE)      */}
+      {/* TAB 4: SERVICES & PRICING (WITH BULK PRICE ADJUSTMENT & PER-CARD TOGGLES)   */}
       {/* =========================================================================== */}
       {activeTab === 'services' && (
         <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div>
               <h2 className="font-display text-2xl font-bold">
-                Servicios, Precios y Visibilidad en Tarjetas
+                Servicios, Precios y Actualización Masiva
               </h2>
               <p className="text-xs text-zinc-400 font-mono">
-                Podés editar precios, pausar un servicio u ocultar el botón de compra/reserva en las tarjetas que prefieras solo informativas.
+                Editá precios individuales o aplicá un ajuste porcentual en 1 clic a toda la carta (redondeado a múltiplos de $500 ARS).
               </p>
             </div>
-            <button
-              onClick={() => {
-                setEditingService(null);
-                setServiceFormData({
-                  index: String(services.length + 1).padStart(2, '0'),
-                  category: 'Fades & Cortes',
-                  name: '',
-                  durationMinutes: 40,
-                  price: 12000,
-                  shortDescription: '',
-                  preparation: ['Venir con el pelo limpio'],
-                  executionSteps: [
-                    'Diagnóstico',
-                    'Degradé con clippers & shaver 0.0mm',
-                    'Corte a tijera',
-                    'Styling',
-                  ],
-                  aftercare: 'Recomendamos control cada 2 semanas.',
-                  productsUsed: 'Babyliss FX3 · Shaver Titanio · Polvo mate',
-                });
-                setIsNewServiceModalOpen(true);
-              }}
-              className="inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-mono font-black uppercase tracking-wider bg-[#D4A373] text-zinc-950 rounded-xl hover:bg-[#C89562] cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5 stroke-[3]" />
-              <span>Añadir Servicio</span>
-            </button>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-1.5 p-1.5 rounded-xl bg-[#111318] border border-[#232730] font-mono text-xs">
+                <span className="px-2 text-zinc-400 font-bold flex items-center gap-1">
+                  <TrendingUp className="w-3.5 h-3.5 text-[#F59E0B]" />
+                  <span>Ajuste Masivo:</span>
+                </span>
+                {[-10, 10, 15, 20].map((pct) => (
+                  <button
+                    key={pct}
+                    type="button"
+                    onClick={() => {
+                      playMechanicalClick();
+                      bulkAdjustServicePrices(pct);
+                      triggerToast(
+                        `Precios de todos los servicios actualizados en ${
+                          pct > 0 ? `+${pct}%` : `${pct}%`
+                        }`
+                      );
+                    }}
+                    className="px-2.5 py-1.5 rounded-lg bg-[#161920] hover:bg-[#F59E0B] text-zinc-200 hover:text-zinc-950 font-black border border-[#282D37] transition-colors cursor-pointer"
+                  >
+                    {pct > 0 ? `+${pct}%` : `${pct}%`}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                onClick={() => {
+                  setEditingService(null);
+                  setServiceFormData({
+                    index: String(services.length + 1).padStart(2, '0'),
+                    category: 'Fades & Cortes',
+                    name: '',
+                    durationMinutes: 40,
+                    price: 12000,
+                    shortDescription: '',
+                    preparation: ['Venir con el pelo limpio'],
+                    executionSteps: [
+                      'Diagnóstico',
+                      'Degradé con clippers & shaver 0.0mm',
+                      'Corte a tijera',
+                      'Styling',
+                    ],
+                    aftercare: 'Recomendamos control cada 2 semanas.',
+                    productsUsed: 'Babyliss FX3 · Shaver Titanio · Polvo mate',
+                  });
+                  setIsNewServiceModalOpen(true);
+                }}
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-mono font-black uppercase tracking-wider bg-[#F59E0B] text-zinc-950 rounded-xl hover:bg-[#D97706] cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5 stroke-[3]" />
+                <span>Añadir Servicio</span>
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -1376,7 +2011,7 @@ export const AdminPage: React.FC = () => {
               >
                 <div>
                   <div className="flex items-center justify-between gap-4 font-mono text-xs text-zinc-400 mb-2">
-                    <span className="text-[#D4A373] font-bold">
+                    <span className="text-[#F59E0B] font-bold">
                       {srv.index}. {srv.category}
                     </span>
                     <span className="text-lg font-black text-white">
@@ -1473,7 +2108,7 @@ export const AdminPage: React.FC = () => {
                         setServiceFormData(srv);
                         setIsNewServiceModalOpen(true);
                       }}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-mono font-bold border border-[#282D37] rounded-lg hover:border-[#D4A373] cursor-pointer"
+                      className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-mono font-bold border border-[#282D37] rounded-lg hover:border-[#F59E0B] cursor-pointer"
                     >
                       <Edit3 className="w-3.5 h-3.5" />
                       <span>Editar Datos</span>
@@ -1496,7 +2131,7 @@ export const AdminPage: React.FC = () => {
       )}
 
       {/* =========================================================================== */}
-      {/* TAB 4: CALENDAR & BLOCKED SLOTS                                             */}
+      {/* TAB 5: CALENDAR & BLOCKED SLOTS                                             */}
       {/* =========================================================================== */}
       {activeTab === 'calendar' && (
         <div className="space-y-6">
@@ -1510,7 +2145,7 @@ export const AdminPage: React.FC = () => {
           </div>
 
           <div className="p-6 rounded-xl border border-[#232730] bg-[#111318]">
-            <h3 className="font-mono text-xs uppercase text-[#D4A373] font-bold mb-4">
+            <h3 className="font-mono text-xs uppercase text-[#F59E0B] font-bold mb-4">
               Bloquear Horario Específico
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -1578,7 +2213,7 @@ export const AdminPage: React.FC = () => {
                   });
                   triggerToast('Franja horaria bloqueada en el calendario en vivo');
                 }}
-                className="px-5 py-2.5 text-xs font-mono font-bold uppercase tracking-wider bg-[#D4A373] text-zinc-950 rounded-lg hover:bg-[#C89562] cursor-pointer"
+                className="px-5 py-2.5 text-xs font-mono font-bold uppercase tracking-wider bg-[#F59E0B] text-zinc-950 rounded-lg hover:bg-[#D97706] cursor-pointer"
               >
                 Bloquear Horario
               </button>
@@ -1599,7 +2234,7 @@ export const AdminPage: React.FC = () => {
                     <span className="font-bold text-white">
                       {b.date} · {b.startTime} hs
                     </span>
-                    <span className="text-[#D4A373]">({b.durationMinutes} minutos)</span>
+                    <span className="text-[#F59E0B]">({b.durationMinutes} minutos)</span>
                   </div>
                   <p className="text-zinc-400 mt-0.5">{b.reason || 'Pausa de estudio'}</p>
                 </div>
@@ -1621,6 +2256,135 @@ export const AdminPage: React.FC = () => {
       )}
 
       {/* =========================================================================== */}
+      {/* TAB 6: SERVER TELEMETRY, REAL-TIME BUSINESS METRICS & SECURITY AUDIT LOGS   */}
+      {/* =========================================================================== */}
+      {activeTab === 'server_audit' && (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 className="font-display text-2xl font-bold">
+                Estado del Servidor Full-Stack, Métricas &amp; Auditoría
+              </h2>
+              <p className="text-xs text-zinc-400 font-mono">
+                Monitoreo en tiempo real del motor de reservas anti-colisión, persistencia JSON y registro de seguridad.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                playMechanicalClick();
+                refreshBackendState();
+                triggerToast('Estado y métricas sincronizados con el servidor');
+              }}
+              className="px-4 py-2.5 rounded-xl bg-[#F59E0B] text-zinc-950 font-mono text-xs font-black uppercase tracking-wider cursor-pointer"
+            >
+              Sincronizar con Servidor Ahora
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 font-mono text-xs">
+            <div className="p-4 rounded-xl bg-[#111318] border border-[#232730]">
+              <span className="text-zinc-400 uppercase text-[10px] font-bold block">
+                Conexión API /api/*
+              </span>
+              <p className="font-display text-xl font-black text-emerald-400 mt-1">
+                {backendConnected ? 'ONLINE · SINCRONIZADO' : 'MODO LOCAL ACTIVO'}
+              </p>
+              <span className="text-[11px] text-zinc-400 block mt-0.5">
+                Rate-Limiting &amp; Sanitización Activos
+              </span>
+            </div>
+
+            <div className="p-4 rounded-xl bg-[#111318] border border-[#232730]">
+              <span className="text-zinc-400 uppercase text-[10px] font-bold block">
+                Ocupación de Jornada Hoy
+              </span>
+              <p className="font-display text-2xl font-black text-[#00F0FF] mt-1 tabular-nums">
+                {backendMetrics ? `${backendMetrics.todayOccupancyPercentage}%` : '25%'}
+              </p>
+              <span className="text-[11px] text-zinc-400 block mt-0.5">
+                {backendMetrics
+                  ? `${backendMetrics.freeSlotsTodayCount} horarios libres hoy`
+                  : 'Cálculo dinámico por bloques'}
+              </span>
+            </div>
+
+            <div className="p-4 rounded-xl bg-[#111318] border border-[#232730]">
+              <span className="text-zinc-400 uppercase text-[10px] font-bold block">
+                Facturación Estimada Hoy
+              </span>
+              <p className="font-display text-2xl font-black text-[#F59E0B] mt-1 tabular-nums">
+                {formatPriceARS(
+                  backendMetrics ? backendMetrics.todayEstimatedRevenueARS : totalRevenueEst
+                )}
+              </p>
+              <span className="text-[11px] text-zinc-400 block mt-0.5">
+                Total general:{' '}
+                {formatPriceARS(
+                  backendMetrics ? backendMetrics.totalEstimatedRevenueARS : totalRevenueEst
+                )}
+              </span>
+            </div>
+
+            <div className="p-4 rounded-xl bg-[#111318] border border-[#232730]">
+              <span className="text-zinc-400 uppercase text-[10px] font-bold block">
+                Modalidades Elegidas
+              </span>
+              <p className="font-display text-xl font-black text-white mt-1 tabular-nums">
+                {backendMetrics
+                  ? `${backendMetrics.depositAppointmentsCount} Seña / ${backendMetrics.commitmentAppointmentsCount} Estudio`
+                  : `${appointments.length} Turnos Activos`}
+              </p>
+              <span className="text-[11px] text-[#CCFF00] block mt-0.5 truncate">
+                {backendMetrics ? backendMetrics.nextAvailableSlotLabel : 'Agenda verificada'}
+              </span>
+            </div>
+          </div>
+
+          <div className="p-6 rounded-2xl bg-[#111318] border border-[#232730] space-y-4">
+            <div className="flex items-center justify-between border-b border-[#1E222B] pb-3">
+              <h3 className="font-display text-xl font-bold text-white">
+                Registro de Auditoría y Operaciones del Servidor ({auditLogs.length})
+              </h3>
+              <span className="text-xs font-mono text-[#00F0FF]">
+                Persistencia Atómica JSON
+              </span>
+            </div>
+
+            {auditLogs.length === 0 ? (
+              <p className="text-xs font-mono text-zinc-400">
+                No hay eventos registrados aún en esta sesión.
+              </p>
+            ) : (
+              <div className="space-y-2 max-h-96 overflow-y-auto pr-1 font-mono text-xs">
+                {auditLogs.slice(0, 35).map((log) => (
+                  <div
+                    key={log.id}
+                    className="p-3 rounded-xl bg-[#0C0E12] border border-[#1E222B] flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+                  >
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 rounded bg-[#F59E0B]/15 text-[#F59E0B] text-[10px] font-black uppercase">
+                          {log.action}
+                        </span>
+                        <span className="text-[10px] uppercase text-zinc-400 font-bold">
+                          Actor: {log.actor}
+                        </span>
+                      </div>
+                      <p className="text-zinc-200">{log.details}</p>
+                    </div>
+                    <span className="text-[11px] text-zinc-500 tabular-nums shrink-0">
+                      {new Date(log.timestamp).toLocaleString('es-AR')}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================================== */}
       {/* MODAL: ADMIN PHOTO UPLOAD TO GALLERY                                        */}
       {/* =========================================================================== */}
       {isUploadModalOpen && (
@@ -1628,7 +2392,7 @@ export const AdminPage: React.FC = () => {
           <div className="w-full max-w-lg bg-[#111318] border border-[#282D37] text-white rounded-2xl p-6 max-h-[90vh] overflow-y-auto shadow-2xl">
             <div className="flex items-center justify-between pb-4 mb-4 border-b border-[#1E222B]">
               <div>
-                <span className="text-[10px] font-mono uppercase text-[#D4A373] font-bold block">
+                <span className="text-[10px] font-mono uppercase text-[#F59E0B] font-bold block">
                   EXCLUSIVO ADMINISTRADOR
                 </span>
                 <h3 className="font-display text-xl font-bold">
@@ -1659,9 +2423,9 @@ export const AdminPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="px-4 py-2.5 rounded-xl bg-[#161920] border border-[#D4A373]/50 text-white font-bold hover:bg-[#D4A373]/20 cursor-pointer flex items-center justify-center gap-2"
+                    className="px-4 py-2.5 rounded-xl bg-[#161920] border border-[#F59E0B]/50 text-white font-bold hover:bg-[#F59E0B]/20 cursor-pointer flex items-center justify-center gap-2"
                   >
-                    <Upload className="w-4 h-4 text-[#D4A373]" />
+                    <Upload className="w-4 h-4 text-[#F59E0B]" />
                     <span>
                       {isCompressingPhoto ? 'Procesando foto...' : 'Seleccionar Archivo'}
                     </span>
@@ -1760,7 +2524,7 @@ export const AdminPage: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2.5 text-xs font-mono font-black uppercase tracking-wider bg-[#D4A373] text-zinc-950 rounded-lg cursor-pointer"
+                  className="px-5 py-2.5 text-xs font-mono font-black uppercase tracking-wider bg-[#F59E0B] text-zinc-950 rounded-lg cursor-pointer"
                 >
                   Publicar Foto Ahora
                 </button>
@@ -1915,30 +2679,39 @@ export const AdminPage: React.FC = () => {
                     updateService(editingService.id, serviceFormData);
                     triggerToast('Servicio actualizado con éxito');
                   } else {
-                    addService({
-                      id: `srv-${Date.now()}`,
+                    const newSrv: StudioService = {
+                      id: `srv-custom-${Date.now()}`,
                       index: String(services.length + 1).padStart(2, '0'),
-                      category: serviceFormData.category || 'Fades & Cortes',
-                      name: serviceFormData.name || '',
-                      durationMinutes: serviceFormData.durationMinutes || 40,
-                      price: serviceFormData.price || 12000,
-                      shortDescription: serviceFormData.shortDescription || '',
-                      preparation: serviceFormData.preparation || ['Cabello limpio'],
+                      category:
+                        (serviceFormData.category as StudioService['category']) ||
+                        'Fades & Cortes',
+                      name: serviceFormData.name.trim(),
+                      durationMinutes: Number(serviceFormData.durationMinutes) || 40,
+                      price: Number(serviceFormData.price) || 12000,
+                      shortDescription:
+                        serviceFormData.shortDescription ||
+                        'Servicio personalizado de autor en Venado Tuerto.',
+                      preparation: serviceFormData.preparation || [
+                        'Venir con el cabello limpio',
+                      ],
                       executionSteps: serviceFormData.executionSteps || [
-                        'Corte y pulido con clipper y shaver 0.0mm',
+                        'Diagnóstico',
+                        'Ejecución técnica a máquina y tijera',
+                        'Acabado',
                       ],
                       aftercare:
-                        serviceFormData.aftercare || 'Mantiene nitidez por 2 semanas',
+                        serviceFormData.aftercare || 'Control recomendado cada 15 días.',
                       productsUsed:
-                        serviceFormData.productsUsed || 'Babyliss FX3 · Shaver Titanio',
-                    });
+                        serviceFormData.productsUsed || 'Línea Profesional Rodrigo Cutsss',
+                    };
+                    addService(newSrv);
                     triggerToast('Nuevo servicio añadido a la carta');
                   }
                   setIsNewServiceModalOpen(false);
                 }}
-                className="px-5 py-2 text-xs font-mono font-bold uppercase tracking-wider bg-[#D4A373] text-zinc-950 rounded-lg hover:bg-[#C89562]"
+                className="px-5 py-2.5 text-xs font-mono font-bold uppercase tracking-wider bg-[#F59E0B] text-zinc-950 rounded-lg cursor-pointer"
               >
-                {editingService ? 'Guardar Cambios' : 'Crear Servicio'}
+                Guardar Servicio
               </button>
             </div>
           </div>

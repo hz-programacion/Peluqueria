@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import {
   StudioService,
   LookbookItem,
@@ -12,6 +12,8 @@ import {
 } from '../data/studioData';
 import {
   StudioConfig,
+  HomeSectionId,
+  DEFAULT_SECTION_ORDER,
   INITIAL_STUDIO_CONFIG,
   INITIAL_APPOINTMENTS_STORE,
   INITIAL_BLOCKED_SLOTS,
@@ -36,6 +38,29 @@ export interface BlockedSlot {
   reason: string;
 }
 
+export interface AuditLogRecord {
+  id: string;
+  timestamp: string;
+  action: string;
+  actor: 'client' | 'admin' | 'system';
+  details: string;
+}
+
+export interface BackendMetricsSummary {
+  todayISO: string;
+  todayAppointmentsCount: number;
+  totalConfirmedCount: number;
+  totalCompletedCount: number;
+  todayOccupancyPercentage: number;
+  todayEstimatedRevenueARS: number;
+  totalEstimatedRevenueARS: number;
+  depositAppointmentsCount: number;
+  commitmentAppointmentsCount: number;
+  topServiceName: string;
+  freeSlotsTodayCount: number;
+  nextAvailableSlotLabel: string;
+}
+
 export type AppPage =
   | 'home'
   | 'services'
@@ -45,14 +70,30 @@ export type AppPage =
   | 'location'
   | 'admin';
 
+export function normalizeSectionOrder(order?: HomeSectionId[]): HomeSectionId[] {
+  if (!Array.isArray(order) || order.length === 0) {
+    return [...DEFAULT_SECTION_ORDER];
+  }
+  const validSet = new Set(DEFAULT_SECTION_ORDER);
+  const filtered = order.filter((id) => validSet.has(id));
+  for (const id of DEFAULT_SECTION_ORDER) {
+    if (!filtered.includes(id)) {
+      filtered.push(id);
+    }
+  }
+  return filtered;
+}
+
 interface StudioContextType {
   config: StudioConfig;
   updateConfig: (partial: Partial<StudioConfig>) => void;
   resetConfig: () => void;
+  moveSectionInOrder: (sectionId: HomeSectionId, direction: 'up' | 'down') => void;
   services: StudioService[];
   addService: (service: StudioService) => void;
   updateService: (id: string, service: Partial<StudioService>) => void;
   deleteService: (id: string) => void;
+  bulkAdjustServicePrices: (percentage: number) => void;
   galleryItems: StudioGalleryItem[];
   addGalleryItem: (item: StudioGalleryItem) => Promise<void>;
   updateGalleryItem: (id: string, partial: Partial<StudioGalleryItem>) => void;
@@ -67,7 +108,14 @@ interface StudioContextType {
   addReview: (review: GoogleReview) => void;
   deleteReview: (id: string) => void;
   appointments: AppointmentRecord[];
-  addAppointment: (appointment: AppointmentRecord) => void;
+  addAppointment: (
+    appointment: AppointmentRecord
+  ) => Promise<{ ok: boolean; error?: string; appointment?: AppointmentRecord }>;
+  rescheduleAppointment: (
+    id: string,
+    newDate: string,
+    newStartTime: string
+  ) => Promise<{ ok: boolean; error?: string; appointment?: AppointmentRecord }>;
   updateAppointmentStatus: (id: string, status: 'confirmed' | 'completed') => void;
   cancelAppointment: (id: string) => void;
   blockedSlots: BlockedSlot[];
@@ -83,6 +131,14 @@ interface StudioContextType {
   setSelectedServiceIds: React.Dispatch<React.SetStateAction<string[]>>;
   isDark: boolean;
   setIsDark: React.Dispatch<React.SetStateAction<boolean>>;
+  uvNeonMode: boolean;
+  toggleUvNeonMode: () => void;
+  preselectedSlot: { date: string; time: string } | null;
+  setPreselectedSlot: React.Dispatch<React.SetStateAction<{ date: string; time: string } | null>>;
+  backendConnected: boolean;
+  backendMetrics: BackendMetricsSummary | null;
+  auditLogs: AuditLogRecord[];
+  refreshBackendState: () => Promise<void>;
 }
 
 const StudioContext = createContext<StudioContextType | undefined>(undefined);
@@ -101,15 +157,32 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   });
 
   const [isDark, setIsDark] = useState<boolean>(true);
+  const [uvNeonMode, setUvNeonMode] = useState<boolean>(() => {
+    return localStorage.getItem('vm_urban_uv_neon') === 'true';
+  });
+  const [preselectedSlot, setPreselectedSlot] = useState<{ date: string; time: string } | null>(
+    null
+  );
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
     return localStorage.getItem('vm_admin_auth') === 'true';
   });
+  const [adminToken, setAdminToken] = useState<string>(() => {
+    return localStorage.getItem('vm_admin_token') || '';
+  });
+  const [backendConnected, setBackendConnected] = useState<boolean>(false);
+  const [backendMetrics, setBackendMetrics] = useState<BackendMetricsSummary | null>(null);
+  const [auditLogs, setAuditLogs] = useState<AuditLogRecord[]>([]);
 
   const [config, setConfig] = useState<StudioConfig>(() => {
     try {
-      const saved = localStorage.getItem('vm_urban_v7_config');
+      const saved = localStorage.getItem('vm_atelier_v4_config');
       if (saved) {
-        return { ...INITIAL_STUDIO_CONFIG, ...JSON.parse(saved) };
+        const parsed = JSON.parse(saved);
+        return {
+          ...INITIAL_STUDIO_CONFIG,
+          ...parsed,
+          sectionOrder: normalizeSectionOrder(parsed.sectionOrder),
+        };
       }
     } catch {
       /* fallback */
@@ -119,7 +192,7 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const [services, setServices] = useState<StudioService[]>(() => {
     try {
-      const saved = localStorage.getItem('vm_urban_v7_services');
+      const saved = localStorage.getItem('vm_atelier_v4_services');
       if (saved) return JSON.parse(saved);
     } catch {
       /* fallback */
@@ -129,7 +202,7 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const [galleryItems, setGalleryItems] = useState<StudioGalleryItem[]>(() => {
     try {
-      const saved = localStorage.getItem('vm_urban_v7_gallery');
+      const saved = localStorage.getItem('vm_atelier_v4_gallery');
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
@@ -142,7 +215,7 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const [likedGalleryIds, setLikedGalleryIds] = useState<Record<string, boolean>>(() => {
     try {
-      const saved = localStorage.getItem('vm_urban_v7_gallery_likes');
+      const saved = localStorage.getItem('vm_atelier_v4_gallery_likes');
       if (saved) return JSON.parse(saved);
     } catch {
       /* fallback */
@@ -152,7 +225,7 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const [lookbook, setLookbook] = useState<LookbookItem[]>(() => {
     try {
-      const saved = localStorage.getItem('vm_urban_v7_lookbook');
+      const saved = localStorage.getItem('vm_atelier_v4_lookbook');
       if (saved) return JSON.parse(saved);
     } catch {
       /* fallback */
@@ -162,7 +235,7 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const [reviews, setReviews] = useState<GoogleReview[]>(() => {
     try {
-      const saved = localStorage.getItem('vm_urban_v7_reviews');
+      const saved = localStorage.getItem('vm_atelier_v4_reviews');
       if (saved) return JSON.parse(saved);
     } catch {
       /* fallback */
@@ -172,7 +245,7 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const [appointments, setAppointments] = useState<AppointmentRecord[]>(() => {
     try {
-      const saved = localStorage.getItem('vm_urban_v7_appointments');
+      const saved = localStorage.getItem('vm_atelier_v4_appointments');
       if (saved) return JSON.parse(saved);
     } catch {
       /* fallback */
@@ -182,7 +255,7 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const [blockedSlots, setBlockedSlots] = useState<BlockedSlot[]>(() => {
     try {
-      const saved = localStorage.getItem('vm_urban_v7_blocked_slots');
+      const saved = localStorage.getItem('vm_atelier_v4_blocked_slots');
       if (saved) return JSON.parse(saved);
     } catch {
       /* fallback */
@@ -190,10 +263,86 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return INITIAL_BLOCKED_SLOTS;
   });
 
-  const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>(['srv-mid-fade-crop']);
+  const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>(['srv-01']);
+
+  const buildAuthHeaders = useCallback(
+    (extra?: Record<string, string>): Record<string, string> => {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        ...extra,
+      };
+      if (adminToken) {
+        headers['x-admin-token'] = adminToken;
+      }
+      headers['x-admin-pin'] = config.adminPin || DEFAULT_ADMIN_PIN;
+      return headers;
+    },
+    [adminToken, config.adminPin]
+  );
+
+  // Hydrate & synchronize state with Full-Stack Express Backend (/api/bootstrap)
+  const refreshBackendState = useCallback(async () => {
+    try {
+      const res = await fetch('/api/bootstrap', {
+        method: 'GET',
+        headers: { Accept: 'application/json' },
+      });
+      if (!res.ok) return;
+      const payload = await res.json();
+      if (payload && payload.ok && payload.data) {
+        setBackendConnected(true);
+        const {
+          config: remoteConfig,
+          services: remoteServices,
+          appointments: remoteAppointments,
+          blockedSlots: remoteBlocked,
+          galleryItems: remoteGallery,
+          reviews: remoteReviews,
+          auditLogs: remoteLogs,
+          metrics: remoteMetrics,
+        } = payload.data;
+
+        if (remoteConfig) {
+          setConfig((prev) => ({
+            ...prev,
+            ...remoteConfig,
+            sectionOrder: normalizeSectionOrder(remoteConfig.sectionOrder),
+          }));
+        }
+        if (Array.isArray(remoteServices) && remoteServices.length > 0) {
+          setServices(remoteServices);
+        }
+        if (Array.isArray(remoteAppointments)) {
+          setAppointments(remoteAppointments);
+        }
+        if (Array.isArray(remoteBlocked)) {
+          setBlockedSlots(remoteBlocked);
+        }
+        if (Array.isArray(remoteGallery) && remoteGallery.length > 0) {
+          setGalleryItems(remoteGallery);
+        }
+        if (Array.isArray(remoteReviews) && remoteReviews.length > 0) {
+          setReviews(remoteReviews);
+        }
+        if (Array.isArray(remoteLogs)) {
+          setAuditLogs(remoteLogs);
+        }
+        if (remoteMetrics) {
+          setBackendMetrics(remoteMetrics);
+        }
+      }
+    } catch {
+      // Offline / local fallback
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshBackendState();
+  }, [refreshBackendState]);
 
   // Sync with Firestore studio_gallery collection if available
   useEffect(() => {
+    if (!db) return;
     let unsubscribe: (() => void) | undefined;
     try {
       const q = query(collection(db, 'studio_gallery'), orderBy('createdAt', 'desc'));
@@ -248,15 +397,15 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const handleStorage = (e: StorageEvent) => {
       if (!e.newValue) return;
       try {
-        if (e.key === 'vm_urban_v7_appointments') {
+        if (e.key === 'vm_atelier_v4_appointments') {
           setAppointments(JSON.parse(e.newValue));
-        } else if (e.key === 'vm_urban_v7_blocked_slots') {
+        } else if (e.key === 'vm_atelier_v4_blocked_slots') {
           setBlockedSlots(JSON.parse(e.newValue));
-        } else if (e.key === 'vm_urban_v7_config') {
+        } else if (e.key === 'vm_atelier_v4_config') {
           setConfig((prev) => ({ ...prev, ...JSON.parse(e.newValue!) }));
-        } else if (e.key === 'vm_urban_v7_services') {
+        } else if (e.key === 'vm_atelier_v4_services') {
           setServices(JSON.parse(e.newValue));
-        } else if (e.key === 'vm_urban_v7_gallery') {
+        } else if (e.key === 'vm_atelier_v4_gallery') {
           setGalleryItems(JSON.parse(e.newValue));
         }
       } catch {
@@ -269,42 +418,42 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   // Sync state to local storage
   useEffect(() => {
-    localStorage.setItem('vm_urban_v7_config', JSON.stringify(config));
+    localStorage.setItem('vm_atelier_v4_config', JSON.stringify(config));
   }, [config]);
 
   useEffect(() => {
-    localStorage.setItem('vm_urban_v7_services', JSON.stringify(services));
+    localStorage.setItem('vm_atelier_v4_services', JSON.stringify(services));
   }, [services]);
 
   useEffect(() => {
     try {
-      localStorage.setItem('vm_urban_v7_gallery', JSON.stringify(galleryItems));
+      localStorage.setItem('vm_atelier_v4_gallery', JSON.stringify(galleryItems));
     } catch {
       // Handle storage quota gracefully
     }
   }, [galleryItems]);
 
   useEffect(() => {
-    localStorage.setItem('vm_urban_v7_gallery_likes', JSON.stringify(likedGalleryIds));
+    localStorage.setItem('vm_atelier_v4_gallery_likes', JSON.stringify(likedGalleryIds));
   }, [likedGalleryIds]);
 
   useEffect(() => {
-    localStorage.setItem('vm_urban_v7_lookbook', JSON.stringify(lookbook));
+    localStorage.setItem('vm_atelier_v4_lookbook', JSON.stringify(lookbook));
   }, [lookbook]);
 
   useEffect(() => {
-    localStorage.setItem('vm_urban_v7_reviews', JSON.stringify(reviews));
+    localStorage.setItem('vm_atelier_v4_reviews', JSON.stringify(reviews));
   }, [reviews]);
 
   useEffect(() => {
-    localStorage.setItem('vm_urban_v7_appointments', JSON.stringify(appointments));
+    localStorage.setItem('vm_atelier_v4_appointments', JSON.stringify(appointments));
   }, [appointments]);
 
   useEffect(() => {
-    localStorage.setItem('vm_urban_v7_blocked_slots', JSON.stringify(blockedSlots));
+    localStorage.setItem('vm_atelier_v4_blocked_slots', JSON.stringify(blockedSlots));
   }, [blockedSlots]);
 
-  // Dark mode effect
+  // Dark mode & UV Street Neon mode effect
   useEffect(() => {
     const root = document.documentElement;
     if (isDark) {
@@ -313,6 +462,34 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       root.classList.remove('dark');
     }
   }, [isDark]);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.dataset.urbanTheme = config.urbanTheme || 'amber';
+    if (uvNeonMode || config.urbanTheme === 'uv') {
+      root.classList.add('uv-neon-mode');
+    } else {
+      root.classList.remove('uv-neon-mode');
+    }
+    localStorage.setItem('vm_urban_uv_neon', uvNeonMode ? 'true' : 'false');
+    window.dispatchEvent(
+      new CustomEvent('uv-neon-mode-change', { detail: { uvNeonMode } })
+    );
+  }, [uvNeonMode, config.urbanTheme]);
+
+  const toggleUvNeonMode = () => {
+    setUvNeonMode((prev) => {
+      const next = !prev;
+      const nextTheme = next ? 'uv' : 'amber';
+      setConfig((c) => ({ ...c, urbanTheme: nextTheme }));
+      fetch('/api/config', {
+        method: 'PUT',
+        headers: buildAuthHeaders(),
+        body: JSON.stringify({ urbanTheme: nextTheme }),
+      }).catch(() => {});
+      return next;
+    });
+  };
 
   // History & Section Navigation sync
   const navigateTo = (page: AppPage, sectionId?: string) => {
@@ -350,6 +527,20 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     if (trimmed === (config.adminPin || DEFAULT_ADMIN_PIN) || trimmed === DEFAULT_ADMIN_PIN) {
       setIsAdminAuthenticated(true);
       localStorage.setItem('vm_admin_auth', 'true');
+      fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin: trimmed }),
+      })
+        .then((r) => r.json())
+        .then((res) => {
+          if (res && res.ok && res.token) {
+            setAdminToken(res.token);
+            localStorage.setItem('vm_admin_token', res.token);
+            refreshBackendState();
+          }
+        })
+        .catch(() => {});
       return true;
     }
     return false;
@@ -357,32 +548,121 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const logoutAdmin = () => {
     setIsAdminAuthenticated(false);
+    setAdminToken('');
     localStorage.removeItem('vm_admin_auth');
+    localStorage.removeItem('vm_admin_token');
   };
 
   const updateConfig = (partial: Partial<StudioConfig>) => {
-    setConfig((prev) => ({ ...prev, ...partial }));
+    setConfig((prev) => {
+      const next = { ...prev, ...partial };
+      if (partial.urbanTheme) {
+        setUvNeonMode(partial.urbanTheme === 'uv');
+      }
+      return next;
+    });
+    fetch('/api/config', {
+      method: 'PUT',
+      headers: buildAuthHeaders(),
+      body: JSON.stringify(partial),
+    })
+      .then(() => refreshBackendState())
+      .catch(() => {});
+  };
+
+  const moveSectionInOrder = (sectionId: HomeSectionId, direction: 'up' | 'down') => {
+    setConfig((prev) => {
+      const current = normalizeSectionOrder(prev.sectionOrder);
+      const idx = current.indexOf(sectionId);
+      if (idx === -1) return prev;
+      const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
+      if (targetIdx < 0 || targetIdx >= current.length) return prev;
+      const next = [...current];
+      const temp = next[idx];
+      next[idx] = next[targetIdx];
+      next[targetIdx] = temp;
+      return { ...prev, sectionOrder: next };
+    });
+    fetch('/api/config/section-order', {
+      method: 'POST',
+      headers: buildAuthHeaders(),
+      body: JSON.stringify({ sectionId, direction }),
+    })
+      .then(() => refreshBackendState())
+      .catch(() => {});
   };
 
   const resetConfig = () => {
     setConfig(INITIAL_STUDIO_CONFIG);
+    fetch('/api/config', {
+      method: 'PUT',
+      headers: buildAuthHeaders(),
+      body: JSON.stringify(INITIAL_STUDIO_CONFIG),
+    }).catch(() => {});
   };
 
   const addService = (service: StudioService) => {
     setServices((prev) => [...prev, service]);
+    fetch('/api/services', {
+      method: 'POST',
+      headers: buildAuthHeaders(),
+      body: JSON.stringify(service),
+    })
+      .then(() => refreshBackendState())
+      .catch(() => {});
   };
 
   const updateService = (id: string, updated: Partial<StudioService>) => {
     setServices((prev) => prev.map((s) => (s.id === id ? { ...s, ...updated } : s)));
+    fetch(`/api/services/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      headers: buildAuthHeaders(),
+      body: JSON.stringify(updated),
+    })
+      .then(() => refreshBackendState())
+      .catch(() => {});
   };
 
   const deleteService = (id: string) => {
     setServices((prev) => prev.filter((s) => s.id !== id));
     setSelectedServiceIds((prev) => prev.filter((sId) => sId !== id));
+    fetch(`/api/services/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      headers: buildAuthHeaders(),
+    })
+      .then(() => refreshBackendState())
+      .catch(() => {});
+  };
+
+  const bulkAdjustServicePrices = (percentage: number) => {
+    if (!Number.isFinite(percentage) || percentage === 0) return;
+    const factor = 1 + percentage / 100;
+    setServices((prev) =>
+      prev.map((s) => {
+        const raw = s.price * factor;
+        const rounded = Math.max(1000, Math.round(raw / 500) * 500);
+        return { ...s, price: rounded };
+      })
+    );
+    fetch('/api/services/bulk-price', {
+      method: 'POST',
+      headers: buildAuthHeaders(),
+      body: JSON.stringify({ percentage }),
+    })
+      .then(() => refreshBackendState())
+      .catch(() => {});
   };
 
   const addGalleryItem = async (item: StudioGalleryItem) => {
     setGalleryItems((prev) => [item, ...prev]);
+    fetch('/api/gallery', {
+      method: 'POST',
+      headers: buildAuthHeaders(),
+      body: JSON.stringify(item),
+    })
+      .then(() => refreshBackendState())
+      .catch(() => {});
+    if (!db) return;
     try {
       await addDoc(collection(db, 'studio_gallery'), {
         title: item.title,
@@ -403,7 +683,7 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         createdAt: serverTimestamp(),
       });
     } catch {
-      // Already saved in local state & localStorage
+      // Already saved in local state & backend
     }
   };
 
@@ -411,10 +691,20 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setGalleryItems((prev) =>
       prev.map((item) => (item.id === id ? { ...item, ...partial } : item))
     );
+    fetch(`/api/gallery/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      headers: buildAuthHeaders(),
+      body: JSON.stringify(partial),
+    }).catch(() => {});
   };
 
   const deleteGalleryItem = async (id: string) => {
     setGalleryItems((prev) => prev.filter((item) => item.id !== id));
+    fetch(`/api/gallery/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      headers: buildAuthHeaders(),
+    }).catch(() => {});
+    if (!db) return;
     try {
       await deleteDoc(doc(db, 'studio_gallery', id));
     } catch {
@@ -451,30 +741,123 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const addReview = (review: GoogleReview) => {
     setReviews((prev) => [review, ...prev]);
+    fetch('/api/reviews', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(review),
+    })
+      .then(() => refreshBackendState())
+      .catch(() => {});
   };
 
   const deleteReview = (id: string) => {
     setReviews((prev) => prev.filter((r) => r.id !== id));
+    fetch(`/api/reviews/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      headers: buildAuthHeaders(),
+    })
+      .then(() => refreshBackendState())
+      .catch(() => {});
   };
 
-  const addAppointment = (appointment: AppointmentRecord) => {
+  const addAppointment = async (
+    appointment: AppointmentRecord
+  ): Promise<{ ok: boolean; error?: string; appointment?: AppointmentRecord }> => {
     setAppointments((prev) => [appointment, ...prev]);
+    try {
+      const res = await fetch('/api/appointments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(appointment),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        // Rollback optimistic insertion if server detected a slot collision
+        setAppointments((prev) => prev.filter((a) => a.id !== appointment.id));
+        return {
+          ok: false,
+          error: data?.error || 'El horario seleccionado ya fue ocupado.',
+        };
+      }
+      if (data.metrics) setBackendMetrics(data.metrics);
+      refreshBackendState();
+      return { ok: true, appointment: data.appointment || appointment };
+    } catch {
+      return { ok: true, appointment };
+    }
+  };
+
+  const rescheduleAppointment = async (
+    id: string,
+    newDate: string,
+    newStartTime: string
+  ): Promise<{ ok: boolean; error?: string; appointment?: AppointmentRecord }> => {
+    const previous = appointments;
+    setAppointments((prev) =>
+      prev.map((a) => (a.id === id ? { ...a, date: newDate, startTime: newStartTime } : a))
+    );
+    try {
+      const res = await fetch(`/api/appointments/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: newDate, startTime: newStartTime }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        setAppointments(previous);
+        return {
+          ok: false,
+          error: data?.error || 'No se pudo reprogramar el turno en ese horario.',
+        };
+      }
+      if (data.metrics) setBackendMetrics(data.metrics);
+      refreshBackendState();
+      return { ok: true, appointment: data.appointment };
+    } catch {
+      return { ok: true };
+    }
   };
 
   const updateAppointmentStatus = (id: string, status: 'confirmed' | 'completed') => {
     setAppointments((prev) => prev.map((a) => (a.id === id ? { ...a, status } : a)));
+    fetch(`/api/appointments/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      headers: buildAuthHeaders(),
+      body: JSON.stringify({ status }),
+    })
+      .then(() => refreshBackendState())
+      .catch(() => {});
   };
 
   const cancelAppointment = (id: string) => {
     setAppointments((prev) => prev.filter((a) => a.id !== id));
+    fetch(`/api/appointments/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      headers: buildAuthHeaders(),
+    })
+      .then(() => refreshBackendState())
+      .catch(() => {});
   };
 
   const addBlockedSlot = (slot: BlockedSlot) => {
     setBlockedSlots((prev) => [...prev, slot]);
+    fetch('/api/blocked-slots', {
+      method: 'POST',
+      headers: buildAuthHeaders(),
+      body: JSON.stringify(slot),
+    })
+      .then(() => refreshBackendState())
+      .catch(() => {});
   };
 
   const deleteBlockedSlot = (id: string) => {
     setBlockedSlots((prev) => prev.filter((s) => s.id !== id));
+    fetch(`/api/blocked-slots/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      headers: buildAuthHeaders(),
+    })
+      .then(() => refreshBackendState())
+      .catch(() => {});
   };
 
   const toggleSelectService = (id: string) => {
@@ -489,10 +872,12 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         config,
         updateConfig,
         resetConfig,
+        moveSectionInOrder,
         services,
         addService,
         updateService,
         deleteService,
+        bulkAdjustServicePrices,
         galleryItems,
         addGalleryItem,
         updateGalleryItem,
@@ -508,6 +893,7 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         deleteReview,
         appointments,
         addAppointment,
+        rescheduleAppointment,
         updateAppointmentStatus,
         cancelAppointment,
         blockedSlots,
@@ -523,6 +909,14 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setSelectedServiceIds,
         isDark,
         setIsDark,
+        uvNeonMode,
+        toggleUvNeonMode,
+        preselectedSlot,
+        setPreselectedSlot,
+        backendConnected,
+        backendMetrics,
+        auditLogs,
+        refreshBackendState,
       }}
     >
       {children}

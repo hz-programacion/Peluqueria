@@ -3,131 +3,103 @@
 
 @layer base {
   :root {
-    --font-display: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-display: 'Cormorant Garamond', Georgia, serif;
+    --font-serif-art: 'Cormorant Garamond', Georgia, serif;
     --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     --font-mono: 'JetBrains Mono', monospace;
-    --color-urban-accent: #D4A373;
-    --color-urban-clay: #C87D65;
-    --color-urban-dark: #0A0B0E;
+
+    /* Organic High-End Atelier Palette */
+    --atelier-paper: #F7F4EE;
+    --atelier-stone: #EFEAE1;
+    --atelier-parchment: #E4DDD1;
+    --atelier-charcoal: #171513;
+    --atelier-espresso: #23201D;
+    --atelier-muted: #655E57;
+    --atelier-bronze: #96734E;
+    --atelier-terracotta: #A65D43;
+    --atelier-sage: #3D4F43;
   }
 
   html {
+    font-family: var(--font-sans);
+    background-color: #F7F4EE;
+    color: #171513;
     scroll-behavior: smooth;
   }
 
   body {
-    font-family: var(--font-sans);
-    letter-spacing: -0.01em;
-    background-color: #0A0B0E;
-    color: #F3F4F6;
     overflow-x: hidden;
-  }
-
-  h1, h2, h3, .font-display {
-    font-family: var(--font-display);
-    text-wrap: balance;
-    letter-spacing: -0.025em;
-  }
-
-  .font-mono-tech {
-    font-family: var(--font-mono);
-    font-variant-numeric: tabular-nums;
+    background-color: #F7F4EE;
+    color: #171513;
   }
 }
 
-/* Subtle Urban Stencil Stripes - Desaturated Warm Bronze */
-.bg-caution-stripes {
-  background: repeating-linear-gradient(
-    -45deg,
-    rgba(212, 163, 115, 0.08),
-    rgba(212, 163, 115, 0.08) 12px,
-    transparent 12px,
-    transparent 24px
-  );
+.font-display {
+  font-family: var(--font-display);
 }
 
-/* Refined Architectural Dot Grid */
-.bg-halftone-grid {
-  background-image: radial-gradient(rgba(212, 163, 115, 0.08) 1px, transparent 1px);
-  background-size: 20px 20px;
+.font-editorial {
+  font-family: var(--font-serif-art);
 }
 
-/* Clean Receipt Card Styling (without clipping bottom content) */
-.receipt-tear-bottom {
-  border-bottom: 3px dashed #D4D4D8;
+.font-sans {
+  font-family: var(--font-sans);
 }
 
-/* Custom scrollbar for modern urban studio */
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+/* Subtle paper grain & warm editorial atmosphere */
+.atelier-paper-surface {
+  background-color: #F7F4EE;
+  background-image: radial-gradient(circle at 15% 10%, rgba(150, 115, 78, 0.06), transparent 45%),
+    radial-gradient(circle at 85% 80%, rgba(61, 79, 67, 0.05), transparent 50%);
+}
+
+.atelier-charcoal-surface {
+  background-color: #171513;
+  background-image: radial-gradient(circle at 80% 15%, rgba(150, 115, 78, 0.12), transparent 50%),
+    radial-gradient(circle at 15% 85%, rgba(61, 79, 67, 0.1), transparent 50%);
+}
+
+/* Editorial Drop Cap for the Manifesto */
+.editorial-dropcap::first-letter {
+  font-family: var(--font-display);
+  font-size: 3.75rem;
+  line-height: 0.82;
+  float: left;
+  padding-right: 0.75rem;
+  padding-top: 0.2rem;
+  color: #96734E;
+  font-weight: 600;
+}
+
+/* Custom subtle scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
+
 ::-webkit-scrollbar-track {
-  background: #0A0B0E;
+  background: #EFEAE1;
 }
+
 ::-webkit-scrollbar-thumb {
-  background: #232730;
-  border-radius: 3px;
+  background: #C5BBAE;
 }
+
 ::-webkit-scrollbar-thumb:hover {
-  background: #D4A373;
+  background: #96734E;
 }
 
-/* Subtle Architectural Surface Overlay */
-.concrete-overlay {
-  position: relative;
-  isolation: isolate;
-}
-
-.concrete-overlay::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 1;
-  background-image: radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 0);
-  background-size: 24px 24px;
-  opacity: 0.4;
-  border-radius: inherit;
-}
-
-/* Modern Matte Studio Surface */
-.distressed-surface {
-  position: relative;
-  background-color: #111318;
-  border: 1px solid #232730;
-  box-shadow: 0 18px 36px -16px rgba(0, 0, 0, 0.65);
-}
-
-/* Generative Graffiti Mural CSS Animations */
-@keyframes graffiti-drip {
-  0% {
-    transform: scaleY(0.1);
-    opacity: 0;
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
-  40% {
-    opacity: 0.65;
-  }
-  100% {
-    transform: scaleY(1);
-    opacity: 0.55;
-  }
-}
-
-@keyframes aerosol-float {
-  0%, 100% {
-    transform: translateY(0px) scale(1);
-  }
-  50% {
-    transform: translateY(-4px) scale(1.01);
-  }
-}
-
-.graffiti-drip-animated {
-  transform-origin: top center;
-  animation: graffiti-drip 1.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
-}
-
-.graffiti-aerosol-float {
-  animation: aerosol-float 12s ease-in-out infinite;
 }

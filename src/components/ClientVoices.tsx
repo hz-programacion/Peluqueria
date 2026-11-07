@@ -1,14 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Star,
-  ChevronLeft,
-  ChevronRight,
-  ShieldCheck,
-  Quote,
-  MessageSquare,
-  Check,
-} from 'lucide-react';
+import { Star, ChevronLeft, ChevronRight, MessageSquare, Check } from 'lucide-react';
 import { db } from '../lib/firebase';
 import {
   collection,
@@ -19,7 +11,7 @@ import {
   orderBy,
   limit,
 } from 'firebase/firestore';
-import { playMechanicalHover, playMechanicalClick } from '../utils/audioFeedback';
+import { useStudio } from '../context/StudioContext';
 
 export interface Testimonial {
   id: string;
@@ -36,67 +28,56 @@ export interface Testimonial {
 const DEFAULT_TESTIMONIALS: Testimonial[] = [
   {
     id: 'test-1',
-    clientName: 'Thiago Benítez',
-    serviceName: 'Corte de Pelo (Corte de Autor & Fade)',
+    clientName: 'Martín Salvatierra',
+    serviceName: 'Corte de Autor / Clásico',
     price: '$12.000 ARS',
     rating: 5,
-    date: 'Hace 2 días',
+    date: 'Hace 3 días',
     city: 'Venado Tuerto',
     verified: true,
     comment:
-      'La posta es que encontrar un barbero que entienda de fades urbanos y textura real en Venado Tuerto es oro puro. Rodri es un crack, puntual al milisegundo y el local en Vuelta de Obligado 931 tiene tremenda vibra. Reservás el turno por la web, te sentás a la hora exacta y salís impecable.',
+      'Una experiencia completamente distinta en Venado Tuerto. Sin ruidos ni gente esperando encima tuyo: llegás a tu hora en Vuelta de Obligado 931, te reciben con un café y Rodrigo se toma todo el tiempo para lograr exactamente el corte que buscás.',
   },
   {
     id: 'test-2',
     clientName: 'Lucas Santoro',
-    serviceName: 'Taper Fade & Line Up',
-    price: '$12.000 ARS',
-    rating: 5,
-    date: 'Hace 4 días',
-    city: 'Venado Tuerto',
-    verified: true,
-    comment:
-      'Tengo rulos y siempre me arruinaban los cortes en peluquerías tradicionales. El taper que me hace Rodrigo es perfecto, respeta la caída natural y me dura prolijo casi un mes. Además la música de fondo y la atención 1 a 1 sin gente amontonada marcan toda la diferencia.',
-  },
-  {
-    id: 'test-3',
-    clientName: 'Nahuel Rossi',
-    serviceName: 'Corte + Platinado Global',
-    price: '$28.000 ARS',
+    serviceName: 'Corte + Perfilado de Barba',
+    price: '$17.000 ARS',
     rating: 5,
     date: 'Hace 1 semana',
     city: 'Venado Tuerto',
     verified: true,
     comment:
-      'Me hice el platinado con Rodri y me dejó el pelo blanco ceniza sin quemarme nada. El trato 1 a 1 sin que nadie te esté mirando mientras esperás te da una comodidad tremenda. La técnica de pulido con shaver y el acabado con polvo mate son de otro nivel.',
+      'Destaco el trabajo a tijera y el cuidado en el perfilado de barba con toalla tibia. El corte crece parejo durante semanas y la reserva desde la web funciona con una precisión impecable.',
   },
   {
-    id: 'test-4',
-    clientName: 'Facundo Morán',
-    serviceName: 'Corte de Pelo + Perfilado de Barba Completo',
-    price: '$17.000 ARS',
+    id: 'test-3',
+    clientName: 'Julián Méndez',
+    serviceName: 'Lavado Premium y Nutrición Capilar',
+    price: '$9.500 ARS',
     rating: 5,
     date: 'Hace 2 semanas',
     city: 'Venado Tuerto',
     verified: true,
     comment:
-      'El perfilado de barba con trimmer de precisión, shaver de titanio y toalla caliente te deja impecable y con cero irritación. Cero espera, te sentás al minuto exacto que reservaste en Vuelta de Obligado 931. El mejor de Venado Tuerto sin dudas.',
+      'Sumé el lavado premium con nutrición a mi corte habitual y el cambio en la textura del pelo se nota al instante. El ambiente del estudio transmite una paz difícil de encontrar hoy en día.',
   },
   {
-    id: 'test-5',
-    clientName: 'Agustín Valenzuela',
-    serviceName: 'Low Skin Fade & Crop',
-    price: '$12.000 ARS',
+    id: 'test-4',
+    clientName: 'Facundo Morán',
+    serviceName: 'Diseño y Perfilado de Barba',
+    price: '$8.500 ARS',
     rating: 5,
     date: 'Hace 3 semanas',
     city: 'Venado Tuerto',
     verified: true,
     comment:
-      'Llegué con el pelo hecho un desastre y me recomendó el low fade con frontal a escuadra. Increíble cómo cambia la presencia. Transparencia total con el precio ($12.000), nada de sorpresas y confirmación inmediata al WhatsApp.',
+      'Puntualidad absoluta y un asesoramiento muy honesto según tus facciones. Es un verdadero estudio de autor donde cada detalle está pensado para que salgas renovado.',
   },
 ];
 
 export const ClientVoices: React.FC = () => {
+  const { addReview } = useStudio();
   const [testimonials, setTestimonials] = useState<Testimonial[]>(DEFAULT_TESTIMONIALS);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [isPaused, setIsPaused] = useState<boolean>(false);
@@ -104,24 +85,30 @@ export const ClientVoices: React.FC = () => {
   const [newAuthor, setNewAuthor] = useState<string>('');
   const [newComment, setNewComment] = useState<string>('');
   const [newRating, setNewRating] = useState<number>(5);
-  const [newService, setNewService] = useState<string>('Corte de Pelo (Corte de Autor & Fade)');
+  const [newService, setNewService] = useState<string>('Corte de Autor / Clásico');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [feedbackSuccess, setFeedbackSuccess] = useState<boolean>(false);
 
   useEffect(() => {
+    if (!db) return;
+    const firestoreDb = db;
     let isMounted = true;
     const fetchFromFirebase = async () => {
       try {
-        const q = query(collection(db, 'testimonials'), orderBy('createdAt', 'desc'), limit(15));
+        const q = query(
+          collection(firestoreDb, 'testimonials'),
+          orderBy('createdAt', 'desc'),
+          limit(15)
+        );
         const snapshot = await getDocs(q);
         if (!snapshot.empty && isMounted) {
           const loaded: Testimonial[] = [];
-          snapshot.forEach((doc) => {
-            const data = doc.data();
+          snapshot.forEach((docSnap) => {
+            const data = docSnap.data();
             loaded.push({
-              id: doc.id,
-              clientName: data.clientName || 'Cliente Rodrigo Cutsss',
-              serviceName: data.serviceName || 'Corte de Pelo',
+              id: docSnap.id,
+              clientName: data.clientName || 'Cliente del Estudio',
+              serviceName: data.serviceName || 'Corte de Autor / Clásico',
               price: data.price || '$12.000 ARS',
               rating: Number(data.rating) || 5,
               date: data.date || 'Reciente',
@@ -155,12 +142,10 @@ export const ClientVoices: React.FC = () => {
   }, [isPaused, testimonials.length]);
 
   const handlePrev = () => {
-    playMechanicalClick();
     setCurrentIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length);
   };
 
   const handleNext = () => {
-    playMechanicalClick();
     setCurrentIndex((prev) => (prev + 1) % testimonials.length);
   };
 
@@ -171,7 +156,6 @@ export const ClientVoices: React.FC = () => {
     if (!newAuthor.trim() || !newComment.trim()) return;
 
     setIsSubmitting(true);
-    playMechanicalClick();
 
     const newEntry: Testimonial = {
       id: `local-${Date.now()}`,
@@ -185,21 +169,33 @@ export const ClientVoices: React.FC = () => {
       comment: newComment.trim(),
     };
 
-    try {
-      await addDoc(collection(db, 'testimonials'), {
-        clientName: newEntry.clientName,
-        serviceName: newEntry.serviceName,
-        price: newEntry.price,
-        rating: newEntry.rating,
-        date: 'Reciente',
-        city: 'Venado Tuerto',
-        verified: true,
-        comment: newEntry.comment,
-        createdAt: serverTimestamp(),
-      });
-    } catch {
-      // Local fallback stores it in local state
+    if (db) {
+      try {
+        await addDoc(collection(db, 'testimonials'), {
+          clientName: newEntry.clientName,
+          serviceName: newEntry.serviceName,
+          price: newEntry.price,
+          rating: newEntry.rating,
+          date: 'Reciente',
+          city: 'Venado Tuerto',
+          verified: true,
+          comment: newEntry.comment,
+          createdAt: serverTimestamp(),
+        });
+      } catch {
+        // Local fallback stores it in local state
+      }
     }
+
+    addReview({
+      id: newEntry.id,
+      authorName: newEntry.clientName,
+      authorInitials: newEntry.clientName.slice(0, 2).toUpperCase(),
+      relativeDate: newEntry.date,
+      rating: newEntry.rating,
+      serviceTag: newEntry.serviceName,
+      textParts: [{ text: newEntry.comment, highlight: false }],
+    });
 
     setTestimonials((prev) => [newEntry, ...prev]);
     setCurrentIndex(0);
@@ -216,58 +212,48 @@ export const ClientVoices: React.FC = () => {
 
   return (
     <section
-      className="max-w-[1380px] mx-auto px-4 sm:px-6 relative z-10"
+      className="max-w-[1320px] mx-auto px-5 sm:px-8 relative z-10"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      <div className="rounded-3xl bg-[#111318] border border-[#232730] p-6 sm:p-10 lg:p-12 overflow-hidden shadow-2xl relative">
-        {/* Top Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-8 border-b border-[#1E222B]">
-          <div>
-            <div className="flex items-center gap-2 mb-2 font-mono text-xs">
-              <span className="w-2 h-2 bg-[#D4A373] rounded-full" />
-              <span className="text-[#D4A373] font-bold uppercase tracking-widest">
-                VOCES DE LA COMUNIDAD // 100% REALES
-              </span>
-              <span className="text-zinc-600">·</span>
-              <span className="text-zinc-400 font-bold">Venado Tuerto · Santa Fe</span>
+      <div className="border-t border-b border-[#171513]/12 py-14 sm:py-20">
+        {/* Section Header */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-[#96734E] font-medium">
+              <span>Voces del Estudio</span>
+              <span aria-hidden="true">·</span>
+              <span>Venado Tuerto, Santa Fe</span>
             </div>
-            <h2 className="font-display text-3xl sm:text-4xl font-black text-white uppercase tracking-tight">
-              Client Voices &amp; Reseñas
+            <h2 className="font-display text-3xl sm:text-5xl font-medium text-[#171513] leading-tight">
+              La experiencia de quienes nos eligen
             </h2>
           </div>
 
           <div className="flex items-center gap-3">
             <button
               type="button"
-              onMouseEnter={playMechanicalHover}
-              onClick={() => {
-                playMechanicalClick();
-                setIsModalOpen(true);
-              }}
-              className="px-4 py-2.5 rounded-xl bg-[#161920] border border-[#D4A373]/40 hover:border-[#D4A373] text-xs font-mono font-bold text-[#D4A373] hover:bg-[#D4A373] hover:text-zinc-950 transition-all flex items-center gap-2 active:scale-95 cursor-pointer"
+              onClick={() => setIsModalOpen(true)}
+              className="px-4 py-2.5 border border-[#171513]/20 hover:border-[#171513] text-xs font-medium uppercase tracking-wider text-[#171513] transition-colors flex items-center gap-2 cursor-pointer whitespace-nowrap"
             >
-              <MessageSquare className="w-3.5 h-3.5" />
-              <span>Dejar Reseña</span>
+              <MessageSquare className="w-3.5 h-3.5 text-[#96734E]" />
+              <span>Compartir reseña</span>
             </button>
 
-            {/* Navigation Carousel Arrows */}
-            <div className="flex items-center gap-1.5 bg-[#0C0E12] p-1 rounded-xl border border-[#232730]">
+            <div className="flex items-center border border-[#171513]/20">
               <button
                 type="button"
-                onMouseEnter={playMechanicalHover}
                 onClick={handlePrev}
                 aria-label="Testimonio anterior"
-                className="w-9 h-9 rounded-lg bg-[#161920] hover:bg-[#D4A373] text-zinc-300 hover:text-zinc-950 flex items-center justify-center transition-all cursor-pointer active:scale-90"
+                className="w-10 h-10 border-r border-[#171513]/20 hover:bg-[#171513] text-[#171513] hover:text-[#F7F4EE] flex items-center justify-center transition-colors cursor-pointer"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <button
                 type="button"
-                onMouseEnter={playMechanicalHover}
                 onClick={handleNext}
                 aria-label="Siguiente testimonio"
-                className="w-9 h-9 rounded-lg bg-[#161920] hover:bg-[#D4A373] text-zinc-300 hover:text-zinc-950 flex items-center justify-center transition-all cursor-pointer active:scale-90"
+                className="w-10 h-10 hover:bg-[#171513] text-[#171513] hover:text-[#F7F4EE] flex items-center justify-center transition-colors cursor-pointer"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
@@ -275,126 +261,88 @@ export const ClientVoices: React.FC = () => {
           </div>
         </div>
 
-        {/* Sliding Carousel Display Card */}
-        <div className="py-8 sm:py-10 min-h-[270px] flex items-center">
+        {/* Active Editorial Pull-Quote */}
+        <div className="min-h-[210px] flex items-center">
           <AnimatePresence mode="wait">
             <motion.div
               key={current.id}
-              initial={{ opacity: 0, x: 24 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -24 }}
-              transition={{ duration: 0.3, ease: 'easeOut' }}
-              className="w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-center"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+              className="w-full grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center"
             >
-              {/* Left Column: Client Profile & Badge */}
-              <div className="lg:col-span-4 space-y-4">
-                <div className="flex items-center gap-3.5">
-                  <div className="w-12 h-12 rounded-2xl bg-[#D4A373]/15 border border-[#D4A373] text-[#D4A373] font-black text-base flex items-center justify-center font-mono">
-                    {current.clientName.slice(0, 2).toUpperCase()}
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-1.5">
-                      <h3 className="font-display font-black text-lg text-white uppercase tracking-wide">
-                        {current.clientName}
-                      </h3>
-                      {current.verified && <ShieldCheck className="w-4 h-4 text-[#D4A373]" />}
-                    </div>
-                    <span className="text-xs font-mono text-zinc-400 block">
-                      {current.city} · {current.date}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Service Tag & Verification */}
-                <div className="space-y-1.5 pt-1">
-                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#161920] border border-[#282D37] text-xs font-mono font-bold text-zinc-200">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#D4A373]" />
-                    <span>{current.serviceName}</span>
-                  </div>
-                  <div className="text-[11px] font-mono text-zinc-400 font-semibold flex items-center gap-1.5">
-                    <Check className="w-3.5 h-3.5 text-[#D4A373]" />
-                    <span>Turno Real en Vuelta de Obligado 931</span>
-                  </div>
-                </div>
-
-                {/* 5 Stars Rating */}
-                <div className="flex items-center gap-1 pt-1">
-                  {[...Array(current.rating)].map((_, i) => (
-                    <Star key={i} className="w-4 h-4 fill-[#D4A373] text-[#D4A373]" />
-                  ))}
-                  <span className="font-mono text-xs font-black text-white ml-2">5.0 / 5.0</span>
-                </div>
-              </div>
-
-              {/* Right Column: Large Quote Testimonial */}
-              <div className="lg:col-span-8 relative">
-                <Quote className="absolute -top-6 -left-4 w-12 h-12 text-[#D4A373]/15 pointer-events-none" />
-                <blockquote className="text-base sm:text-xl font-sans font-normal text-zinc-100 leading-relaxed italic relative z-10 pl-2">
+              <div className="lg:col-span-8">
+                <blockquote className="font-display italic text-2xl sm:text-3xl lg:text-[2.15rem] text-[#171513] leading-[1.35]">
                   “{current.comment}”
                 </blockquote>
-                <div className="mt-4 pt-3 border-t border-[#1E222B] flex items-center justify-between text-xs font-mono text-zinc-500">
-                  <span>ESTUDIO RODRIGO CUTSSS // ATENCIÓN 1 A 1</span>
-                  <span className="text-[#D4A373] font-bold">FADE MILIMÉTRICO 0.0 MM</span>
+              </div>
+
+              <div className="lg:col-span-4 lg:border-l lg:border-[#171513]/12 lg:pl-8 space-y-2">
+                <div className="flex items-center gap-1 text-[#96734E]">
+                  {[...Array(current.rating)].map((_, i) => (
+                    <Star key={i} className="w-3.5 h-3.5 fill-[#96734E]" />
+                  ))}
+                  <span className="font-mono text-xs text-[#171513] ml-1.5 tabular-nums">5.0</span>
+                </div>
+                <p className="font-display text-2xl font-semibold text-[#171513]">
+                  {current.clientName}
+                </p>
+                <div className="text-xs text-[#575049] space-y-0.5">
+                  <p>{current.serviceName}</p>
+                  <p className="text-[#8C8379]">
+                    {current.city} · {current.date}
+                  </p>
                 </div>
               </div>
             </motion.div>
           </AnimatePresence>
         </div>
 
-        {/* Carousel Pagination Dots */}
-        <div className="pt-4 border-t border-[#1E222B] flex items-center justify-between">
+        {/* Minimal Index Bar */}
+        <div className="mt-10 pt-6 border-t border-[#171513]/10 flex items-center justify-between text-xs text-[#655E57]">
           <div className="flex items-center gap-2">
             {testimonials.map((_, idx) => (
               <button
                 key={idx}
                 type="button"
-                onMouseEnter={playMechanicalHover}
-                onClick={() => {
-                  playMechanicalClick();
-                  setCurrentIndex(idx);
-                }}
+                onClick={() => setCurrentIndex(idx)}
                 aria-label={`Ir al testimonio ${idx + 1}`}
-                className={`h-2 rounded-full transition-all cursor-pointer ${
-                  currentIndex === idx
-                    ? 'w-8 bg-[#D4A373]'
-                    : 'w-2 bg-[#252934] hover:bg-zinc-500'
+                className={`h-1.5 transition-all cursor-pointer ${
+                  currentIndex === idx ? 'w-8 bg-[#96734E]' : 'w-2 bg-[#171513]/20'
                 }`}
               />
             ))}
           </div>
-
-          <div className="font-mono text-xs text-zinc-400">
-            <span className="text-[#D4A373] font-bold">{currentIndex + 1}</span>
-            <span className="text-zinc-600"> / </span>
-            <span>{testimonials.length} opiniones verificadas</span>
-          </div>
+          <span className="font-mono tabular-nums">
+            0{currentIndex + 1} / 0{testimonials.length}
+          </span>
         </div>
       </div>
 
       {/* Leave Review Modal */}
       <AnimatePresence>
         {isModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#171513]/60 backdrop-blur-sm">
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 16 }}
+              initial={{ opacity: 0, scale: 0.97, y: 12 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 16 }}
-              className="w-full max-w-lg bg-[#111318] border border-[#282D37] rounded-3xl p-6 sm:p-8 shadow-2xl text-white font-mono space-y-6"
+              exit={{ opacity: 0, scale: 0.97, y: 12 }}
+              className="w-full max-w-lg bg-[#F7F4EE] border border-[#171513]/20 p-6 sm:p-8 shadow-2xl text-[#171513] space-y-6"
             >
-              <div className="flex items-center justify-between border-b border-[#1E222B] pb-4">
+              <div className="flex items-center justify-between border-b border-[#171513]/12 pb-4">
                 <div>
-                  <h3 className="font-display font-black text-xl uppercase tracking-wider text-white">
-                    Compartí tu Experiencia
+                  <h3 className="font-display text-2xl font-semibold text-[#171513]">
+                    Compartí tu experiencia
                   </h3>
-                  <p className="text-xs text-zinc-400 mt-0.5">
-                    Tu reseña quedará registrada para la comunidad de Venado Tuerto.
+                  <p className="text-xs text-[#655E57] mt-0.5">
+                    Tu opinión acompaña a nuevos clientes de Venado Tuerto.
                   </p>
                 </div>
                 <button
                   type="button"
-                  onMouseEnter={playMechanicalHover}
                   onClick={() => setIsModalOpen(false)}
-                  className="w-8 h-8 rounded-lg bg-[#161920] border border-[#282D37] hover:border-[#D4A373] text-zinc-300 hover:text-white flex items-center justify-center text-sm cursor-pointer"
+                  className="w-8 h-8 border border-[#171513]/15 hover:border-[#171513] text-[#171513] flex items-center justify-center text-sm cursor-pointer"
                 >
                   ✕
                 </button>
@@ -402,19 +350,19 @@ export const ClientVoices: React.FC = () => {
 
               {feedbackSuccess ? (
                 <div className="py-10 text-center space-y-3">
-                  <div className="w-12 h-12 rounded-full bg-[#D4A373]/20 border border-[#D4A373] text-[#D4A373] mx-auto flex items-center justify-center">
-                    <Check className="w-6 h-6 stroke-[3]" />
+                  <div className="w-12 h-12 bg-[#3D4F43]/15 border border-[#3D4F43] text-[#3D4F43] mx-auto flex items-center justify-center">
+                    <Check className="w-6 h-6" />
                   </div>
-                  <h4 className="font-display text-lg font-black uppercase text-white">
-                    ¡Reseña Guardada con Éxito!
+                  <h4 className="font-display text-2xl font-medium text-[#171513]">
+                    Muchas gracias por tu reseña
                   </h4>
-                  <p className="text-xs text-zinc-400">Gracias por confiar en Rodrigo Cutsss.</p>
+                  <p className="text-xs text-[#655E57]">Quedó publicada en el estudio.</p>
                 </div>
               ) : (
                 <form onSubmit={handleSubmitReview} className="space-y-4 text-xs">
                   <div>
-                    <label className="block text-zinc-400 mb-1.5 uppercase tracking-wider font-bold">
-                      Tu Nombre y Apellido:
+                    <label className="block text-[#575049] mb-1.5 uppercase tracking-wider font-medium">
+                      Tu Nombre y Apellido
                     </label>
                     <input
                       type="text"
@@ -422,40 +370,40 @@ export const ClientVoices: React.FC = () => {
                       placeholder="Ej. Martín Rivas"
                       value={newAuthor}
                       onChange={(e) => setNewAuthor(e.target.value)}
-                      className="w-full h-11 px-3.5 rounded-xl bg-[#0C0E12] border border-[#282D37] text-white focus:outline-none focus:border-[#D4A373]"
+                      className="w-full h-11 px-3.5 bg-[#EFEAE1]/60 border border-[#171513]/20 text-[#171513] focus:outline-none focus:border-[#96734E]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-zinc-400 mb-1.5 uppercase tracking-wider font-bold">
-                      Servicio Realizado:
+                    <label className="block text-[#575049] mb-1.5 uppercase tracking-wider font-medium">
+                      Servicio realizado
                     </label>
                     <select
                       value={newService}
                       onChange={(e) => setNewService(e.target.value)}
-                      className="w-full h-11 px-3.5 rounded-xl bg-[#0C0E12] border border-[#282D37] text-white focus:outline-none focus:border-[#D4A373]"
+                      className="w-full h-11 px-3.5 bg-[#EFEAE1]/60 border border-[#171513]/20 text-[#171513] focus:outline-none focus:border-[#96734E]"
                     >
-                      <option value="Corte de Pelo (Corte de Autor & Fade)">
-                        Corte de Pelo ($12.000 ARS)
+                      <option value="Corte de Autor / Clásico">
+                        Corte de Autor / Clásico ($12.000)
                       </option>
-                      <option value="Taper Fade & Line Up">
-                        Taper Fade &amp; Line Up ($12.000 ARS)
+                      <option value="Corte + Perfilado de Barba">
+                        Corte + Perfilado de Barba ($17.000)
                       </option>
-                      <option value="Corte de Pelo + Ritual de Barba Completa">
-                        Corte + Barba Completa ($17.000 ARS)
+                      <option value="Diseño y Perfilado de Barba">
+                        Diseño y Perfilado de Barba ($8.500)
                       </option>
-                      <option value="Corte de Pelo + Platinado Global / Color">
-                        Corte + Platinado ($28.000 ARS)
+                      <option value="Coloración / Iluminación">
+                        Coloración / Iluminación ($28.000)
                       </option>
-                      <option value="Arreglo & Perfilado de Barba con Vapor">
-                        Perfilado de Barba ($7.000 ARS)
+                      <option value="Lavado Premium y Nutrición Capilar">
+                        Lavado Premium y Nutrición Capilar ($9.500)
                       </option>
                     </select>
                   </div>
 
                   <div>
-                    <label className="block text-zinc-400 mb-1.5 uppercase tracking-wider font-bold">
-                      Calificación:
+                    <label className="block text-[#575049] mb-1.5 uppercase tracking-wider font-medium">
+                      Valoración
                     </label>
                     <div className="flex items-center gap-2">
                       {[1, 2, 3, 4, 5].map((star) => (
@@ -466,10 +414,10 @@ export const ClientVoices: React.FC = () => {
                           className="p-1 cursor-pointer"
                         >
                           <Star
-                            className={`w-6 h-6 ${
+                            className={`w-5 h-5 ${
                               star <= newRating
-                                ? 'fill-[#D4A373] text-[#D4A373]'
-                                : 'text-zinc-600'
+                                ? 'fill-[#96734E] text-[#96734E]'
+                                : 'text-[#C5BBAE]'
                             }`}
                           />
                         </button>
@@ -478,16 +426,16 @@ export const ClientVoices: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-zinc-400 mb-1.5 uppercase tracking-wider font-bold">
-                      Tu Opinión sobre el Corte y la Atención:
+                    <label className="block text-[#575049] mb-1.5 uppercase tracking-wider font-medium">
+                      Tu comentario
                     </label>
                     <textarea
                       required
                       rows={4}
-                      placeholder="Contá cómo fue tu turno, la puntualidad y el resultado..."
+                      placeholder="Contanos cómo fue tu experiencia en el estudio..."
                       value={newComment}
                       onChange={(e) => setNewComment(e.target.value)}
-                      className="w-full p-3.5 rounded-xl bg-[#0C0E12] border border-[#282D37] text-white focus:outline-none focus:border-[#D4A373]"
+                      className="w-full p-3.5 bg-[#EFEAE1]/60 border border-[#171513]/20 text-[#171513] focus:outline-none focus:border-[#96734E]"
                     />
                   </div>
 
@@ -495,16 +443,16 @@ export const ClientVoices: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setIsModalOpen(false)}
-                      className="px-4 py-2.5 rounded-xl border border-[#282D37] text-zinc-400 hover:text-white"
+                      className="px-4 py-2.5 border border-[#171513]/20 text-[#575049] hover:text-[#171513] cursor-pointer"
                     >
                       Cancelar
                     </button>
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="px-6 py-2.5 rounded-xl bg-[#D4A373] hover:bg-[#C89562] text-zinc-950 font-black uppercase tracking-wider shadow-sm active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+                      className="px-6 py-2.5 bg-[#171513] hover:bg-[#96734E] text-[#F7F4EE] font-medium uppercase tracking-wider transition-colors cursor-pointer disabled:opacity-50"
                     >
-                      {isSubmitting ? 'Guardando...' : 'Publicar Reseña'}
+                      {isSubmitting ? 'Publicando...' : 'Publicar reseña'}
                     </button>
                   </div>
                 </form>
