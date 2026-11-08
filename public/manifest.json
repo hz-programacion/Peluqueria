@@ -1,0 +1,63 @@
+{
+  "id": "/",
+  "name": "Rodrigo Cutsss · Peluquería & Barbería",
+  "short_name": "RodrigoCuts",
+  "description": "Estudio privado de peluquería y barbería en Vuelta de Obligado 931, Venado Tuerto. Reservá tu turno online 1 a 1, consultá servicios y explorá la galería.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#9E2A2B",
+  "background_color": "#F3ECE0",
+  "lang": "es-AR",
+  "categories": ["lifestyle", "shopping", "business"],
+  "icons": [
+    {
+      "src": "/pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Sacar Turno Online",
+      "short_name": "Reservar",
+      "description": "Elegí tu servicio, fecha y horario disponible en tiempo real",
+      "url": "/#turnero",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Carta de Servicios y Precios",
+      "short_name": "Servicios",
+      "description": "Consultá los valores actualizados de corte, barba y coloración",
+      "url": "/#servicios",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Galería de Fotos",
+      "short_name": "Galería",
+      "description": "Explorá y subí fotos al archivo del estudio",
+      "url": "/#obras",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ]
+}

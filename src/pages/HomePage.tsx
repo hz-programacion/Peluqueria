@@ -8,6 +8,9 @@ import {
   getNextAvailableSlotInfo,
   resolveInstagramInfo,
   resolveWhatsAppInfo,
+  resolveTikTokInfo,
+  resolveFacebookInfo,
+  resolveYouTubeInfo,
 } from '../utils/bookingEngine';
 import { ThermalReceiptBooking } from '../components/ThermalReceiptBooking';
 import { ClientVoices } from '../components/ClientVoices';
@@ -17,7 +20,7 @@ import { BarberProfileSection } from '../components/BarberProfileSection';
 import { UrbanParallaxBackground } from '../components/UrbanParallaxBackground';
 import { UrbanGraffitiMural } from '../components/UrbanGraffitiMural';
 import { GraffitiDripTrail } from '../components/GraffitiDripTrail';
-import { EditorialRotatingBanner, MagneticButton } from '../components/EditorialEffects';
+import { MagneticButton } from '../components/EditorialEffects';
 import { RetroCornerBandaBookmark, RetroRiverCrestBadge } from '../components/RetroPaperBanda';
 import {
   Clock,
@@ -30,6 +33,7 @@ import {
   Sparkles,
   Scissors,
   Copy,
+  Share2,
 } from 'lucide-react';
 
 const SECTION_TAB_LABELS: Record<HomeSectionId, string> = {
@@ -45,11 +49,14 @@ const SECTION_TAB_LABELS: Record<HomeSectionId, string> = {
 export const HomePage: React.FC = () => {
   const {
     config,
+    updateConfig,
     services,
     appointments,
     blockedSlots,
     setSelectedServiceIds,
     setPreselectedSlot,
+    setActiveSeoSection,
+    triggerCurtainTransition,
   } = useStudio();
 
   const visibleServices = useMemo(
@@ -112,6 +119,28 @@ export const HomePage: React.FC = () => {
     }
   }, [enabledSections, activeTabSection]);
 
+  useEffect(() => {
+    const mapAnchorToSecId: Record<string, HomeSectionId> = {
+      turnero: 'booking',
+      reservar: 'booking',
+      servicios: 'services',
+      transformaciones: 'beforeAfter',
+      obras: 'gallery',
+      opiniones: 'reviews',
+      estudio: 'barber',
+      ubicacion: 'location',
+    };
+    const onActivateSection = (e: Event) => {
+      const detail = (e as CustomEvent<{ sectionId?: string }>).detail;
+      const secId = detail?.sectionId ? mapAnchorToSecId[detail.sectionId] : undefined;
+      if (secId && enabledSections.includes(secId)) {
+        setActiveTabSection(secId);
+      }
+    };
+    window.addEventListener('atelier:activate-home-section', onActivateSection);
+    return () => window.removeEventListener('atelier:activate-home-section', onActivateSection);
+  }, [enabledSections]);
+
   const liveStatus = useMemo(
     () =>
       getStudioLiveStatus(
@@ -145,6 +174,9 @@ export const HomePage: React.FC = () => {
 
   const igInfo = resolveInstagramInfo(config.instagram);
   const waInfo = resolveWhatsAppInfo(config.phoneDisplay, config.whatsappRaw);
+  const tkInfo = resolveTikTokInfo(config.tiktok);
+  const fbInfo = resolveFacebookInfo(config.facebook);
+  const ytInfo = resolveYouTubeInfo(config.youtube);
 
   // Parallax Scroll Hooks
   const heroRef = useRef<HTMLDivElement>(null);
@@ -159,6 +191,7 @@ export const HomePage: React.FC = () => {
   );
 
   const scrollToTurnero = () => {
+    setActiveSeoSection('turnero');
     if (config.layoutMode === 'tabs') {
       setActiveTabSection('booking');
     }
@@ -481,15 +514,15 @@ export const HomePage: React.FC = () => {
             <span className="text-[#5C5346]">{config.studioTitle}</span>
           </div>
           <h2 className="font-display text-3xl sm:text-5xl font-bold tracking-tight text-[#181512] leading-tight">
-            Trabajos reales{' '}
+            Galería de Fotos{' '}
             <span className="font-editorial italic font-normal text-[#9E2A2B]">
-              &amp; el estudio
+              &amp; Postal del Estudio
             </span>
           </h2>
         </div>
         <p className="text-xs sm:text-sm font-mono text-[#4F463B] max-w-md">
-          Fades limpios, cortes a tijera, colorimetría y postales de nuestro espacio en{' '}
-          {config.address}.
+          Mirá las fotos del estudio y trabajos realizados en {config.address}, o subí directamente
+          nuevas fotos al álbum.
         </p>
       </div>
       <StudioMultiGallery />
@@ -644,16 +677,55 @@ export const HomePage: React.FC = () => {
               <MessageCircle className="w-3.5 h-3.5 text-[#9E2A2B]" />
               <span>WhatsApp</span>
             </a>
+          </div>
 
-            <a
-              href={igInfo.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-3 rounded border border-[#C8BBA4] bg-[#F3ECE0] hover:border-[#9E2A2B] text-[#181512] text-xs font-mono font-semibold uppercase tracking-wider transition-colors"
-            >
-              <Instagram className="w-3.5 h-3.5 text-[#9E2A2B]" />
-              <span>Instagram</span>
-            </a>
+          {/* Dedicated Social Media Channels Strip */}
+          <div className="pt-4 border-t border-dashed border-[#C8BBA4] space-y-2.5">
+            <span className="text-[11px] font-mono uppercase tracking-[0.2em] text-[#9E2A2B] font-semibold flex items-center gap-1.5">
+              <Share2 className="w-3.5 h-3.5" />
+              Seguinos en Redes Sociales
+            </span>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <a
+                href={igInfo.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-3 py-2.5 rounded-lg border border-[#C8BBA4] bg-[#F3ECE0] hover:border-[#9E2A2B] text-xs font-mono font-semibold text-[#181512] transition-colors"
+              >
+                <Instagram className="w-3.5 h-3.5 text-[#9E2A2B] shrink-0" />
+                <span className="truncate">{igInfo.handle}</span>
+              </a>
+
+              <a
+                href={tkInfo.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-3 py-2.5 rounded-lg border border-[#C8BBA4] bg-[#F3ECE0] hover:border-[#9E2A2B] text-xs font-mono font-semibold text-[#181512] transition-colors"
+              >
+                <span className="text-[#9E2A2B] font-bold shrink-0">♪</span>
+                <span className="truncate">TikTok</span>
+              </a>
+
+              <a
+                href={fbInfo.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-3 py-2.5 rounded-lg border border-[#C8BBA4] bg-[#F3ECE0] hover:border-[#9E2A2B] text-xs font-mono font-semibold text-[#181512] transition-colors"
+              >
+                <span className="text-[#9E2A2B] font-bold shrink-0">f</span>
+                <span className="truncate">Facebook</span>
+              </a>
+
+              <a
+                href={ytInfo.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-3 py-2.5 rounded-lg border border-[#C8BBA4] bg-[#F3ECE0] hover:border-[#9E2A2B] text-xs font-mono font-semibold text-[#181512] transition-colors"
+              >
+                <span className="text-[#9E2A2B] font-bold shrink-0">▶</span>
+                <span className="truncate">YouTube</span>
+              </a>
+            </div>
           </div>
         </div>
 
@@ -973,53 +1045,124 @@ export const HomePage: React.FC = () => {
         </section>
       )}
 
-      {/* ROTATING AGED-PAPER PROMOTIONAL DIVIDER BANNER WITH PARALLAX */}
-      <EditorialRotatingBanner variant="divider" onBookClick={scrollToTurnero} />
-
-      {/* LAYOUT MODE SWITCH: LANDING SCROLL VS SEGMENTED TABS */}
-      {config.layoutMode === 'tabs' ? (
-        <div className="max-w-7xl mx-auto px-4 sm:px-8 py-12">
+      {/* INTERACTIVE VIEW NAVIGATION BAR (Allows switching between Continuous Scroll & App Curtain Tabs) */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-8 pt-2 pb-4 relative z-20">
+        <div className="p-3 sm:p-4 rounded-xl bg-[#FAF6EE] border border-[#C8BBA4] shadow-[0_8px_24px_rgba(24,21,18,0.05)] flex flex-col lg:flex-row lg:items-center justify-between gap-3">
           <div
             role="tablist"
             aria-label="Secciones del estudio"
-            className="flex flex-wrap items-center gap-2 pb-8 border-b border-[#C8BBA4]"
+            className="flex flex-wrap items-center gap-1.5"
           >
-            {enabledSections.map((secId) => {
-              const isSelected = activeTabSection === secId;
+            {enabledSections.map((secId, idx) => {
+              const isSelected =
+                config.layoutMode === 'tabs'
+                  ? activeTabSection === secId
+                  : false;
+              const anchorMap: Record<HomeSectionId, string> = {
+                booking: 'turnero',
+                services: 'servicios',
+                beforeAfter: 'transformaciones',
+                gallery: 'obras',
+                reviews: 'opiniones',
+                barber: 'estudio',
+                location: 'ubicacion',
+              };
               return (
                 <button
                   key={secId}
                   type="button"
                   role="tab"
                   aria-selected={isSelected}
-                  onClick={() => setActiveTabSection(secId)}
-                  className={`px-5 py-3 rounded text-xs font-mono font-semibold uppercase tracking-[0.15em] border transition-colors cursor-pointer ${
+                  onClick={() => {
+                    const label = SECTION_TAB_LABELS[secId];
+                    triggerCurtainTransition(
+                      label,
+                      `${config.studioTitle} · ${config.address}`
+                    );
+                    setActiveTabSection(secId);
+                    setActiveSeoSection(anchorMap[secId]);
+                    if (config.layoutMode !== 'tabs') {
+                      setTimeout(() => {
+                        const el = document.getElementById(anchorMap[secId]);
+                        if (el) {
+                          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                      }, 110);
+                    }
+                  }}
+                  className={`relative px-3.5 py-2 rounded-lg text-[11px] font-mono font-semibold uppercase tracking-[0.12em] border transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                     isSelected
-                      ? 'bg-[#9E2A2B] text-[#FAF6EE] border-[#9E2A2B]'
-                      : 'bg-[#FAF6EE] text-[#4F463B] border-[#C8BBA4] hover:text-[#181512]'
+                      ? 'bg-[#9E2A2B] text-[#FAF6EE] border-[#9E2A2B] shadow-xs'
+                      : 'bg-[#F3ECE0] text-[#4F463B] border-[#C8BBA4] hover:border-[#9E2A2B] hover:text-[#181512]'
                   }`}
                 >
-                  {SECTION_TAB_LABELS[secId]}
+                  <span className="opacity-65 mr-1">0{idx + 1}.</span>
+                  <span>{SECTION_TAB_LABELS[secId]}</span>
                 </button>
               );
             })}
           </div>
 
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeTabSection}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.25 }}
+          {/* Quick View Mode Toggle: Scroll Continuo vs. Modo App por Vistas */}
+          <div className="flex items-center gap-1.5 self-start lg:self-auto shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-[#D5C9B4] w-full lg:w-auto justify-end">
+            <span className="text-[10px] font-mono uppercase tracking-wider text-[#6E6355] mr-1">
+              Navegación:
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                triggerCurtainTransition(
+                  'Flujo Continuo Editorial',
+                  `${config.studioTitle} · Vista Completa`
+                );
+                updateConfig({ layoutMode: 'landing' });
+              }}
+              className={`px-3 py-1.5 rounded text-[11px] font-mono font-semibold uppercase tracking-wider border transition-colors cursor-pointer whitespace-nowrap ${
+                (config.layoutMode || 'landing') === 'landing'
+                  ? 'bg-[#181512] text-[#FAF6EE] border-[#181512]'
+                  : 'bg-[#F3ECE0] text-[#4F463B] border-[#C8BBA4] hover:text-[#181512]'
+              }`}
             >
-              {renderSectionById(activeTabSection)}
-            </motion.div>
-          </AnimatePresence>
+              Continua
+            </button>
+            <button
+              type="button"
+              data-testid="toggle-app-tabs-mode"
+              onClick={() => {
+                triggerCurtainTransition(
+                  SECTION_TAB_LABELS[activeTabSection],
+                  `${config.studioTitle} · Modo App por Vistas`
+                );
+                updateConfig({ layoutMode: 'tabs' });
+              }}
+              className={`px-3 py-1.5 rounded text-[11px] font-mono font-semibold uppercase tracking-wider border transition-colors cursor-pointer whitespace-nowrap ${
+                config.layoutMode === 'tabs'
+                  ? 'bg-[#9E2A2B] text-[#FAF6EE] border-[#9E2A2B]'
+                  : 'bg-[#F3ECE0] text-[#4F463B] border-[#C8BBA4] hover:text-[#181512]'
+              }`}
+            >
+              Por Vistas (Telón)
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* LAYOUT MODE SWITCH: LANDING SCROLL VS ANIMATED CURTAIN TABS */}
+      {config.layoutMode === 'tabs' ? (
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 pb-16">
+          <motion.div
+            key={activeTabSection}
+            initial={{ opacity: 0, y: 22, scale: 0.992 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
+          >
+            {renderSectionById(activeTabSection)}
+          </motion.div>
         </div>
       ) : (
         <>{enabledSections.map((secId) => renderSectionById(secId))}</>
       )}
+
     </div>
   );
 };

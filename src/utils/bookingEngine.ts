@@ -7,6 +7,9 @@ export interface BookingSummary {
   serviceMinutes: number;
   bufferMinutes: number;
   totalBlockMinutes: number;
+  subtotalPrice: number;
+  discountAmount: number;
+  discountReason?: string;
   totalPrice: number;
   depositAmount: number;
 }
@@ -15,6 +18,16 @@ export interface TimeSlot {
   time: string; // "HH:mm"
   available: boolean;
   reason?: string;
+}
+
+export interface UpcomingOpenDay {
+  dateISO: string;
+  dayNameShort: string;
+  dayNumber: string;
+  monthShort: string;
+  shortLabel: string;
+  isToday: boolean;
+  freeSlotsCount: number;
 }
 
 export interface BookingFormInput {
@@ -41,6 +54,22 @@ export interface NextAvailableSlotInfo {
   freeCountToday: number;
 }
 
+const DAY_NAMES_SHORT = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+const MONTH_NAMES_SHORT = [
+  'Ene',
+  'Feb',
+  'Mar',
+  'Abr',
+  'May',
+  'Jun',
+  'Jul',
+  'Ago',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dic',
+];
+
 /**
  * Returns YYYY-MM-DD in local time (never shifted to tomorrow or UTC).
  */
@@ -61,7 +90,7 @@ export function getOffsetDateISO(daysOffset: number, now: Date = new Date()): st
 
 /**
  * Calculates cumulative service duration, mandatory hygiene buffer,
- * total block duration, total price, and deposit amount.
+ * automatic combo / multi-service discount, total block duration, total price, and deposit amount.
  */
 export function calculateBookingSummary(
   selectedServiceIds: string[],
@@ -71,10 +100,41 @@ export function calculateBookingSummary(
 ): BookingSummary {
   const visibleCatalog = catalog.filter((s) => !s.hidden);
   const selectedServices = visibleCatalog.filter((s) => selectedServiceIds.includes(s.id));
-  const serviceMinutes = selectedServices.reduce((sum, s) => sum + s.durationMinutes, 0);
+
+  let serviceMinutes = selectedServices.reduce((sum, s) => sum + s.durationMinutes, 0);
+  const subtotalPrice = selectedServices.reduce((sum, s) => sum + s.price, 0);
+  let discountAmount = 0;
+  let discountReason: string | undefined;
+
+  // Smart Business Rule 1: If client selects "Corte" (srv-01) + "Barba" (srv-03) separately,
+  // automatically match the official "Corte + Perfilado de Barba" (srv-02) combo price & 60m duration!
+  const hasHaircut01 = selectedServices.some((s) => s.id === 'srv-01');
+  const hasBeard03 = selectedServices.some((s) => s.id === 'srv-03');
+  const officialCombo02 = visibleCatalog.find((s) => s.id === 'srv-02');
+
+  if (hasHaircut01 && hasBeard03) {
+    const hairSrv = selectedServices.find((s) => s.id === 'srv-01')!;
+    const beardSrv = selectedServices.find((s) => s.id === 'srv-03')!;
+    const pairSum = hairSrv.price + beardSrv.price;
+    const targetComboPrice = officialCombo02 ? officialCombo02.price : pairSum - 3500;
+    if (pairSum > targetComboPrice) {
+      discountAmount = pairSum - targetComboPrice;
+      discountReason = 'Bonificación automática Combo Corte + Barba';
+    }
+    // Optimize combined chair time by 15 min when performing haircut + beard in the same session
+    serviceMinutes = Math.max(45, serviceMinutes - 15);
+  } else if (selectedServices.length >= 2) {
+    // Smart Business Rule 2: 10% Multi-Service Pack Bonus (rounded to nearest $500 ARS)
+    const rawDiscount = Math.round((subtotalPrice * 0.1) / 500) * 500;
+    if (rawDiscount >= 500) {
+      discountAmount = rawDiscount;
+      discountReason = 'Bonificación Pack Servicios Combinados (10% OFF)';
+    }
+  }
+
+  const totalPrice = Math.max(0, subtotalPrice - discountAmount);
   const bufferMinutes = selectedServices.length > 0 ? bufferMin : 0;
   const totalBlockMinutes = serviceMinutes + bufferMinutes;
-  const totalPrice = selectedServices.reduce((sum, s) => sum + s.price, 0);
   const depositAmount = Math.round(totalPrice * (depositPercentage / 100));
 
   return {
@@ -82,6 +142,9 @@ export function calculateBookingSummary(
     serviceMinutes,
     bufferMinutes,
     totalBlockMinutes,
+    subtotalPrice,
+    discountAmount,
+    discountReason,
     totalPrice,
     depositAmount,
   };
@@ -179,6 +242,62 @@ export function getAvailableTimeSlots(
 }
 
 /**
+ * Returns the next `count` open business days that have at least 1 available slot,
+ * skipping closed weekdays (e.g. Sundays/Mondays) so the booking calendar always
+ * defaults to a bookable working day.
+ */
+export function getUpcomingOpenDays(
+  appointments: AppointmentRecord[],
+  blockedSlots: BlockedTimeSlotDef[] = [],
+  openHour = 11,
+  closeHour = 21,
+  openDays: number[] = [2, 3, 4, 5, 6],
+  requiredBlockMinutes = 50,
+  count = 6,
+  now: Date = new Date()
+): UpcomingOpenDay[] {
+  const result: UpcomingOpenDay[] = [];
+  const todayISO = getTodayLocalISO(now);
+
+  for (let offset = 0; offset <= 21 && result.length < count; offset++) {
+    const candidateDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + offset);
+    const dayOfWeek = candidateDate.getDay();
+    if (Array.isArray(openDays) && openDays.length > 0 && !openDays.includes(dayOfWeek)) {
+      continue;
+    }
+
+    const dateISO = getTodayLocalISO(candidateDate);
+    const daySlots = getAvailableTimeSlots(
+      dateISO,
+      requiredBlockMinutes,
+      appointments,
+      openHour,
+      closeHour,
+      blockedSlots,
+      openDays
+    );
+    const freeSlotsCount = daySlots.filter((s) => s.available).length;
+
+    const dayNameShort = DAY_NAMES_SHORT[dayOfWeek] || 'Día';
+    const dayNumber = String(candidateDate.getDate()).padStart(2, '0');
+    const monthShort = MONTH_NAMES_SHORT[candidateDate.getMonth()] || '';
+    const isToday = dateISO === todayISO;
+
+    result.push({
+      dateISO,
+      dayNameShort,
+      dayNumber,
+      monthShort,
+      shortLabel: isToday ? `Hoy (${dayNameShort} ${dayNumber})` : `${dayNameShort} ${dayNumber} ${monthShort}`,
+      isToday,
+      freeSlotsCount,
+    });
+  }
+
+  return result;
+}
+
+/**
  * Calculates in real-time the next available slot today (or the next open day if today has none left).
  */
 export function getNextAvailableSlotInfo(
@@ -218,8 +337,8 @@ export function getNextAvailableSlotInfo(
     };
   }
 
-  // Otherwise check the next 5 days for the earliest open slot
-  for (let offset = 1; offset <= 5; offset++) {
+  // Otherwise check the next 7 days for the earliest open slot
+  for (let offset = 1; offset <= 7; offset++) {
     const nextDateISO = getOffsetDateISO(offset, now);
     const nextSlots = getAvailableTimeSlots(
       nextDateISO,
@@ -232,7 +351,12 @@ export function getNextAvailableSlotInfo(
     );
     const firstFree = nextSlots.find((s) => s.available);
     if (firstFree) {
-      const dayLabel = offset === 1 ? 'mañana' : nextDateISO;
+      const parts = nextDateISO.split('-').map(Number);
+      const d = new Date(parts[0], parts[1] - 1, parts[2]);
+      const dayLabel =
+        offset === 1
+          ? 'mañana'
+          : `${DAY_NAMES_SHORT[d.getDay()]} ${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
       return {
         dateISO: nextDateISO,
         time: firstFree.time,
@@ -277,6 +401,42 @@ export function findAppointmentsByQuery(
     if (app.clientName.toLowerCase().includes(queryLower)) return true;
     return false;
   });
+}
+
+/**
+ * Normalizes an Argentine WhatsApp / mobile phone number into international digits (549...)
+ * and a clean human-readable display string.
+ */
+export function normalizeArgentineWhatsApp(rawInput: string): {
+  digits: string;
+  formattedDisplay: string;
+  isValid: boolean;
+} {
+  let digits = (rawInput || '').replace(/\D/g, '');
+  if (!digits) {
+    return { digits: '', formattedDisplay: '', isValid: false };
+  }
+
+  // Strip leading 00 or 0 (national trunk prefix in Argentina, e.g. 03462...)
+  digits = digits.replace(/^0+/, '');
+
+  // If 10 digits (e.g. 3462554421), prepend 549 for Argentina mobile WhatsApp
+  if (digits.length === 10 && !digits.startsWith('54')) {
+    digits = `549${digits}`;
+  } else if (digits.length === 11 && digits.startsWith('15')) {
+    digits = `5493462${digits.slice(2)}`;
+  } else if (digits.startsWith('54') && !digits.startsWith('549') && digits.length === 12) {
+    digits = `549${digits.slice(2)}`;
+  }
+
+  const isValid = digits.length >= 8 && digits.length <= 15;
+  return {
+    digits,
+    formattedDisplay: digits.startsWith('549')
+      ? `+54 9 ${digits.slice(3, 7)} ${digits.slice(7)}`
+      : rawInput.trim(),
+    isValid,
+  };
 }
 
 /**
@@ -428,5 +588,56 @@ export function resolveWhatsAppInfo(
     url: `https://wa.me/${digits}`,
     digits,
     display,
+  };
+}
+
+export function resolveTikTokInfo(input?: string): { url: string; handle: string } {
+  const trimmed = (input || '@rodrigo.cutsss_vt').trim();
+  if (/^https?:\/\//i.test(trimmed)) {
+    const match = trimmed.match(/tiktok\.com\/@?([^/?#]+)/i);
+    const extracted = match && match[1] ? match[1].replace(/^@/, '') : 'rodrigo.cutsss_vt';
+    return {
+      url: trimmed,
+      handle: `@${extracted}`,
+    };
+  }
+  const cleanHandle = trimmed.replace(/^@/, '').replace(/\/+$/, '') || 'rodrigo.cutsss_vt';
+  return {
+    url: `https://www.tiktok.com/@${cleanHandle}`,
+    handle: `@${cleanHandle}`,
+  };
+}
+
+export function resolveFacebookInfo(input?: string): { url: string; handle: string } {
+  const trimmed = (input || 'rodrigocutsss.vt').trim();
+  if (/^https?:\/\//i.test(trimmed)) {
+    const match = trimmed.match(/facebook\.com\/([^/?#]+)/i);
+    const extracted = match && match[1] ? match[1] : 'Rodrigo Cutsss';
+    return {
+      url: trimmed,
+      handle: extracted,
+    };
+  }
+  const cleanHandle = trimmed.replace(/^@/, '').replace(/\/+$/, '') || 'rodrigocutsss.vt';
+  return {
+    url: `https://www.facebook.com/${cleanHandle}`,
+    handle: cleanHandle,
+  };
+}
+
+export function resolveYouTubeInfo(input?: string): { url: string; handle: string } {
+  const trimmed = (input || '@rodrigocutsss').trim();
+  if (/^https?:\/\//i.test(trimmed)) {
+    const match = trimmed.match(/youtube\.com\/@?([^/?#]+)/i);
+    const extracted = match && match[1] ? match[1].replace(/^@/, '') : 'rodrigocutsss';
+    return {
+      url: trimmed,
+      handle: `@${extracted}`,
+    };
+  }
+  const cleanHandle = trimmed.replace(/^@/, '').replace(/\/+$/, '') || 'rodrigocutsss';
+  return {
+    url: `https://www.youtube.com/@${cleanHandle}`,
+    handle: `@${cleanHandle}`,
   };
 }

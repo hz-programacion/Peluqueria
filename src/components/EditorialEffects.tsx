@@ -143,7 +143,8 @@ export const EditorialRotatingBanner: React.FC<{
 
   useAnimationFrame((_, delta) => {
     if (isHovered) return;
-    const baseSpeed = variant === 'top' ? -2.2 : -3.0;
+    // Calm, unhurried editorial ticker speed (~90s per full cycle)
+    const baseSpeed = -0.55;
     let moveBy = directionFactor.current * baseSpeed * (delta / 1000);
 
     if (config.enableParallax) {
@@ -153,7 +154,7 @@ export const EditorialRotatingBanner: React.FC<{
       } else if (vf > 0) {
         directionFactor.current = 1;
       }
-      moveBy += directionFactor.current * moveBy * Math.min(Math.abs(vf), 4);
+      moveBy += directionFactor.current * moveBy * Math.min(Math.abs(vf) * 0.25, 0.8);
     }
 
     let next = baseX.get() + moveBy;

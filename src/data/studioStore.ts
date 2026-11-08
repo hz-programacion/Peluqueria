@@ -39,6 +39,8 @@ export interface StudioConfig {
   whatsappRaw: string;
   instagram: string;
   tiktok: string;
+  facebook?: string;
+  youtube?: string;
   transferAlias: string;
   spotifyPlaylistUrl: string;
   currentVibeTrack: string;
@@ -77,6 +79,7 @@ export interface StudioConfig {
   showGalleryTechnicalSpec: boolean;
   showGalleryLikes: boolean;
   showGalleryTags: boolean;
+  allowPublicGalleryUpload?: boolean;
   showServiceBookingButton: boolean;
   showServicePrice: boolean;
   showServiceProducts: boolean;
@@ -99,6 +102,8 @@ export const INITIAL_STUDIO_CONFIG: StudioConfig = {
   whatsappRaw: STUDIO_INFO.whatsappRaw,
   instagram: STUDIO_INFO.instagram,
   tiktok: '@rodrigo.cutsss_vt',
+  facebook: 'rodrigocutsss.vt',
+  youtube: '@rodrigocutsss',
   transferAlias: 'RODRIGO.CUTSSS',
   spotifyPlaylistUrl: STUDIO_INFO.spotifyPlaylistUrl,
   currentVibeTrack: 'Rodrigo Cutsss · Vinyl & Atelier Session',
@@ -133,11 +138,12 @@ export const INITIAL_STUDIO_CONFIG: StudioConfig = {
   showReviewsSection: true,
   showLocationSection: true,
   showGalleryFilter: true,
-  showGalleryBookingButton: true,
-  showGalleryPriceBadge: true,
-  showGalleryTechnicalSpec: true,
+  showGalleryBookingButton: false,
+  showGalleryPriceBadge: false,
+  showGalleryTechnicalSpec: false,
   showGalleryLikes: true,
-  showGalleryTags: false,
+  showGalleryTags: true,
+  allowPublicGalleryUpload: true,
   showServiceBookingButton: true,
   showServicePrice: true,
   showServiceProducts: true,

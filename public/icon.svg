@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <clipPath id="shieldClip">
+      <rect x="36" y="36" width="440" height="440" rx="96" />
+    </clipPath>
+  </defs>
+  <!-- Aged Paper Background -->
+  <rect width="512" height="512" rx="110" fill="#FAF6EE" />
+  <g clip-path="url(#shieldClip)">
+    <rect x="36" y="36" width="440" height="440" rx="96" fill="#FAF6EE" />
+    <!-- Subtle Aged Paper Grid Lines -->
+    <line x1="36" y1="146" x2="476" y2="146" stroke="#E2D9C5" stroke-width="2" />
+    <line x1="36" y1="256" x2="476" y2="256" stroke="#E2D9C5" stroke-width="2" />
+    <line x1="36" y1="366" x2="476" y2="366" stroke="#E2D9C5" stroke-width="2" />
+    <!-- Iconic Retro River Plate Diagonal Red Sash (La Banda) -->
+    <polygon points="-20,420 420,-20 532,92 92,532" fill="#9E2A2B" />
+    <line x1="-10" y1="430" x2="430" y2="-10" stroke="#781D1E" stroke-width="6" />
+    <line x1="82" y1="522" x2="522" y2="82" stroke="#781D1E" stroke-width="6" />
+  </g>
+  <!-- Double Vintage Frame Border -->
+  <rect x="36" y="36" width="440" height="440" rx="96" fill="none" stroke="#181512" stroke-width="14" />
+  <rect x="54" y="54" width="404" height="404" rx="80" fill="none" stroke="#C5B79F" stroke-width="4" />
+  <!-- Central Stamp Medallion -->
+  <rect x="126" y="166" width="260" height="180" rx="28" fill="#FAF6EE" stroke="#181512" stroke-width="10" />
+  <text
+    x="256"
+    y="286"
+    text-anchor="middle"
+    font-family="Georgia, 'Times New Roman', serif"
+    font-weight="bold"
+    font-style="italic"
+    font-size="116"
+    fill="#181512"
+    letter-spacing="-4"
+  >
+    RC
+  </text>
+  <text
+    x="256"
+    y="326"
+    text-anchor="middle"
+    font-family="monospace"
+    font-weight="bold"
+    font-size="20"
+    fill="#9E2A2B"
+    letter-spacing="5"
+  >
+    CUTSSS · 931
+  </text>
+</svg>

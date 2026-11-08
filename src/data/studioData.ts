@@ -93,6 +93,90 @@ export interface ClientFormulaNote {
   updatedAt: string;
 }
 
+export interface TransformationCaseRecord {
+  id: string;
+  title: string;
+  shortTabTitle: string;
+  tag: string;
+  serviceId: string;
+  priceDisplay: string;
+  duration: string;
+  idealFor: string;
+  beforeLabel: string;
+  beforeDetail: string;
+  afterLabel: string;
+  afterDetail: string;
+  beforeImage: string;
+  afterImage: string;
+  formulaSteps: string[];
+}
+
+export const INITIAL_TRANSFORMATION_CASES: TransformationCaseRecord[] = [
+  {
+    id: 'trans-crop-fade',
+    title: 'De Largo Sin Estructura a Burst Fade 0.0mm & Textured Crop',
+    shortTabTitle: 'Burst Fade & Crop',
+    tag: 'CASO 01 · CAMBIO DE ESTRUCTURA',
+    serviceId: 'srv-01',
+    priceDisplay: '$12.000 ARS',
+    duration: '45 min',
+    idealFor: 'Cabello lacio u ondulado con laterales abultados que pierde forma a las 2 semanas.',
+    beforeLabel: 'ANTES · 6 SEMANAS DE CRECIMIENTO',
+    beforeDetail: 'Laterales sin forma, nuca desprolija y peso excesivo en la zona superior.',
+    afterLabel: 'DESPUÉS · SKIN FADE 0.0MM & CROP MATE',
+    afterDetail: 'Pulido al ras con Shaver de Titanio 0.0mm, textura a tijera y polvo mate.',
+    beforeImage: '/src/assets/images/urban_barber_hero_1793929257447.jpg',
+    afterImage: '/src/assets/images/urban_textured_crop_1793929259231.jpg',
+    formulaSteps: [
+      'Apertura de guía a clipper y rasurado hipoalergénico 0.0 mm con shaver de lámina de titanio.',
+      'Descarga de peso en cúspide con tijera de esculpir para lograr movimiento orgánico.',
+      'Marcado frontal limpio con Trimmer y sellado con polvo texturizante mate.',
+    ],
+  },
+  {
+    id: 'trans-taper-beard',
+    title: 'De Rulos & Barba Desconectada a Low Taper + Barba al Vapor',
+    shortTabTitle: 'Low Taper & Barba',
+    tag: 'CASO 02 · VISAGISMO COMPLETO',
+    serviceId: 'srv-02',
+    priceDisplay: '$17.000 ARS',
+    duration: '60 min',
+    idealFor: 'Clientes que buscan integrar el corte con una barba prolija que estilice las facciones.',
+    beforeLabel: 'ANTES · RULOS Y BARBA SIN LÍNEA',
+    beforeDetail: 'Volumen descontrolado en patillas y barba sin ángulo mandibular definido.',
+    afterLabel: 'DESPUÉS · LOW TAPER & BARBA ESCULPIDA',
+    afterDetail: 'Transición limpia en sienes, barba perfilada con toalla tibia y contornos a trimmer.',
+    beforeImage: '/src/assets/images/urban_taper_curls_1793929259459.jpg',
+    afterImage: '/src/assets/images/urban_beard_fade_1793929260672.jpg',
+    formulaSteps: [
+      'Low Taper comprimido en patillas y nuca baja conservando la caída natural superior.',
+      'Esculpido geométrico de barba con toalla caliente al vapor y bálsamo hidratante.',
+      'Limpieza al ras en cuello y pómulos con Shaver de Titanio 0.0 mm.',
+    ],
+  },
+  {
+    id: 'trans-platinum-ice',
+    title: 'De Base Oscura a Platinado Hielo Ceniza + High Skin Fade',
+    shortTabTitle: 'Platinado Hielo',
+    tag: 'CASO 03 · COLORIMETRÍA DE AUTOR',
+    serviceId: 'srv-04',
+    priceDisplay: '$28.000 ARS',
+    duration: '90 min',
+    idealFor: 'Cambio de look total cuidando la fibra capilar con protectores Plex sin tonos amarillos.',
+    beforeLabel: 'ANTES · TONO NATURAL SIN CONTRASTE',
+    beforeDetail: 'Cabello oscuro uniforme sin definición en contornos ni contraste lateral.',
+    afterLabel: 'DESPUÉS · PLATINADO CENIZA FRÍO + FADE',
+    afterDetail: 'Decoloración protegida con Plex y matiz blanco hielo con degradé alto.',
+    beforeImage: '/src/assets/images/urban_textured_crop_1793929259231.jpg',
+    afterImage: '/src/assets/images/urban_platinum_buzz_1793929260240.jpg',
+    formulaSteps: [
+      'Protección lipídica del cuero cabelludo y decoloración controlada con aditivo Plex.',
+      'Matizado técnico plata ceniza frío para neutralizar por completo tonos cálidos.',
+      'High Skin Fade 0.0 mm en laterales para resaltar el contraste del corte.',
+    ],
+  },
+];
+
 export const PRESENTATION_AUDIO_URL =
   '/assets/aistudio/ElevenLabs_2026-11-06T09_51_29_Carlos_pro_pvc_s50_sim75_v4_d6b60f32.mp3';
 

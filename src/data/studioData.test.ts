@@ -314,4 +314,134 @@ test('STUDIO_SERVICES contains the 5 realistic local services for Venado Tuerto'
   ]);
 });
 
+test('seoEngine: resolveSeoViewKey and buildViewSeoMetadata produce unique titles, descriptions, and Schema.org JSON-LD for every view', async () => {
+  const { resolveSeoViewKey, buildViewSeoMetadata } = await import('../utils/seoEngine');
+
+  assert.equal(resolveSeoViewKey('home', 'turnero'), 'booking');
+  assert.equal(resolveSeoViewKey('home', 'servicios'), 'services');
+  assert.equal(resolveSeoViewKey('home', 'obras'), 'lookbook');
+  assert.equal(resolveSeoViewKey('admin', ''), 'admin');
+
+  const views = [
+    'home',
+    'booking',
+    'services',
+    'beforeAfter',
+    'lookbook',
+    'reviews',
+    'experience',
+    'location',
+    'admin',
+  ] as const;
+
+  const titles = new Set<string>();
+  const descriptions = new Set<string>();
+
+  for (const v of views) {
+    const meta = buildViewSeoMetadata({
+      viewKey: v,
+      config: INITIAL_STUDIO_CONFIG,
+      services: STUDIO_SERVICES,
+      origin: 'https://rodrigocutsss.com.ar',
+    });
+    assert.ok(meta.title.length > 15, `View ${v} must have a descriptive title`);
+    assert.ok(meta.description.length > 40, `View ${v} must have a descriptive meta description`);
+    titles.add(meta.title);
+    descriptions.add(meta.description);
+  }
+
+  assert.equal(titles.size, views.length, 'Every view must have a unique <title>');
+  assert.equal(descriptions.size, views.length, 'Every view must have a unique <meta name="description">');
+
+  const adminMeta = buildViewSeoMetadata({
+    viewKey: 'admin',
+    config: INITIAL_STUDIO_CONFIG,
+    origin: 'https://rodrigocutsss.com.ar',
+  });
+  assert.equal(adminMeta.robots, 'noindex, nofollow');
+});
+
+test('PWA compliance: manifest.json, service worker, and icon assets meet browser installability standards', async () => {
+  const fs = await import('node:fs');
+  const path = await import('node:path');
+
+  const manifestPath = path.resolve(process.cwd(), 'public/manifest.json');
+  assert.equal(fs.existsSync(manifestPath), true, 'public/manifest.json must exist');
+
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+  assert.equal(manifest.id, '/');
+  assert.equal(manifest.start_url, '/');
+  assert.equal(manifest.scope, '/');
+  assert.equal(manifest.display, 'standalone');
+  assert.ok(manifest.short_name.length <= 12, 'short_name must be <= 12 characters');
+
+  const iconSizes = manifest.icons.map((i: { sizes: string }) => i.sizes);
+  assert.equal(iconSizes.includes('192x192'), true, 'Must include 192x192 icon');
+  assert.equal(iconSizes.includes('512x512'), true, 'Must include 512x512 icon');
+
+  const hasMaskable = manifest.icons.some(
+    (i: { purpose?: string }) => i.purpose === 'maskable'
+  );
+  assert.equal(hasMaskable, true, 'Must include dedicated maskable icon');
+
+  for (const file of [
+    'public/sw.js',
+    'public/icon.svg',
+    'public/pwa-192x192.png',
+    'public/pwa-512x512.png',
+    'public/pwa-maskable-512x512.png',
+    'public/apple-touch-icon.png',
+  ]) {
+    const full = path.resolve(process.cwd(), file);
+    assert.equal(fs.existsSync(full), true, `${file} must exist`);
+    assert.ok(fs.statSync(full).size > 100, `${file} must be non-empty`);
+  }
+});
+
+test('Perfected Business Logic: smart combo discount, upcoming open working days on closed Sunday, and Argentine WhatsApp normalization', async () => {
+  const {
+    calculateBookingSummary,
+    getUpcomingOpenDays,
+    normalizeArgentineWhatsApp,
+  } = await import('../utils/bookingEngine');
+
+  // 1. Selecting Haircut (srv-01: $12.000, 45m) + Beard (srv-03: $8.500, 30m) automatically matches Combo (srv-02: $17.000, 60m)
+  const comboSummary = calculateBookingSummary(['srv-01', 'srv-03'], STUDIO_SERVICES, 10, 30);
+  assert.equal(comboSummary.subtotalPrice, 20500);
+  assert.equal(comboSummary.discountAmount, 3500);
+  assert.equal(comboSummary.totalPrice, 17000);
+  assert.equal(comboSummary.serviceMinutes, 60);
+
+  // 2. Selecting Haircut (srv-01: $12.000) + Wash/Nutrition (srv-05: $9.500) applies 10% Pack Bonus
+  const packSummary = calculateBookingSummary(['srv-01', 'srv-05'], STUDIO_SERVICES, 10, 30);
+  assert.equal(packSummary.subtotalPrice, 21500);
+  assert.ok(packSummary.discountAmount >= 2000);
+  assert.equal(packSummary.totalPrice, packSummary.subtotalPrice - packSummary.discountAmount);
+
+  // 3. On Sunday 2026-11-08 when openDays is Tue-Sat ([2,3,4,5,6]), getUpcomingOpenDays starts on Tuesday 2026-11-10
+  const sunday = new Date(2026, 10, 8, 13, 0, 0);
+  const upcoming = getUpcomingOpenDays([], [], 11, 21, [2, 3, 4, 5, 6], 50, 6, sunday);
+  assert.equal(upcoming.length, 6);
+  assert.equal(upcoming[0].dateISO, '2026-11-10');
+  assert.equal(upcoming[0].dayNameShort, 'Mar');
+  assert.ok(upcoming[0].freeSlotsCount > 0);
+
+  // 4. Argentine WhatsApp normalization handles local Venado Tuerto numbers
+  const norm = normalizeArgentineWhatsApp('03462 55-4421');
+  assert.equal(norm.isValid, true);
+  assert.equal(norm.digits, '5493462554421');
+});
+
+test('INITIAL_TRANSFORMATION_CASES provides complete before/after transformation records with recommended profiles', async () => {
+  const { INITIAL_TRANSFORMATION_CASES } = await import('./studioData');
+  assert.ok(INITIAL_TRANSFORMATION_CASES.length >= 3);
+  for (const item of INITIAL_TRANSFORMATION_CASES) {
+    assert.ok(item.id.length > 0);
+    assert.ok(item.title.length > 3);
+    assert.ok(item.beforeImage.length > 5);
+    assert.ok(item.afterImage.length > 5);
+    assert.ok(item.idealFor.length > 5);
+  }
+});
+
 

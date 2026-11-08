@@ -14,17 +14,20 @@ import {
   RefreshCw,
   ArrowRight,
   ArrowLeft,
+  Trash2,
+  Sparkles,
 } from 'lucide-react';
 import { useStudio } from '../context/StudioContext';
 import {
   calculateBookingSummary,
   getAvailableTimeSlots,
+  getUpcomingOpenDays,
+  normalizeArgentineWhatsApp,
   formatPriceARS,
   timeToMinutes,
   minutesToTime,
   resolveWhatsAppInfo,
   getTodayLocalISO,
-  getOffsetDateISO,
   findAppointmentsByQuery,
 } from '../utils/bookingEngine';
 import {
@@ -38,6 +41,8 @@ import { AppointmentRecord } from '../data/studioData';
 type BookingMode = 'new_booking' | 'lookup_ticket';
 type BookingStep = 1 | 2 | 3;
 
+const CLIENT_STORAGE_KEY = 'rodrigo_cutsss_client_profile_v1';
+
 export const ThermalReceiptBooking: React.FC = () => {
   const {
     config,
@@ -46,6 +51,7 @@ export const ThermalReceiptBooking: React.FC = () => {
     blockedSlots,
     addAppointment,
     rescheduleAppointment,
+    cancelAppointment,
     selectedServiceIds,
     toggleSelectService,
     setSelectedServiceIds,
@@ -57,13 +63,44 @@ export const ThermalReceiptBooking: React.FC = () => {
   const [currentStep, setCurrentStep] = useState<BookingStep>(1);
 
   const todayISO = getTodayLocalISO();
-  const tomorrowISO = getOffsetDateISO(1);
-  const dayAfterISO = getOffsetDateISO(2);
+  const visibleServices = services.filter((s) => !s.hidden);
 
-  const [selectedDate, setSelectedDate] = useState<string>(todayISO);
+  const summary = calculateBookingSummary(
+    selectedServiceIds,
+    visibleServices,
+    config.cleanBufferMinutes,
+    config.depositPercentage
+  );
+
+  const upcomingOpenDays = getUpcomingOpenDays(
+    appointments,
+    blockedSlots,
+    config.openingHour,
+    config.closingHour,
+    config.openDays,
+    summary.totalBlockMinutes,
+    6
+  );
+
+  const initialOpenDate = upcomingOpenDays[0]?.dateISO || todayISO;
+  const [selectedDate, setSelectedDate] = useState<string>(initialOpenDate);
   const [selectedTime, setSelectedTime] = useState<string>('');
-  const [clientName, setClientName] = useState<string>('');
-  const [whatsapp, setWhatsapp] = useState<string>('');
+  const [clientName, setClientName] = useState<string>(() => {
+    try {
+      const saved = localStorage.getItem(CLIENT_STORAGE_KEY);
+      return saved ? JSON.parse(saved).clientName || '' : '';
+    } catch {
+      return '';
+    }
+  });
+  const [whatsapp, setWhatsapp] = useState<string>(() => {
+    try {
+      const saved = localStorage.getItem(CLIENT_STORAGE_KEY);
+      return saved ? JSON.parse(saved).whatsapp || '' : '';
+    } catch {
+      return '';
+    }
+  });
   const [paymentOption, setPaymentOption] = useState<'deposit' | 'commitment'>('deposit');
   const [formError, setFormError] = useState<string>('');
   const [confirmedTicket, setConfirmedTicket] = useState<ExportableTicketData | null>(null);
@@ -112,14 +149,17 @@ export const ThermalReceiptBooking: React.FC = () => {
     };
   }, [setSelectedServiceIds]);
 
-  const visibleServices = services.filter((s) => !s.hidden);
-
-  const summary = calculateBookingSummary(
-    selectedServiceIds,
-    visibleServices,
-    config.cleanBufferMinutes,
-    config.depositPercentage
-  );
+  // Ensure selectedDate stays on an open business day if current selectedDate has 0 slots on initial mount
+  useEffect(() => {
+    const firstBookableDay = upcomingOpenDays.find((d) => d.freeSlotsCount > 0) || upcomingOpenDays[0];
+    if (firstBookableDay && selectedDate === todayISO) {
+      const todayParts = todayISO.split('-').map(Number);
+      const todayObj = new Date(todayParts[0], todayParts[1] - 1, todayParts[2]);
+      if (!config.openDays.includes(todayObj.getDay())) {
+        setSelectedDate(firstBookableDay.dateISO);
+      }
+    }
+  }, [upcomingOpenDays, selectedDate, todayISO, config.openDays]);
 
   const slots = getAvailableTimeSlots(
     selectedDate,
@@ -183,7 +223,8 @@ export const ThermalReceiptBooking: React.FC = () => {
       setFormError('Por favor ingresá tu nombre y apellido.');
       return;
     }
-    if (whatsapp.replace(/\D/g, '').length < 8) {
+    const normalizedWa = normalizeArgentineWhatsApp(whatsapp);
+    if (!normalizedWa.isValid) {
       setFormError('Ingresá un número de WhatsApp válido (mínimo 8 dígitos).');
       return;
     }
@@ -202,7 +243,7 @@ export const ThermalReceiptBooking: React.FC = () => {
       serviceMinutes: summary.serviceMinutes,
       bufferMinutes: summary.bufferMinutes,
       clientName: clientName.trim(),
-      whatsapp: whatsapp.trim(),
+      whatsapp: normalizedWa.formattedDisplay,
       serviceNames: summary.selectedServices.map((s) => s.name),
       paymentOption,
       status: 'confirmed',
@@ -218,6 +259,19 @@ export const ThermalReceiptBooking: React.FC = () => {
     }
 
     const saved = result.appointment || newRecord;
+
+    try {
+      localStorage.setItem(
+        CLIENT_STORAGE_KEY,
+        JSON.stringify({
+          clientName: saved.clientName,
+          whatsapp: saved.whatsapp,
+          lastTicketId: saved.id,
+        })
+      );
+    } catch {
+      // Ignore storage quota errors
+    }
 
     setConfirmedTicket({
       id: saved.id,
@@ -599,6 +653,21 @@ export const ThermalReceiptBooking: React.FC = () => {
                               <RefreshCw className="w-3.5 h-3.5 text-[#9E2A2B]" />
                               <span>Cambiar Horario</span>
                             </button>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                cancelAppointment(app.id);
+                                setRescheduleFeedback({
+                                  type: 'ok',
+                                  text: `Turno #${app.id} cancelado. El horario quedó liberado.`,
+                                });
+                              }}
+                              className="px-3.5 py-2 rounded-lg border border-[#9E2A2B]/40 hover:bg-[#9E2A2B] hover:text-[#FAF6EE] text-[#9E2A2B] text-xs font-mono font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              <span>Cancelar Turno</span>
+                            </button>
                           </div>
                         </div>
                       );
@@ -683,7 +752,7 @@ export const ThermalReceiptBooking: React.FC = () => {
                   <dt className="text-xs text-[#5C5346] uppercase tracking-wider font-mono">
                     Modalidad
                   </dt>
-                  <dd className="text-zinc-200 mt-0.5">
+                  <dd className="text-[#181512] font-semibold mt-0.5">
                     {confirmedTicket.paymentOption === 'deposit'
                       ? `Seña 30% (Alias: ${confirmedTicket.transferAlias})`
                       : 'Abono en el estudio al finalizar'}
@@ -894,58 +963,78 @@ export const ThermalReceiptBooking: React.FC = () => {
                         </span>
                       </div>
 
-                      {/* Date Selection Bar */}
+                      {/* Date Selection Bar with Next 6 Open Working Days */}
                       <div className="p-5 rounded-2xl bg-[#EAE0CE] border border-[#D5C9B4] space-y-4">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                           <label
                             htmlFor="atelier-booking-date"
                             className="text-xs font-mono uppercase tracking-wider text-[#4F463B] font-bold flex items-center gap-2"
                           >
                             <Calendar className="w-4 h-4 text-[#9E2A2B]" />
-                            <span>Fecha del turno:</span>
+                            <span>Próximos días hábiles de atención:</span>
                           </label>
-                          <div className="flex items-center gap-2">
-                            {[
-                              { label: 'Hoy', iso: todayISO },
-                              { label: 'Mañana', iso: tomorrowISO },
-                              { label: 'Pasado', iso: dayAfterISO },
-                            ].map((preset) => (
-                              <button
-                                key={preset.label}
-                                type="button"
-                                onClick={() => {
-                                  setSelectedDate(preset.iso);
-                                  setSelectedTime('');
-                                }}
-                                className={`px-3.5 py-1.5 rounded-lg text-xs font-mono font-bold transition-colors cursor-pointer ${
-                                  selectedDate === preset.iso
-                                    ? 'bg-[#9E2A2B] text-[#FAF6EE]'
-                                    : 'bg-[#FAF6EE] text-[#5C5346] border border-[#D5C9B4] hover:text-[#181512]'
-                                }`}
-                              >
-                                {preset.label}
-                              </button>
-                            ))}
-                          </div>
+                          <span className="text-[11px] font-mono text-[#5C5346]">
+                            {config.scheduleDisplay}
+                          </span>
                         </div>
 
-                        <input
-                          id="atelier-booking-date"
-                          type="date"
-                          value={selectedDate}
-                          min={todayISO}
-                          onChange={(e) => {
-                            setSelectedDate(e.target.value);
-                            setSelectedTime('');
-                          }}
-                          className="w-full h-11 px-4 rounded-xl bg-[#FAF6EE] border border-[#C8BBA4] text-[#181512] font-mono text-sm focus:outline-none focus:border-[#9E2A2B]"
-                        />
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+                          {upcomingOpenDays.map((dayItem) => {
+                            const isSelectedDay = selectedDate === dayItem.dateISO;
+                            return (
+                              <button
+                                key={dayItem.dateISO}
+                                type="button"
+                                onClick={() => {
+                                  setSelectedDate(dayItem.dateISO);
+                                  setSelectedTime('');
+                                }}
+                                className={`p-2.5 rounded-xl border text-left font-mono transition-all cursor-pointer ${
+                                  isSelectedDay
+                                    ? 'bg-[#9E2A2B] border-[#781D1E] text-[#FAF6EE] shadow-[0_3px_0_#5E1516]'
+                                    : 'bg-[#FAF6EE] border-[#C8BBA4] text-[#181512] hover:border-[#9E2A2B]'
+                                }`}
+                              >
+                                <span className="text-[10px] uppercase tracking-wider block opacity-85">
+                                  {dayItem.isToday ? 'Hoy' : dayItem.dayNameShort}
+                                </span>
+                                <span className="text-sm font-bold block mt-0.5">
+                                  {dayItem.dayNumber} {dayItem.monthShort}
+                                </span>
+                                <span
+                                  className={`text-[10px] block mt-1 ${
+                                    isSelectedDay ? 'text-[#FAF6EE]/90' : 'text-[#9E2A2B] font-semibold'
+                                  }`}
+                                >
+                                  {dayItem.freeSlotsCount} libres
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        <div className="pt-1 flex flex-col sm:flex-row sm:items-center gap-2">
+                          <span className="text-[11px] font-mono text-[#5C5346] shrink-0">
+                            ¿Otra fecha?:
+                          </span>
+                          <input
+                            id="atelier-booking-date"
+                            type="date"
+                            value={selectedDate}
+                            min={todayISO}
+                            onChange={(e) => {
+                              setSelectedDate(e.target.value);
+                              setSelectedTime('');
+                            }}
+                            className="w-full h-10 px-3.5 rounded-xl bg-[#FAF6EE] border border-[#C8BBA4] text-[#181512] font-mono text-xs focus:outline-none focus:border-[#9E2A2B]"
+                          />
+                        </div>
                       </div>
 
                       {/* Time Slot Grid */}
                       <div className="p-5 rounded-2xl bg-[#EAE0CE] border border-[#D5C9B4] space-y-4">
                         <div className="flex items-center justify-between text-xs font-mono text-[#5C5346]">
-                          <span className="uppercase tracking-wider font-bold flex items-center gap-2 text-zinc-200">
+                          <span className="uppercase tracking-wider font-bold flex items-center gap-2 text-[#181512]">
                             <Clock className="w-4 h-4 text-[#9E2A2B]" />
                             <span>Horarios en {config.studioTitle} ({selectedDate}):</span>
                           </span>
@@ -953,10 +1042,23 @@ export const ThermalReceiptBooking: React.FC = () => {
                         </div>
 
                         {slots.length === 0 ? (
-                          <p className="text-sm text-[#F43F5E] py-6 text-center font-mono">
-                            El estudio permanece cerrado en la fecha seleccionada. Por favor elegí
-                            otro día hábil.
-                          </p>
+                          <div className="py-5 text-center space-y-2.5">
+                            <p className="text-xs sm:text-sm text-[#9E2A2B] font-mono font-semibold">
+                              El estudio permanece cerrado en la fecha seleccionada ({selectedDate}).
+                            </p>
+                            {upcomingOpenDays[0] && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedDate(upcomingOpenDays[0].dateISO);
+                                  setSelectedTime('');
+                                }}
+                                className="px-4 py-2 rounded-lg bg-[#9E2A2B] text-[#FAF6EE] font-mono text-xs font-semibold uppercase tracking-wider cursor-pointer"
+                              >
+                                Pasar al próximo día hábil ({upcomingOpenDays[0].shortLabel})
+                              </button>
+                            )}
+                          </div>
                         ) : (
                           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2.5">
                             {slots.map((slot, slotIdx) => {
@@ -1226,15 +1328,33 @@ export const ThermalReceiptBooking: React.FC = () => {
                     <dt className="text-[#5C5346]">Tiempo dedicado:</dt>
                     <dd className="text-[#181512] tabular-nums">{summary.serviceMinutes} min</dd>
                   </div>
+                  {summary.discountAmount > 0 && (
+                    <div className="p-2.5 rounded-lg bg-[#9E2A2B]/10 border border-[#9E2A2B]/30 flex items-center justify-between gap-2 text-[11px]">
+                      <span className="text-[#9E2A2B] font-bold flex items-center gap-1">
+                        <Sparkles className="w-3.5 h-3.5 shrink-0" />
+                        <span>{summary.discountReason || 'Bonificación Pack'}</span>
+                      </span>
+                      <span className="font-bold text-[#9E2A2B] tabular-nums shrink-0">
+                        -{formatPriceARS(summary.discountAmount)}
+                      </span>
+                    </div>
+                  )}
                 </dl>
 
                 <div className="pt-4 border-t border-[#D5C9B4] flex items-baseline justify-between">
                   <span className="text-xs font-mono uppercase tracking-wider text-[#5C5346] font-bold">
                     Valor Total
                   </span>
-                  <span className="font-mono text-2xl font-black text-[#181512] tabular-nums">
-                    {formatPriceARS(summary.totalPrice)}
-                  </span>
+                  <div className="text-right">
+                    {summary.discountAmount > 0 && (
+                      <span className="text-xs font-mono text-[#6E6355] line-through mr-2 tabular-nums">
+                        {formatPriceARS(summary.subtotalPrice)}
+                      </span>
+                    )}
+                    <span className="font-mono text-2xl font-black text-[#181512] tabular-nums">
+                      {formatPriceARS(summary.totalPrice)}
+                    </span>
+                  </div>
                 </div>
 
                 <p className="text-[11px] text-[#5C5346] leading-relaxed pt-2 border-t border-[#D5C9B4]">

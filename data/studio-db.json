@@ -1,6 +1,6 @@
 {
-  "version": 6,
-  "updatedAt": "2026-11-08T17:01:53.395Z",
+  "version": 8,
+  "updatedAt": "2026-11-08T23:16:36.910Z",
   "config": {
     "authorName": "Rodrigo",
     "studioTitle": "Rodrigo Cutsss",
@@ -16,14 +16,16 @@
     "whatsappRaw": "5493462554421",
     "instagram": "@rodrigo.cutsss",
     "tiktok": "@rodrigo.cutsss_vt",
+    "facebook": "rodrigocutsss.vt",
+    "youtube": "@rodrigocutsss",
     "transferAlias": "RODRIGO.CUTSSS",
     "spotifyPlaylistUrl": "https://open.spotify.com",
-    "currentVibeTrack": "Rodrigo Cutsss · Monumental Session",
+    "currentVibeTrack": "Rodrigo Cutsss · Vinyl & Atelier Session",
     "googleMapsUrl": "https://www.google.com/maps/search/?api=1&query=Vuelta+de+Obligado+931+Venado+Tuerto+Santa+Fe",
     "wazeUrl": "https://waze.com/ul?q=Vuelta+de+Obligado+931+Venado+Tuerto+Santa+Fe",
     "googleReviewShortlink": "https://g.page/r/RodrigoCutsss/review",
-    "heroImage": "/src/assets/images/urban_hero_barber_fade_1793930881960.jpg",
-    "spaceImage": "/src/assets/images/urban_studio_neon_lounge_1793930880222.jpg",
+    "heroImage": "/src/assets/images/urban_barber_hero_1793929257447.jpg",
+    "spaceImage": "/src/assets/images/urban_graffiti_mirror_1793930882309.jpg",
     "openingHour": 11,
     "closingHour": 21,
     "openDays": [
@@ -52,7 +54,7 @@
     ],
     "urbanTheme": "crimson",
     "showPromoBanner": true,
-    "promoBannerText": "RODRIGO CUTSSS · LA BANDA DEL CORTE EN VUELTA DE OBLIGADO 931, VENADO TUERTO",
+    "promoBannerText": "RODRIGO CUTSSS · PELUQUERÍA Y BARBERÍA DE AUTOR EN VUELTA DE OBLIGADO 931, VENADO TUERTO",
     "enableDripTrail": true,
     "enableParallax": true,
     "showHeroSection": true,
@@ -64,11 +66,12 @@
     "showReviewsSection": true,
     "showLocationSection": true,
     "showGalleryFilter": true,
-    "showGalleryBookingButton": true,
-    "showGalleryPriceBadge": true,
-    "showGalleryTechnicalSpec": true,
+    "showGalleryBookingButton": false,
+    "showGalleryPriceBadge": false,
+    "showGalleryTechnicalSpec": false,
     "showGalleryLikes": true,
-    "showGalleryTags": false,
+    "showGalleryTags": true,
+    "allowPublicGalleryUpload": true,
     "showServiceBookingButton": true,
     "showServicePrice": true,
     "showServiceProducts": true,
@@ -106,7 +109,7 @@
       "durationMinutes": 60,
       "price": 17000,
       "popularTag": "Combo Completo",
-      "imageUrl": "/src/assets/images/urban_hero_barber_fade_1793930881960.jpg",
+      "imageUrl": "/src/assets/images/urban_beard_fade_1793929260672.jpg",
       "shortDescription": "Servicio integral de corte de cabello a medida combinado con diseño, rebaje volumétrico y perfilado de barba con compresa tibia e hidratación.",
       "preparation": [
         "Ideal para integrar el degradé de las patillas con la estructura mandibular en una sola sesión.",
@@ -128,7 +131,7 @@
       "name": "Diseño y Perfilado de Barba",
       "durationMinutes": 30,
       "price": 8500,
-      "imageUrl": "/src/assets/images/urban_barber_clippers_detail_1793930879480.jpg",
+      "imageUrl": "/src/assets/images/urban_barber_hands_detail_1793930883253.jpg",
       "shortDescription": "Alineación de pómulos y cuello, rebaje graduado de volumen, ritual de toalla tibia relajante y nutrición profunda del vello facial y la piel.",
       "preparation": [
         "Venir con la barba seca y peinada en su dirección natural para evaluar la densidad real."
@@ -150,7 +153,7 @@
       "durationMinutes": 90,
       "price": 28000,
       "popularTag": "Color Studio",
-      "imageUrl": "/src/assets/images/urban_platinum_color_fade_1793930882124.jpg",
+      "imageUrl": "/src/assets/images/urban_platinum_buzz_1793929260240.jpg",
       "shortDescription": "Platinados globales, reflejos, mechas o iluminación trabajados con aditivos protectores de fibra más corte y matizado personalizado.",
       "preparation": [
         "No lavar el cuero cabelludo durante las 24 horas previas para conservar la barrera lipídica natural."
@@ -171,7 +174,7 @@
       "name": "Lavado Premium y Nutrición Capilar",
       "durationMinutes": 30,
       "price": 9500,
-      "imageUrl": "/src/assets/images/urban_studio_neon_lounge_1793930880222.jpg",
+      "imageUrl": "/src/assets/images/urban_taper_curls_1793929259459.jpg",
       "shortDescription": "Limpieza oxigenante del cuero cabelludo, masaje descontracturante y baño de crema restaurador con vapor tibio para devolver cuerpo y brillo.",
       "preparation": [
         "Podés reservarlo como sesión individual de renovación o sumarlo a tu corte habitual."
@@ -271,7 +274,7 @@
       "id": "gal-2",
       "title": "El Estudio en Vuelta de Obligado 931",
       "category": "El Estudio & Local",
-      "imageUrl": "/src/assets/images/urban_studio_neon_lounge_1793930880222.jpg",
+      "imageUrl": "/src/assets/images/urban_graffiti_mirror_1793930882309.jpg",
       "description": "Nuestro espacio privado en Venado Tuerto: sillón profesional, iluminación de precisión, buena música y atención exclusiva por turno.",
       "dateLabel": "El Estudio",
       "tags": [
@@ -287,7 +290,7 @@
       "id": "gal-3",
       "title": "Skin Fade & Perfilado Geométrico de Barba",
       "category": "Cortes & Fades",
-      "imageUrl": "/src/assets/images/urban_hero_barber_fade_1793930881960.jpg",
+      "imageUrl": "/src/assets/images/urban_beard_fade_1793929260672.jpg",
       "description": "Degradé en laterales integrado con barba rebajada en ángulo mandibular y terminación con compresa tibia y óleo nutritivo.",
       "dateLabel": "Combo Completo",
       "tags": [
@@ -304,7 +307,7 @@
       "id": "gal-4",
       "title": "Arsenal Técnico: Clippers & Tijeras de Acero",
       "category": "Máquinas & Setup",
-      "imageUrl": "/src/assets/images/urban_barber_clippers_detail_1793930879480.jpg",
+      "imageUrl": "/src/assets/images/urban_barber_hands_detail_1793930883253.jpg",
       "description": "Máquinas inalámbricas calibradas al detalle, trimmers de contorno hipoalergénicas y esterilización completa entre cada cliente.",
       "dateLabel": "Setup Profesional",
       "tags": [
@@ -321,7 +324,7 @@
       "id": "gal-5",
       "title": "Ice Platinum Global + Low Taper",
       "category": "Color & Diseños",
-      "imageUrl": "/src/assets/images/urban_platinum_color_fade_1793930882124.jpg",
+      "imageUrl": "/src/assets/images/urban_platinum_buzz_1793929260240.jpg",
       "description": "Decoloración cuidada con aditivo protector de enlaces, matiz blanco hielo uniforme y contornos limpios en patillas y nuca.",
       "dateLabel": "Colorimetría",
       "tags": [
@@ -338,7 +341,7 @@
       "id": "gal-6",
       "title": "Low Taper & Movimiento Natural en Capas",
       "category": "Cultura & Streetwear",
-      "imageUrl": "/src/assets/images/lookbook_classic_scissoring_1793889690402.jpg",
+      "imageUrl": "/src/assets/images/urban_textured_crop_1793929259231.jpg",
       "description": "Trabajo a tijera manteniendo el largo superior con contornos ultra limpios para un look versátil que crece parejo.",
       "dateLabel": "Estilo de Autor",
       "tags": [
@@ -363,7 +366,7 @@
       "city": "Venado Tuerto",
       "verified": true,
       "comment": "Una experiencia completamente distinta en Venado Tuerto. Sin ruidos ni gente esperando encima tuyo: llegás a tu hora en Vuelta de Obligado 931, te reciben con un café y Rodrigo se toma todo el tiempo para lograr exactamente el corte que buscás.",
-      "createdAtISO": "2026-11-05T17:00:53.715Z"
+      "createdAtISO": "2026-11-05T23:16:18.890Z"
     },
     {
       "id": "rev-seed-2",
@@ -375,7 +378,7 @@
       "city": "Venado Tuerto",
       "verified": true,
       "comment": "La precisión con la tijera y el cuidado en el perfilado de barba con toalla tibia son de otro nivel. El corte crece prolijo durante semanas sin perder la forma.",
-      "createdAtISO": "2026-11-03T17:00:53.715Z"
+      "createdAtISO": "2026-11-03T23:16:18.891Z"
     },
     {
       "id": "rev-seed-3",
@@ -387,7 +390,7 @@
       "city": "Venado Tuerto",
       "verified": true,
       "comment": "Buscaba unos reflejos muy sutiles que no dañaran el pelo y el resultado superó lo que imaginaba. Ambiente tranquilo, trato personalizado y productos de primera línea.",
-      "createdAtISO": "2026-11-01T17:00:53.715Z"
+      "createdAtISO": "2026-11-01T23:16:18.891Z"
     },
     {
       "id": "rev-seed-4",
@@ -399,20 +402,20 @@
       "city": "Venado Tuerto",
       "verified": true,
       "comment": "Reservar desde el celular es comodísimo y la puntualidad es total. El lavado nutritivo con masaje capilar al final del corte hace que salgas renovado.",
-      "createdAtISO": "2026-10-25T17:00:53.715Z"
+      "createdAtISO": "2026-10-25T23:16:18.891Z"
     }
   ],
   "auditLogs": [
     {
-      "id": "audit-1794157313395",
-      "timestamp": "2026-11-08T17:01:53.395Z",
+      "id": "audit-1794179796910",
+      "timestamp": "2026-11-08T23:16:36.910Z",
       "action": "ADMIN_LOGIN_SUCCESS",
       "actor": "admin",
       "details": "Sesión administrativa iniciada correctamente."
     },
     {
       "id": "audit-init",
-      "timestamp": "2026-11-08T17:00:53.717Z",
+      "timestamp": "2026-11-08T23:16:18.893Z",
       "action": "SYSTEM_BOOT",
       "actor": "system",
       "details": "Motor backend de Rodrigo Cutsss inicializado y sincronizado."

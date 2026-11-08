@@ -6,11 +6,13 @@ import {
   AppointmentRecord,
   StudioGalleryItem,
   ClientFormulaNote,
+  TransformationCaseRecord,
   STUDIO_SERVICES,
   LOOKBOOK_ITEMS,
   GOOGLE_REVIEWS,
   STUDIO_GALLERY_ITEMS,
   INITIAL_CLIENT_NOTES,
+  INITIAL_TRANSFORMATION_CASES,
 } from '../data/studioData';
 import {
   StudioConfig,
@@ -72,6 +74,12 @@ export type AppPage =
   | 'location'
   | 'admin';
 
+export interface CurtainTransitionState {
+  id: number;
+  label: string;
+  subtitle: string;
+}
+
 export function normalizeSectionOrder(order?: HomeSectionId[]): HomeSectionId[] {
   if (!Array.isArray(order) || order.length === 0) {
     return [...DEFAULT_SECTION_ORDER];
@@ -102,6 +110,11 @@ interface StudioContextType {
   deleteGalleryItem: (id: string) => Promise<void>;
   toggleLikeGalleryItem: (id: string) => void;
   likedGalleryIds: Record<string, boolean>;
+  transformations: TransformationCaseRecord[];
+  addTransformation: (item: TransformationCaseRecord) => void;
+  updateTransformation: (id: string, partial: Partial<TransformationCaseRecord>) => void;
+  deleteTransformation: (id: string) => void;
+  resetTransformations: () => void;
   lookbook: LookbookItem[];
   addLookbookItem: (item: LookbookItem) => void;
   updateLookbookItem: (id: string, item: Partial<LookbookItem>) => void;
@@ -130,7 +143,11 @@ interface StudioContextType {
   loginAdmin: (pin: string) => boolean;
   logoutAdmin: () => void;
   currentPage: AppPage;
+  activeSeoSection: string | null;
+  setActiveSeoSection: (sectionId: string | null) => void;
   navigateTo: (page: AppPage, sectionId?: string) => void;
+  curtainTransition: CurtainTransitionState | null;
+  triggerCurtainTransition: (label: string, subtitle?: string) => void;
   selectedServiceIds: string[];
   toggleSelectService: (id: string) => void;
   setSelectedServiceIds: React.Dispatch<React.SetStateAction<string[]>>;
@@ -159,6 +176,17 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       return hash as AppPage;
     }
     return 'home';
+  });
+  const [activeSeoSection, setActiveSeoSection] = useState<string | null>(() => {
+    const hash = window.location.hash.replace('#/', '').replace('#', '');
+    if (
+      ['turnero', 'servicios', 'transformaciones', 'obras', 'opiniones', 'estudio', 'ubicacion'].includes(
+        hash
+      )
+    ) {
+      return hash;
+    }
+    return null;
   });
 
   const [isDark, setIsDark] = useState<boolean>(true);
@@ -227,6 +255,33 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
     return {};
   });
+
+  const [transformations, setTransformations] = useState<TransformationCaseRecord[]>(() => {
+    try {
+      const saved = localStorage.getItem('vm_atelier_v8_transformations');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {
+      /* fallback */
+    }
+    return INITIAL_TRANSFORMATION_CASES;
+  });
+
+  const [curtainTransition, setCurtainTransition] = useState<CurtainTransitionState | null>(null);
+
+  const triggerCurtainTransition = useCallback((label: string, subtitle?: string) => {
+    const id = Date.now();
+    setCurtainTransition({
+      id,
+      label,
+      subtitle: subtitle || 'Rodrigo Cutsss · Sastrería Capilar',
+    });
+    setTimeout(() => {
+      setCurtainTransition((prev) => (prev && prev.id === id ? null : prev));
+    }, 520);
+  }, []);
 
   const [lookbook, setLookbook] = useState<LookbookItem[]>(() => {
     try {
@@ -455,6 +510,14 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, [likedGalleryIds]);
 
   useEffect(() => {
+    try {
+      localStorage.setItem('vm_atelier_v8_transformations', JSON.stringify(transformations));
+    } catch {
+      // Handle storage quota gracefully
+    }
+  }, [transformations]);
+
+  useEffect(() => {
     localStorage.setItem('vm_atelier_v8_lookbook', JSON.stringify(lookbook));
   }, [lookbook]);
 
@@ -512,21 +575,47 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     });
   };
 
-  // History & Section Navigation sync
-  const navigateTo = useCallback((page: AppPage, sectionId?: string) => {
-    setCurrentPage(page);
-    window.location.hash = `#/${page}`;
-    if (sectionId) {
-      setTimeout(() => {
-        const el = document.getElementById(sectionId);
-        if (el) {
-          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }, 80);
-    } else {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  }, []);
+  // History & Section Navigation sync with Curtain Reveal
+  const navigateTo = useCallback(
+    (page: AppPage, sectionId?: string) => {
+      const pageLabels: Record<AppPage, string> = {
+        home: 'Portada del Estudio',
+        booking: 'Registro de Turnos',
+        services: 'Carta de Servicios',
+        lookbook: 'Galería Fotográfica',
+        experience: 'Conocé al Barbero',
+        location: 'Ubicación & Horarios',
+        admin: 'Escritorio de Dirección',
+      };
+      const sectionLabels: Record<string, string> = {
+        turnero: 'Registro de Turnos',
+        servicios: 'Carta de Servicios',
+        transformaciones: 'Antes & Después',
+        obras: 'Galería Fotográfica',
+        opiniones: 'Reseñas de Clientes',
+        estudio: 'Conocé al Barbero',
+        ubicacion: 'Ubicación & Horarios',
+      };
+      const label =
+        (sectionId && sectionLabels[sectionId]) || pageLabels[page] || 'Rodrigo Cutsss';
+      triggerCurtainTransition(label, `${config.studioTitle} · ${config.address}`);
+
+      setCurrentPage(page);
+      setActiveSeoSection(sectionId || null);
+      window.location.hash = sectionId && page === 'home' ? `#${sectionId}` : `#/${page}`;
+      if (sectionId) {
+        setTimeout(() => {
+          const el = document.getElementById(sectionId);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }, 120);
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    },
+    [config.studioTitle, config.address, triggerCurtainTransition]
+  );
 
   // Discreet Keyboard Shortcut for Admin Access (Ctrl + Shift + A or Alt + A)
   useEffect(() => {
@@ -551,6 +640,16 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         )
       ) {
         setCurrentPage(hash as AppPage);
+        if (hash === 'home') {
+          setActiveSeoSection(null);
+        }
+      } else if (
+        ['turnero', 'servicios', 'transformaciones', 'obras', 'opiniones', 'estudio', 'ubicacion'].includes(
+          hash
+        )
+      ) {
+        setCurrentPage('home');
+        setActiveSeoSection(hash);
       }
     };
     window.addEventListener('hashchange', handleHashChange);
@@ -920,6 +1019,24 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     );
   };
 
+  const addTransformation = (item: TransformationCaseRecord) => {
+    setTransformations((prev) => [item, ...prev]);
+  };
+
+  const updateTransformation = (id: string, partial: Partial<TransformationCaseRecord>) => {
+    setTransformations((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, ...partial } : item))
+    );
+  };
+
+  const deleteTransformation = (id: string) => {
+    setTransformations((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  const resetTransformations = () => {
+    setTransformations(INITIAL_TRANSFORMATION_CASES);
+  };
+
   return (
     <StudioContext.Provider
       value={{
@@ -938,6 +1055,11 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         deleteGalleryItem,
         toggleLikeGalleryItem,
         likedGalleryIds,
+        transformations,
+        addTransformation,
+        updateTransformation,
+        deleteTransformation,
+        resetTransformations,
         lookbook,
         addLookbookItem,
         updateLookbookItem,
@@ -960,7 +1082,11 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         loginAdmin,
         logoutAdmin,
         currentPage,
+        activeSeoSection,
+        setActiveSeoSection,
         navigateTo,
+        curtainTransition,
+        triggerCurtainTransition,
         selectedServiceIds,
         toggleSelectService,
         setSelectedServiceIds,

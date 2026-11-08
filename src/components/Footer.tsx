@@ -1,11 +1,18 @@
 import React, { useRef } from 'react';
 import { useStudio } from '../context/StudioContext';
-import { MapPin, Navigation, ArrowUp, MessageCircle, Instagram, Shield } from 'lucide-react';
-import { resolveInstagramInfo, resolveWhatsAppInfo } from '../utils/bookingEngine';
+import { MapPin, Navigation, ArrowUp, MessageCircle, Instagram, Shield, Globe } from 'lucide-react';
+import {
+  resolveInstagramInfo,
+  resolveWhatsAppInfo,
+  resolveTikTokInfo,
+  resolveFacebookInfo,
+  resolveYouTubeInfo,
+} from '../utils/bookingEngine';
 import { RetroFooterBandaMonument, RetroRiverCrestBadge } from './RetroPaperBanda';
+import { PWAInstallButton } from './PWAInstallButton';
 
 export const Footer: React.FC = () => {
-  const { config, navigateTo, isAdminAuthenticated } = useStudio();
+  const { config, navigateTo, isAdminAuthenticated, setActiveSeoSection } = useStudio();
   const copyrightClicksRef = useRef<{ count: number; lastTime: number }>({
     count: 0,
     lastTime: 0,
@@ -13,12 +20,17 @@ export const Footer: React.FC = () => {
 
   const igInfo = resolveInstagramInfo(config.instagram);
   const waInfo = resolveWhatsAppInfo(config.phoneDisplay, config.whatsappRaw);
+  const tiktokInfo = resolveTikTokInfo(config.tiktok);
+  const fbInfo = resolveFacebookInfo(config.facebook);
+  const ytInfo = resolveYouTubeInfo(config.youtube);
 
   const scrollToTop = () => {
+    setActiveSeoSection('');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const scrollToSection = (sectionId: string) => {
+    setActiveSeoSection(sectionId);
     const el = document.getElementById(sectionId);
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -58,7 +70,7 @@ export const Footer: React.FC = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-8 relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 pb-10 border-b border-[#C5B79F]">
-          {/* Brand & Studio Summary */}
+          {/* Brand & Studio Summary + Social Media Strip */}
           <div className="lg:col-span-5 space-y-4">
             <div className="inline-flex items-center gap-3">
               <RetroRiverCrestBadge size="md" />
@@ -75,6 +87,51 @@ export const Footer: React.FC = () => {
               barba en <strong className="text-[#181512] font-semibold">{config.address}</strong>,{' '}
               {config.neighborhood}.
             </p>
+
+            {/* Social Media Networks */}
+            <div className="pt-2 space-y-2">
+              <span className="text-[11px] font-mono uppercase tracking-widest text-[#5C5346] font-semibold block">
+                Comunidad &amp; Redes Sociales Oficiales
+              </span>
+              <div className="flex flex-wrap gap-2">
+                <a
+                  href={igInfo.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded border border-[#C5B79F] bg-[#FAF6EE] hover:border-[#9E2A2B] text-xs font-mono font-semibold text-[#181512] transition-colors shadow-2xs"
+                >
+                  <Instagram className="w-3.5 h-3.5 text-[#9E2A2B]" />
+                  <span>Instagram</span>
+                </a>
+                <a
+                  href={tiktokInfo.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded border border-[#C5B79F] bg-[#FAF6EE] hover:border-[#9E2A2B] text-xs font-mono font-semibold text-[#181512] transition-colors shadow-2xs"
+                >
+                  <Globe className="w-3.5 h-3.5 text-[#9E2A2B]" />
+                  <span>TikTok</span>
+                </a>
+                <a
+                  href={fbInfo.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded border border-[#C5B79F] bg-[#FAF6EE] hover:border-[#9E2A2B] text-xs font-mono font-semibold text-[#181512] transition-colors shadow-2xs"
+                >
+                  <Globe className="w-3.5 h-3.5 text-[#9E2A2B]" />
+                  <span>Facebook</span>
+                </a>
+                <a
+                  href={ytInfo.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded border border-[#C5B79F] bg-[#FAF6EE] hover:border-[#9E2A2B] text-xs font-mono font-semibold text-[#181512] transition-colors shadow-2xs"
+                >
+                  <Globe className="w-3.5 h-3.5 text-[#9E2A2B]" />
+                  <span>YouTube</span>
+                </a>
+              </div>
+            </div>
           </div>
 
           {/* Curated Navigation */}
@@ -116,7 +173,7 @@ export const Footer: React.FC = () => {
                   onClick={() => scrollToSection('obras')}
                   className="hover:text-[#9E2A2B] transition-colors cursor-pointer"
                 >
-                  Archivo Fotográfico
+                  Galería de Fotos
                 </button>
               </li>
               <li>
@@ -191,6 +248,7 @@ export const Footer: React.FC = () => {
                 <Navigation className="w-3.5 h-3.5 text-[#9E2A2B]" />
                 <span>Waze</span>
               </a>
+              <PWAInstallButton variant="footer" />
             </div>
           </div>
         </div>

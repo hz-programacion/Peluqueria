@@ -10,14 +10,29 @@ import {
   MessageCircle,
   Instagram,
   ArrowRight,
+  Share2,
 } from 'lucide-react';
 import { useStudio, AppPage } from '../context/StudioContext';
 import { EditorialRotatingBanner, MagneticButton } from './EditorialEffects';
 import { RetroHeaderBandaOrnament, RetroRiverCrestBadge } from './RetroPaperBanda';
-import { resolveInstagramInfo, resolveWhatsAppInfo } from '../utils/bookingEngine';
+import { PWAInstallButton } from './PWAInstallButton';
+import {
+  resolveInstagramInfo,
+  resolveWhatsAppInfo,
+  resolveTikTokInfo,
+  resolveFacebookInfo,
+  resolveYouTubeInfo,
+} from '../utils/bookingEngine';
 
 export const Header: React.FC = () => {
-  const { currentPage, navigateTo, isAdminAuthenticated, config } = useStudio();
+  const {
+    currentPage,
+    navigateTo,
+    setActiveSeoSection,
+    triggerCurtainTransition,
+    isAdminAuthenticated,
+    config,
+  } = useStudio();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -76,7 +91,7 @@ export const Header: React.FC = () => {
         {
           id: 'lookbook',
           sectionId: 'obras',
-          label: 'Trabajos',
+          label: 'Galería',
           enabled: config.showGallerySection !== false,
         },
         {
@@ -118,19 +133,30 @@ export const Header: React.FC = () => {
     }
 
     setIsMobileMenuOpen(false);
+    setActiveSeoSection(null);
     if (currentPage !== 'home') {
       navigateTo('home');
     } else {
+      triggerCurtainTransition('Portada del Estudio', `${config.studioTitle} · ${config.address}`);
+      window.history.replaceState(null, '', window.location.pathname);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
-  const handleNavClick = (item: { id: AppPage; sectionId: string }) => {
+  const handleNavClick = (item: { id: AppPage; sectionId: string; label: string }) => {
     setIsMobileMenuOpen(false);
+    setActiveSeoSection(item.sectionId);
+    window.dispatchEvent(
+      new CustomEvent('atelier:activate-home-section', { detail: { sectionId: item.sectionId } })
+    );
     if (currentPage === 'home') {
+      triggerCurtainTransition(item.label, `${config.studioTitle} · ${config.address}`);
       const target = document.getElementById(item.sectionId);
       if (target) {
-        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        window.history.replaceState(null, '', `#${item.sectionId}`);
+        setTimeout(() => {
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 110);
         return;
       }
     }
@@ -139,10 +165,18 @@ export const Header: React.FC = () => {
 
   const handleBookNow = () => {
     setIsMobileMenuOpen(false);
+    setActiveSeoSection('turnero');
+    window.dispatchEvent(
+      new CustomEvent('atelier:activate-home-section', { detail: { sectionId: 'turnero' } })
+    );
     if (currentPage === 'home') {
+      triggerCurtainTransition('Registro de Turnos', `${config.studioTitle} · ${config.address}`);
       const target = document.getElementById('turnero');
       if (target) {
-        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        window.history.replaceState(null, '', '#turnero');
+        setTimeout(() => {
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 110);
         return;
       }
     }
@@ -151,10 +185,13 @@ export const Header: React.FC = () => {
 
   const waInfo = resolveWhatsAppInfo(config.phoneDisplay, config.whatsappRaw);
   const igInfo = resolveInstagramInfo(config.instagram);
+  const tkInfo = resolveTikTokInfo(config.tiktok);
+  const fbInfo = resolveFacebookInfo(config.facebook);
+  const ytInfo = resolveYouTubeInfo(config.youtube);
 
   return (
     <div className="sticky top-0 z-50 w-full">
-      {/* Rotating Vintage Print Ticker Banner (controlled by Admin) */}
+      {/* Rotating Vintage Print Ticker Banner (controlled by Admin, calm speed) */}
       {currentPage !== 'admin' && (
         <EditorialRotatingBanner variant="top" onBookClick={handleBookNow} />
       )}
@@ -173,8 +210,8 @@ export const Header: React.FC = () => {
         />
 
         <div
-          className={`relative z-10 max-w-7xl mx-auto px-4 sm:px-8 flex items-center justify-between gap-4 sm:gap-8 transition-all duration-300 ${
-            isScrolled ? 'py-2.5' : 'py-3.5'
+          className={`relative z-10 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 flex items-center justify-between gap-2 sm:gap-6 transition-all duration-300 ${
+            isScrolled ? 'py-2' : 'py-3'
           }`}
         >
           {/* Zone 1: Brand Wordmark with Vintage Shield & Diagonal Carmine Sash (Triple-click for stealth Admin) */}
@@ -182,15 +219,15 @@ export const Header: React.FC = () => {
             type="button"
             onClick={handleLogoClick}
             title="Inicio · Rodrigo Cutsss"
-            className="group inline-flex items-center gap-2.5 sm:gap-3 text-left whitespace-nowrap shrink-0 cursor-pointer select-none"
+            className="group inline-flex items-center gap-2 sm:gap-3 text-left min-w-0 cursor-pointer select-none"
           >
             <RetroRiverCrestBadge size="sm" />
 
-            <div className="flex flex-col">
-              <span className="font-display text-lg sm:text-2xl font-bold tracking-tight text-[#181512] group-hover:text-[#9E2A2B] transition-colors leading-none">
+            <div className="flex flex-col min-w-0">
+              <span className="font-display text-base sm:text-2xl font-bold tracking-tight text-[#181512] group-hover:text-[#9E2A2B] transition-colors leading-none truncate">
                 {config.studioTitle || 'Rodrigo Cutsss'}
               </span>
-              <span className="text-[9px] font-mono uppercase tracking-[0.2em] text-[#6B6052] mt-1 hidden sm:block">
+              <span className="text-[9px] font-mono uppercase tracking-[0.2em] text-[#6B6052] mt-1 hidden sm:block truncate">
                 Sastrería Capilar · Venado Tuerto
               </span>
             </div>
@@ -199,7 +236,7 @@ export const Header: React.FC = () => {
           {/* Zone 2: Concise single-line navigation links (Desktop) */}
           <nav
             aria-label="Navegación principal"
-            className="hidden md:flex items-center gap-6 lg:gap-7 text-xs font-mono uppercase tracking-[0.14em] font-semibold text-[#4A4137]"
+            className="hidden md:flex items-center gap-5 lg:gap-7 text-xs font-mono uppercase tracking-[0.14em] font-semibold text-[#4A4137] shrink-0"
           >
             {navItems.map((item) => (
               <button
@@ -213,24 +250,28 @@ export const Header: React.FC = () => {
             ))}
           </nav>
 
-          {/* Zone 3: Primary CTA + Mobile Hamburger Menu Toggle */}
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          {/* Zone 3: Primary CTA + Mobile Hamburger Menu Toggle (Guaranteed full visibility on all mobile screens) */}
+          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
             {isAdminAuthenticated && currentPage !== 'admin' && (
               <button
                 type="button"
                 onClick={() => navigateTo('admin')}
-                className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded border border-[#9E2A2B]/50 bg-[#EAE0CE] text-[#181512] hover:bg-[#9E2A2B] hover:text-[#FAF6EE] text-[11px] font-mono font-semibold uppercase tracking-wider transition-colors cursor-pointer whitespace-nowrap shrink-0"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded border border-[#9E2A2B]/50 bg-[#EAE0CE] text-[#181512] hover:bg-[#9E2A2B] hover:text-[#FAF6EE] text-[10px] sm:text-[11px] font-mono font-semibold uppercase tracking-wider transition-colors cursor-pointer whitespace-nowrap shrink-0"
               >
                 <Shield className="w-3.5 h-3.5 text-[#9E2A2B]" />
                 <span className="hidden lg:inline">Panel Admin</span>
               </button>
             )}
 
+            {/* In-App PWA Install Button (Desktop Header) */}
+            <PWAInstallButton variant="header" />
+
             <MagneticButton
               onClick={handleBookNow}
-              className="px-3.5 sm:px-5 py-2 sm:py-2.5 rounded bg-[#9E2A2B] hover:bg-[#822021] text-[#FAF6EE] border border-[#781D1E] shadow-[0_3px_0_#5E1516] text-[11px] sm:text-xs font-mono font-semibold tracking-[0.12em] sm:tracking-[0.14em] uppercase transition-all duration-200 whitespace-nowrap shrink-0"
+              className="px-2.5 sm:px-5 py-2 sm:py-2.5 rounded bg-[#9E2A2B] hover:bg-[#822021] text-[#FAF6EE] border border-[#781D1E] shadow-[0_2px_0_#5E1516] sm:shadow-[0_3px_0_#5E1516] text-[10px] sm:text-xs font-mono font-semibold tracking-[0.08em] sm:tracking-[0.14em] uppercase transition-all duration-200 whitespace-nowrap shrink-0"
             >
-              Reservá tu lugar
+              <span className="sm:hidden">Reservar</span>
+              <span className="hidden sm:inline">Reservá tu lugar</span>
             </MagneticButton>
 
             {/* Mobile Hamburger Button (< md) */}
@@ -240,7 +281,7 @@ export const Header: React.FC = () => {
               aria-expanded={isMobileMenuOpen}
               aria-label={isMobileMenuOpen ? 'Cerrar menú de navegación' : 'Abrir menú de navegación'}
               data-testid="mobile-menu-toggle"
-              className="md:hidden inline-flex items-center justify-center w-9 h-9 rounded border border-[#C8BBA4] bg-[#FAF6EE] text-[#181512] hover:border-[#9E2A2B] hover:text-[#9E2A2B] transition-colors cursor-pointer shrink-0"
+              className="md:hidden inline-flex items-center justify-center w-9 h-9 rounded border border-[#9E2A2B]/55 bg-[#FAF6EE] text-[#181512] hover:bg-[#9E2A2B] hover:text-[#FAF6EE] shadow-2xs transition-colors cursor-pointer shrink-0"
             >
               {isMobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
             </button>
@@ -265,7 +306,7 @@ export const Header: React.FC = () => {
             exit={{ opacity: 0, y: -12 }}
             transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
             data-testid="mobile-menu-drawer"
-            className="md:hidden relative w-full bg-[#FAF6EE] border-b-2 border-[#9E2A2B] shadow-[0_20px_45px_rgba(24,21,18,0.18)] overflow-hidden"
+            className="md:hidden relative w-full bg-[#FAF6EE] border-b-2 border-[#9E2A2B] shadow-[0_20px_45px_rgba(24,21,18,0.18)] overflow-hidden max-h-[85vh] overflow-y-auto"
           >
             {/* Subtle Diagonal Sash Watermark inside Mobile Menu */}
             <div
@@ -323,26 +364,65 @@ export const Header: React.FC = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-2.5 pt-1">
-                <a
-                  href={waInfo.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded border border-[#C8BBA4] bg-[#FAF6EE] text-[#181512] hover:border-[#9E2A2B] text-xs font-mono font-semibold uppercase tracking-wider"
-                >
-                  <MessageCircle className="w-3.5 h-3.5 text-[#9E2A2B]" />
-                  WhatsApp
-                </a>
-                <a
-                  href={igInfo.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded border border-[#C8BBA4] bg-[#FAF6EE] text-[#181512] hover:border-[#9E2A2B] text-xs font-mono font-semibold uppercase tracking-wider"
-                >
-                  <Instagram className="w-3.5 h-3.5 text-[#9E2A2B]" />
-                  {igInfo.handle}
-                </a>
+              {/* Social Media Channels Grid */}
+              <div className="space-y-2">
+                <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#9E2A2B] font-semibold flex items-center gap-1.5">
+                  <Share2 className="w-3 h-3" />
+                  Redes Sociales &amp; Contacto Directo
+                </span>
+                <div className="grid grid-cols-2 gap-2">
+                  <a
+                    href={waInfo.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded border border-[#C8BBA4] bg-[#FAF6EE] text-[#181512] hover:border-[#9E2A2B] text-xs font-mono font-semibold"
+                  >
+                    <MessageCircle className="w-3.5 h-3.5 text-[#9E2A2B]" />
+                    <span>WhatsApp</span>
+                  </a>
+                  <a
+                    href={igInfo.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded border border-[#C8BBA4] bg-[#FAF6EE] text-[#181512] hover:border-[#9E2A2B] text-xs font-mono font-semibold"
+                  >
+                    <Instagram className="w-3.5 h-3.5 text-[#9E2A2B]" />
+                    <span className="truncate">{igInfo.handle}</span>
+                  </a>
+                  <a
+                    href={tkInfo.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded border border-[#C8BBA4] bg-[#FAF6EE] text-[#181512] hover:border-[#9E2A2B] text-xs font-mono font-semibold"
+                  >
+                    <span className="font-bold text-[#9E2A2B]">♪</span>
+                    <span className="truncate">TikTok</span>
+                  </a>
+                  <a
+                    href={fbInfo.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded border border-[#C8BBA4] bg-[#FAF6EE] text-[#181512] hover:border-[#9E2A2B] text-xs font-mono font-semibold"
+                  >
+                    <span className="font-bold text-[#9E2A2B]">f</span>
+                    <span className="truncate">Facebook</span>
+                  </a>
+                </div>
+                {config.youtube && (
+                  <a
+                    href={ytInfo.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded border border-[#C8BBA4] bg-[#FAF6EE] text-[#181512] hover:border-[#9E2A2B] text-xs font-mono font-semibold"
+                  >
+                    <span className="font-bold text-[#9E2A2B]">▶</span>
+                    <span>YouTube · {ytInfo.handle}</span>
+                  </a>
+                )}
               </div>
+
+              {/* In-App PWA Install Button inside Mobile Drawer */}
+              <PWAInstallButton variant="drawer" />
 
               <button
                 type="button"
