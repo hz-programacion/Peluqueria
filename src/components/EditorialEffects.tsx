@@ -180,7 +180,7 @@ export const EditorialRotatingBanner: React.FC<{
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         onClick={onBookClick}
-        className="w-full bg-[#171513] text-[#F7F4EE] border-b border-[#C8A97E]/25 overflow-hidden py-2.5 cursor-pointer select-none relative z-30"
+        className="w-full bg-[#E8DFCE] text-[#181512] border-b border-[#C5B79F] overflow-hidden py-1.5 cursor-pointer select-none relative z-30"
       >
         <motion.div
           style={{ x: xPercent }}
@@ -189,21 +189,21 @@ export const EditorialRotatingBanner: React.FC<{
           {repeatedItems.map((item, idx) => (
             <div
               key={`${item.label}-${idx}`}
-              className="inline-flex items-center gap-3 px-6 text-xs tracking-wide"
+              className="inline-flex items-center gap-2.5 px-6 text-xs tracking-wide"
             >
               {item.tag && (
-                <span className="text-[10px] uppercase tracking-[0.18em] text-[#C8A97E] font-medium">
+                <span className="text-[#9E2A2B] text-[10px] font-mono uppercase tracking-[0.16em] font-bold">
                   {item.tag}
                 </span>
               )}
-              <span className="text-[#F7F4EE] font-normal">{item.label}</span>
+              <span className="text-[#2C2620] font-medium">{item.label}</span>
               {item.highlight && (
-                <span className="font-mono text-[11px] text-[#C8A97E] font-medium tabular-nums">
-                  ({item.highlight})
+                <span className="font-mono text-[11px] text-[#9E2A2B] font-semibold tabular-nums">
+                  · {item.highlight}
                 </span>
               )}
-              <span className="text-[#96734E]/60 pl-3" aria-hidden="true">
-                ✦
+              <span className="text-[#9E2A2B]/65 pl-3 font-serif italic" aria-hidden="true">
+                ╱
               </span>
             </div>
           ))}
@@ -212,15 +212,17 @@ export const EditorialRotatingBanner: React.FC<{
     );
   }
 
-  // Architectural Parallax Divider Variant
+  // Subtle Retro Aged-Paper Parallax Divider Variant
   return (
     <section
-      aria-label="Información destacada del estudio, precios y ubicación"
+      aria-label="Información destacada de Rodrigo Cutsss, precios y ubicación"
       data-testid="editorial-promo-banner-divider"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className="w-full bg-[#171513] text-[#F7F4EE] border-y border-[#171513] py-5 overflow-hidden relative select-none"
+      className="w-full bg-[#EAE0CE] text-[#181512] border-y-2 border-[#C5B79F] py-3.5 overflow-hidden relative select-none shadow-inner"
     >
+      {/* Subtle Carmine Pinstripe along the top of the divider */}
+      <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#9E2A2B]/60 to-transparent" />
       <motion.div
         style={{ x: xPercent }}
         className="flex items-center whitespace-nowrap w-max"
@@ -230,21 +232,21 @@ export const EditorialRotatingBanner: React.FC<{
             key={`div-${item.label}-${idx}`}
             type="button"
             onClick={onBookClick}
-            className="inline-flex items-center gap-4 px-8 group cursor-pointer text-left"
+            className="inline-flex items-center gap-3.5 px-8 group cursor-pointer text-left"
           >
-            <span className="text-[10px] uppercase tracking-[0.2em] text-[#C8A97E] font-mono">
+            <span className="text-[#9E2A2B] text-[10px] uppercase tracking-[0.18em] font-mono font-bold">
               {item.tag}
             </span>
-            <span className="font-display italic text-xl sm:text-2xl text-[#F7F4EE] group-hover:text-[#C8A97E] transition-colors">
+            <span className="font-display font-bold uppercase tracking-tight text-base sm:text-lg text-[#181512] group-hover:text-[#9E2A2B] transition-colors">
               {item.label}
             </span>
             {item.highlight && (
-              <span className="font-mono text-xs px-2.5 py-1 border border-[#C8A97E]/35 text-[#E4DDD1] tabular-nums">
-                {item.highlight}
+              <span className="font-mono text-xs text-[#6B5E4E] font-semibold tabular-nums">
+                · {item.highlight}
               </span>
             )}
-            <span className="text-[#96734E] pl-4" aria-hidden="true">
-              ·
+            <span className="text-[#9E2A2B]/70 pl-4 font-serif italic text-base" aria-hidden="true">
+              ╱
             </span>
           </button>
         ))}

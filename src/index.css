@@ -3,34 +3,39 @@
 
 @layer base {
   :root {
-    --font-display: 'Cormorant Garamond', Georgia, serif;
+    --font-display: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
     --font-serif-art: 'Cormorant Garamond', Georgia, serif;
     --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     --font-mono: 'JetBrains Mono', monospace;
 
-    /* Organic High-End Atelier Palette */
-    --atelier-paper: #F7F4EE;
-    --atelier-stone: #EFEAE1;
-    --atelier-parchment: #E4DDD1;
-    --atelier-charcoal: #171513;
-    --atelier-espresso: #23201D;
-    --atelier-muted: #655E57;
-    --atelier-bronze: #96734E;
-    --atelier-terracotta: #A65D43;
-    --atelier-sage: #3D4F43;
+    /* Aged Paper & Subtle Retro River Plate Palette */
+    --paper-bg: #F3ECE0;
+    --paper-card: #FAF6EE;
+    --paper-aged: #EAE0CE;
+    --paper-border: #C8BBA4;
+    --ink-primary: #181512;
+    --ink-secondary: #4F463B;
+    --ink-muted: #786D5E;
+    --river-red: #9E2A2B;
+    --river-crimson: #822021;
+    --river-gold: #B89146;
   }
 
   html {
     font-family: var(--font-sans);
-    background-color: #F7F4EE;
-    color: #171513;
+    background-color: #F3ECE0;
+    color: #181512;
     scroll-behavior: smooth;
   }
 
   body {
     overflow-x: hidden;
-    background-color: #F7F4EE;
-    color: #171513;
+    background-color: #F3ECE0;
+    color: #181512;
+    background-image:
+      radial-gradient(circle at 15% 15%, rgba(158, 42, 43, 0.035), transparent 45%),
+      radial-gradient(circle at 85% 80%, rgba(184, 145, 70, 0.06), transparent 50%),
+      linear-gradient(180deg, #F5EFE4 0%, #EFE6D5 50%, #F3ECE0 100%);
   }
 }
 
@@ -50,65 +55,94 @@
   font-family: var(--font-mono);
 }
 
-/* Subtle paper grain & warm editorial atmosphere */
-.atelier-paper-surface {
-  background-color: #F7F4EE;
-  background-image: radial-gradient(circle at 15% 10%, rgba(150, 115, 78, 0.06), transparent 45%),
-    radial-gradient(circle at 85% 80%, rgba(61, 79, 67, 0.05), transparent 50%);
+/* Tactile Aged-Paper Card Surface */
+.retro-paper-card {
+  background-color: #FAF6EE;
+  border: 1px solid #C8BBA4;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.7) inset,
+    0 10px 28px -8px rgba(24, 21, 18, 0.08);
+  background-image:
+    radial-gradient(circle at 92% 8%, rgba(158, 42, 43, 0.04), transparent 40%),
+    radial-gradient(circle at 8% 92%, rgba(184, 145, 70, 0.06), transparent 45%);
 }
 
-[data-atelier-theme="crimson"] .atelier-paper-surface {
-  background-color: #F8F3ED;
-  background-image: radial-gradient(circle at 15% 10%, rgba(166, 93, 67, 0.09), transparent 45%),
-    radial-gradient(circle at 85% 80%, rgba(150, 115, 78, 0.06), transparent 50%);
+/* Subtle Diagonal Weathered Carmine Sash Background */
+.river-banda-bg {
+  background-image: linear-gradient(
+    135deg,
+    transparent 46.5%,
+    rgba(158, 42, 43, 0.075) 46.5%,
+    rgba(158, 42, 43, 0.075) 53.5%,
+    transparent 53.5%
+  );
 }
 
-[data-atelier-theme="volt"] .atelier-paper-surface {
-  background-color: #F3F5F1;
-  background-image: radial-gradient(circle at 15% 10%, rgba(61, 79, 67, 0.09), transparent 45%),
-    radial-gradient(circle at 85% 80%, rgba(150, 115, 78, 0.05), transparent 50%);
+.river-banda-corner {
+  position: relative;
 }
 
-[data-atelier-theme="uv"] .atelier-paper-surface {
-  background-color: #F1ECE3;
-  background-image: radial-gradient(circle at 15% 10%, rgba(23, 21, 19, 0.08), transparent 45%),
-    radial-gradient(circle at 85% 80%, rgba(150, 115, 78, 0.09), transparent 50%);
+.river-banda-corner::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(
+    135deg,
+    transparent 48%,
+    rgba(250, 246, 238, 0.9) 48%,
+    rgba(250, 246, 238, 0.9) 52%,
+    rgba(158, 42, 43, 0.78) 52%,
+    rgba(158, 42, 43, 0.78) 62%,
+    rgba(250, 246, 238, 0.9) 62%,
+    rgba(250, 246, 238, 0.9) 66%,
+    transparent 66%
+  );
+  pointer-events: none;
 }
 
-.atelier-charcoal-surface {
-  background-color: #171513;
-  background-image: radial-gradient(circle at 80% 15%, rgba(150, 115, 78, 0.12), transparent 50%),
-    radial-gradient(circle at 15% 85%, rgba(61, 79, 67, 0.1), transparent 50%);
+/* Warm analog vintage paper surface texture */
+.distressed-surface {
+  background-image:
+    radial-gradient(circle at 18% 12%, rgba(158, 42, 43, 0.045), transparent 50%),
+    radial-gradient(circle at 82% 85%, rgba(184, 145, 70, 0.055), transparent 55%);
 }
 
-/* Editorial Drop Cap for the Manifesto */
-.editorial-dropcap::first-letter {
-  font-family: var(--font-display);
-  font-size: 3.75rem;
-  line-height: 0.82;
-  float: left;
-  padding-right: 0.75rem;
-  padding-top: 0.2rem;
-  color: #96734E;
-  font-weight: 600;
+[data-urban-theme="crimson"] {
+  --river-red: #9E2A2B;
 }
 
-/* Custom subtle scrollbars */
+[data-urban-theme="amber"] {
+  --river-red: #8B2627;
+}
+
+[data-urban-theme="uv"] {
+  --river-red: #B23234;
+}
+
+[data-urban-theme="volt"] {
+  --river-red: #B89146;
+}
+
+/* Subtle Vintage Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #EFEAE1;
+  background: #EAE0CE;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #C5BBAE;
+  background: #B8AA93;
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #96734E;
+  background: #9E2A2B;
 }
 
 @media (prefers-reduced-motion: reduce) {

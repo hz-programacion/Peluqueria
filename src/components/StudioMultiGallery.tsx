@@ -9,7 +9,6 @@ import {
   ChevronRight,
   Calendar,
   Shield,
-  Flame,
   Scissors,
 } from 'lucide-react';
 import { useStudio } from '../context/StudioContext';
@@ -28,40 +27,40 @@ const GALLERY_FILTERS: { id: 'Todas' | GalleryItemCategory; label: string }[] = 
 
 const URBAN_CARD_ACCENTS = [
   {
-    color: '#F59E0B',
-    badgeBg: 'bg-[#F59E0B] text-zinc-950',
-    borderHover: 'hover:border-[#F59E0B]',
-    trendTag: 'TENDENCIA 2026 · CROP & SKIN FADE',
+    color: '#9E2A2B',
+    badgeBg: 'bg-[#9E2A2B] text-[#F3EFE6]',
+    borderHover: 'hover:border-[#9E2A2B]',
+    trendTag: 'ARCHIVO · CROP & SKIN FADE',
   },
   {
-    color: '#22D3EE',
-    badgeBg: 'bg-[#22D3EE] text-zinc-950',
-    borderHover: 'hover:border-[#22D3EE]',
-    trendTag: 'ESPACIO URBANO 1 A 1',
+    color: '#C5A059',
+    badgeBg: 'bg-[#1A1816] border border-[#C5A059]/50 text-[#C5A059]',
+    borderHover: 'hover:border-[#C5A059]',
+    trendTag: 'ESTUDIO PRIVADO 1 A 1',
   },
   {
-    color: '#F43F5E',
-    badgeBg: 'bg-[#F43F5E] text-white',
-    borderHover: 'hover:border-[#F43F5E]',
-    trendTag: 'TENDENCIA 2026 · LOW TAPER RULOS',
+    color: '#9E2A2B',
+    badgeBg: 'bg-[#9E2A2B] text-[#F3EFE6]',
+    borderHover: 'hover:border-[#9E2A2B]',
+    trendTag: 'ARCHIVO · LOW TAPER RULOS',
   },
   {
-    color: '#A3E635',
-    badgeBg: 'bg-[#A3E635] text-zinc-950',
-    borderHover: 'hover:border-[#A3E635]',
+    color: '#C5A059',
+    badgeBg: 'bg-[#1A1816] border border-[#C5A059]/50 text-[#C5A059]',
+    borderHover: 'hover:border-[#C5A059]',
     trendTag: 'PRECISIÓN 0.0MM TITANIO',
   },
   {
-    color: '#22D3EE',
-    badgeBg: 'bg-[#22D3EE] text-zinc-950',
-    borderHover: 'hover:border-[#22D3EE]',
-    trendTag: 'TENDENCIA 2026 · PLATINADO HIELO',
+    color: '#9E2A2B',
+    badgeBg: 'bg-[#9E2A2B] text-[#F3EFE6]',
+    borderHover: 'hover:border-[#9E2A2B]',
+    trendTag: 'COLORIMETRÍA · PLATINADO',
   },
   {
-    color: '#F59E0B',
-    badgeBg: 'bg-[#F59E0B] text-zinc-950',
-    borderHover: 'hover:border-[#F59E0B]',
-    trendTag: 'ATELIER PRIVADO VT',
+    color: '#C5A059',
+    badgeBg: 'bg-[#1A1816] border border-[#C5A059]/50 text-[#C5A059]',
+    borderHover: 'hover:border-[#C5A059]',
+    trendTag: 'RODRIGO CUTSSS · VT',
   },
 ];
 
@@ -114,12 +113,12 @@ export const StudioMultiGallery: React.FC = () => {
 
   return (
     <div className="space-y-8">
-      {/* Urban Street-Art Segmented Filter Bar */}
+      {/* Aged-Paper Segmented Filter Bar */}
       {(config.showGalleryFilter || isAdminAuthenticated) && (
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#252A36]">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#C8BBA4]">
           {config.showGalleryFilter ? (
             <div
-              className="inline-flex items-center gap-1.5 p-1.5 rounded-2xl bg-[#0E1017] border border-[#252A36] overflow-x-auto max-w-full"
+              className="inline-flex items-center gap-1.5 p-1.5 rounded-xl bg-[#EAE0CE] border border-[#C8BBA4] overflow-x-auto max-w-full"
               role="tablist"
               aria-label="Filtrar fotos de la galería"
             >
@@ -143,16 +142,16 @@ export const StudioMultiGallery: React.FC = () => {
                       playMechanicalClick();
                       setSelectedCategory(cat.id);
                     }}
-                    className={`px-3.5 py-2 rounded-xl text-xs font-mono font-bold whitespace-nowrap shrink-0 transition-all cursor-pointer ${
+                    className={`px-3.5 py-2 rounded-lg text-xs font-mono font-bold whitespace-nowrap shrink-0 transition-all cursor-pointer ${
                       isSelected
-                        ? 'bg-[#F59E0B] text-zinc-950 shadow-md'
-                        : 'text-zinc-400 hover:text-white hover:bg-white/5'
+                        ? 'bg-[#9E2A2B] text-[#FAF6EE] shadow-xs'
+                        : 'text-[#4F463B] hover:text-[#181512] hover:bg-[#FAF6EE]'
                     }`}
                   >
                     <span>{cat.label}</span>
                     <span
                       className={`ml-1.5 text-[11px] tabular-nums ${
-                        isSelected ? 'text-zinc-900 font-black' : 'text-zinc-500'
+                        isSelected ? 'text-[#FAF6EE]/90 font-black' : 'text-[#6E6355]'
                       }`}
                     >
                       ({count})
@@ -162,7 +161,7 @@ export const StudioMultiGallery: React.FC = () => {
               })}
             </div>
           ) : (
-            <div className="text-xs font-mono text-zinc-400">
+            <div className="text-xs font-mono text-[#5C5346]">
               Mostrando {visibleItems.length} creaciones reales del estudio
             </div>
           )}
@@ -176,7 +175,7 @@ export const StudioMultiGallery: React.FC = () => {
                 playMechanicalClick();
                 navigateTo('admin');
               }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#161920] hover:bg-[#F59E0B] hover:text-zinc-950 border border-[#F59E0B]/50 text-white font-mono text-xs font-bold whitespace-nowrap shrink-0 transition-all cursor-pointer self-start sm:self-auto"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#FAF6EE] hover:bg-[#9E2A2B] hover:text-[#FAF6EE] border border-[#9E2A2B]/50 text-[#181512] font-mono text-xs font-bold whitespace-nowrap shrink-0 transition-all cursor-pointer self-start sm:self-auto"
             >
               <Shield className="w-3.5 h-3.5" />
               <span>Subir / Editar Fotos en Admin</span>
@@ -207,90 +206,73 @@ export const StudioMultiGallery: React.FC = () => {
             return (
               <motion.article
                 key={item.id}
-                whileHover={{ y: -6 }}
+                whileHover={{ y: -5 }}
                 transition={{ type: 'spring', stiffness: 300, damping: 24 }}
                 onClick={() => {
                   playMechanicalClick();
                   setActiveLightboxItem(item);
                 }}
-                className={`group rounded-2xl bg-[#11131B] border border-[#252A36] ${accent.borderHover} transition-all overflow-hidden flex flex-col justify-between shadow-2xl cursor-pointer relative distressed-surface`}
+                className="group rounded-xl bg-[#FAF6EE] border border-[#C8BBA4] hover:border-[#9E2A2B] transition-all overflow-hidden flex flex-col justify-between shadow-[0_12px_30px_rgba(24,21,18,0.08)] cursor-pointer relative river-banda-corner"
               >
-                {/* Top Urban Aerosol Accent Bar */}
-                <div
-                  className="h-1 w-full"
-                  style={{
-                    background: `linear-gradient(90deg, ${accent.color}, transparent)`,
-                  }}
-                />
-
-                <div className="relative z-10">
-                  {/* Image Wrapper */}
-                  <div className="relative h-68 sm:h-76 overflow-hidden bg-[#0A0B0E]">
+                <div className="relative z-10 p-2.5 pb-0">
+                  {/* Mounted Vintage Photograph Frame */}
+                  <div className="relative h-64 sm:h-72 overflow-hidden rounded-lg border border-[#C8BBA4] bg-[#181512]">
                     <img
                       src={item.imageUrl}
                       alt={item.title}
                       loading="lazy"
                       referrerPolicy="no-referrer"
-                      className="w-full h-full object-cover group-hover:scale-106 transition-transform duration-700"
+                      className="w-full h-full object-cover sepia-[0.1] contrast-[1.03] group-hover:scale-105 transition-transform duration-700"
                     />
 
-                    <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-[#0B0D13] via-[#0B0D13]/55 to-transparent pointer-events-none" />
+                    <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-[#181512]/90 via-[#181512]/45 to-transparent pointer-events-none" />
 
-                    {/* Top Left Trend 2026 Badge */}
+                    {/* Top Left Archive Badge */}
                     <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5">
-                      <span
-                        className={`px-2.5 py-1 rounded-lg font-mono text-[10px] font-black uppercase tracking-wider shadow-lg flex items-center gap-1 ${accent.badgeBg}`}
-                      >
-                        <Flame className="w-3 h-3" />
-                        <span>{accent.trendTag}</span>
+                      <span className="px-2.5 py-1 rounded bg-[#FAF6EE]/95 border border-[#C8BBA4] text-[#9E2A2B] font-mono text-[10px] font-bold uppercase tracking-wider shadow-xs">
+                        {accent.trendTag}
                       </span>
                     </div>
 
                     {showPrice && (
                       <div className="absolute top-3 right-3 z-10">
-                        <span className="px-2.5 py-1 rounded-lg bg-[#0A0B0E]/92 border border-[#282D37] text-white font-mono text-xs font-black tabular-nums shadow-lg">
+                        <span className="px-2.5 py-1 rounded bg-[#9E2A2B] text-[#FAF6EE] font-mono text-xs font-bold tabular-nums shadow-xs">
                           {item.priceLabel}
                         </span>
                       </div>
                     )}
 
-                    <div className="absolute bottom-3 left-4 right-4 flex items-center justify-between text-xs font-mono text-zinc-200 z-10">
-                      <span
-                        className="font-bold uppercase tracking-wider"
-                        style={{ color: accent.color }}
-                      >
+                    <div className="absolute bottom-3 left-3.5 right-3.5 flex items-center justify-between text-xs font-mono text-[#FAF6EE] z-10">
+                      <span className="font-bold uppercase tracking-wider text-[#E8DFCE]">
                         {item.category}
                       </span>
-                      <span className="text-zinc-300 group-hover:text-white font-bold transition-colors">
-                        Ampliar creación &rarr;
+                      <span className="text-[#FAF6EE] font-semibold">
+                        Ampliar &rarr;
                       </span>
                     </div>
                   </div>
 
-                  {/* Card Body */}
-                  <div className="p-5 sm:p-6 space-y-3">
-                    <div className="flex items-center justify-between text-xs font-mono text-zinc-400">
-                      <span className="text-zinc-300 font-bold">{igInfo.handle}</span>
+                  {/* Card Body on Aged Cardstock */}
+                  <div className="p-4 sm:p-5 space-y-2.5">
+                    <div className="flex items-center justify-between text-xs font-mono text-[#5C5346]">
+                      <span className="text-[#9E2A2B] font-bold">{igInfo.handle}</span>
                       <span>·</span>
                       <span>{item.dateLabel}</span>
                     </div>
 
-                    <h3 className="font-display text-xl font-black uppercase tracking-tight text-white group-hover:text-[#F59E0B] transition-colors leading-snug">
+                    <h3 className="font-display text-xl font-bold tracking-tight text-[#181512] group-hover:text-[#9E2A2B] transition-colors leading-snug">
                       {item.title}
                     </h3>
 
                     {item.description && (
-                      <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed line-clamp-2">
+                      <p className="text-xs sm:text-sm text-[#4F463B] leading-relaxed line-clamp-2">
                         {item.description}
                       </p>
                     )}
 
                     {showSpec && (
-                      <div className="p-3 rounded-xl bg-[#0A0C10] border border-[#1E2330] text-xs font-mono text-zinc-300">
-                        <span
-                          className="font-bold uppercase text-[10px] block mb-0.5"
-                          style={{ color: accent.color }}
-                        >
+                      <div className="p-3 rounded-lg bg-[#EAE0CE] border border-[#C8BBA4] text-xs font-mono text-[#181512]">
+                        <span className="font-bold uppercase text-[10px] block mb-0.5 text-[#9E2A2B]">
                           Fórmula &amp; Técnica Real:
                         </span>
                         <span>{item.technicalSpec}</span>
@@ -298,11 +280,11 @@ export const StudioMultiGallery: React.FC = () => {
                     )}
 
                     {config.showGalleryTags && item.tags && item.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 pt-1 text-[11px] font-mono text-zinc-400">
+                      <div className="flex flex-wrap gap-1.5 pt-1 text-[11px] font-mono text-[#5C5346]">
                         {item.tags.slice(0, 3).map((tag, tagIdx) => (
                           <span
                             key={tagIdx}
-                            className="px-2 py-0.5 rounded bg-[#161922] border border-[#232836]"
+                            className="px-2 py-0.5 rounded bg-[#EAE0CE] border border-[#C8BBA4]"
                           >
                             {tag}
                           </span>
@@ -314,7 +296,7 @@ export const StudioMultiGallery: React.FC = () => {
 
                 {/* Card Footer */}
                 {(config.showGalleryLikes || showBuyBtn) && (
-                  <div className="px-5 py-3.5 border-t border-[#1E222B] bg-[#0B0D12]/95 flex items-center justify-between gap-2 relative z-10">
+                  <div className="px-5 py-3.5 border-t border-[#D5C9B4] bg-[#F3ECE0] flex items-center justify-between gap-2 relative z-10">
                     {config.showGalleryLikes ? (
                       <button
                         type="button"
@@ -324,17 +306,17 @@ export const StudioMultiGallery: React.FC = () => {
                           toggleLikeGalleryItem(item.id);
                         }}
                         aria-label={`Me gusta ${item.title}`}
-                        className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-zinc-300 hover:text-[#F43F5E] transition-colors cursor-pointer"
+                        className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-[#4F463B] hover:text-[#9E2A2B] transition-colors cursor-pointer"
                       >
                         <Heart
                           className={`w-4 h-4 ${
-                            isLiked ? 'fill-[#F43F5E] text-[#F43F5E]' : 'text-zinc-400'
+                            isLiked ? 'fill-[#9E2A2B] text-[#9E2A2B]' : 'text-[#6E6355]'
                           }`}
                         />
                         <span className="tabular-nums">{item.likes}</span>
                       </button>
                     ) : (
-                      <span className="text-xs font-mono text-zinc-500">{config.address}</span>
+                      <span className="text-xs font-mono text-[#5C5346]">{config.address}</span>
                     )}
 
                     {showBuyBtn ? (
@@ -358,13 +340,13 @@ export const StudioMultiGallery: React.FC = () => {
                             navigateTo('booking');
                           }
                         }}
-                        className="px-3.5 py-2 rounded-xl bg-[#F59E0B] hover:bg-[#D97706] text-zinc-950 font-mono text-xs font-black uppercase tracking-wider inline-flex items-center gap-1.5 whitespace-nowrap transition-all cursor-pointer shadow-sm active:scale-95"
+                        className="px-3.5 py-2 rounded bg-[#9E2A2B] hover:bg-[#822021] text-[#FAF6EE] font-mono text-xs font-semibold uppercase tracking-wider inline-flex items-center gap-1.5 whitespace-nowrap transition-all cursor-pointer shadow-xs"
                       >
                         <Scissors className="w-3.5 h-3.5" />
                         <span>Quiero Este Look</span>
                       </button>
                     ) : (
-                      <span className="text-xs font-mono text-zinc-500">{config.address}</span>
+                      <span className="text-xs font-mono text-[#5C5346]">{config.address}</span>
                     )}
                   </div>
                 )}

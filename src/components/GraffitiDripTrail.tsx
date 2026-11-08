@@ -11,7 +11,7 @@ interface DripNode {
   hasSecondaryDrip: boolean;
 }
 
-const URBAN_DRIP_PALETTE = ['#F59E0B', '#00F0FF', '#FF5500', '#CCFF00', '#F43F5E'];
+const URBAN_DRIP_PALETTE = ['#9E2A2B', '#F3EFE6', '#7A2021', '#C5A059', '#B8B1A4'];
 
 /**
  * Expressive mouse-following graffiti 'drip' trail using SVG paths and framer-motion.

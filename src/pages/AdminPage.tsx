@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useStudio, normalizeSectionOrder } from '../context/StudioContext';
 import {
   Shield,
@@ -6,15 +6,9 @@ import {
   Plus,
   Trash2,
   Edit3,
-  X,
   Clock,
   DollarSign,
   Calendar,
-  Instagram,
-  Save,
-  MessageCircle,
-  CheckCircle2,
-  Lock,
   Camera,
   Eye,
   EyeOff,
@@ -30,6 +24,14 @@ import {
   Search,
   Settings,
   TrendingUp,
+  MessageCircle,
+  CheckCircle2,
+  Lock,
+  Users,
+  FileText,
+  KeyRound,
+  BellRing,
+  Star,
 } from 'lucide-react';
 import { StudioService, GalleryItemCategory } from '../data/studioData';
 import {
@@ -45,6 +47,7 @@ import {
   resolveInstagramInfo,
   resolveWhatsAppInfo,
 } from '../utils/bookingEngine';
+import { RetroCornerBandaBookmark, RetroRiverCrestBadge } from '../components/RetroPaperBanda';
 
 const compressImageFile = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -92,37 +95,37 @@ const SECTION_ADMIN_META: Record<
     key: 'showBookingSection',
     label: 'Turnero Paso a Paso & Consulta por WhatsApp (#turnero)',
     description:
-      'Asistente de reservas en 3 pasos, consulta de turno activo y descarga de comprobante PNG/ICS.',
+      'Asistente de reservas en 3 pasos, consulta de turno activo y descarga de ticket PNG/ICS.',
   },
   services: {
     key: 'showServicesSection',
     label: 'Catálogo Interactivo de Servicios (#servicios)',
     description:
-      'Carta editorial de servicios con vista previa sincronizada, tiempos, valores y selección en 1 clic.',
+      'Carta de servicios con vista previa sincronizada, tiempos, valores y selección en 1 clic.',
   },
   beforeAfter: {
     key: 'showBeforeAfterSection',
-    label: 'Comparador Editorial "Antes & Después" (#transformaciones)',
+    label: 'Comparador Urbano "Antes & Después" (#transformaciones)',
     description:
-      'Deslizador interactivo de sastrería capilar para comparar diagnóstico previo y resultado final.',
+      'Deslizador interactivo con divisor aerosol para comparar el estado previo y el corte terminado.',
   },
   gallery: {
     key: 'showGallerySection',
-    label: 'Obras & Detalles de Autor (#obras)',
+    label: 'Galería & Trabajos del Estudio (#obras)',
     description:
-      'Portafolio fotográfico con revelado editorial, filtros por categoría y reserva directa.',
+      'Portafolio fotográfico con filtros por categoría, likes, ficha técnica y reserva directa.',
   },
   reviews: {
     key: 'showReviewsSection',
-    label: 'Voces del Estudio & Reseñas (#opiniones)',
+    label: 'Reseñas de Clientes (#opiniones)',
     description:
-      'Testimonios verificados de clientes en Venado Tuerto y formulario para publicar reseña.',
+      'Testimonios verificados de clientes en Venado Tuerto y modal para publicar reseña.',
   },
   barber: {
     key: 'showBarberSection',
-    label: 'Manifiesto & El Estudio (#estudio)',
+    label: 'Conocé al Barbero & Audio de Presentación (#estudio)',
     description:
-      'Presentación editorial del espacio privado, filosofía uno a uno y fotografía con parallax.',
+      'Perfil de Rodrigo, reproductor de voz con transcripción sincronizada y contacto directo.',
   },
   location: {
     key: 'showLocationSection',
@@ -166,23 +169,24 @@ export const AdminPage: React.FC = () => {
     blockedSlots,
     addBlockedSlot,
     deleteBlockedSlot,
+    clientNotes,
+    saveClientNote,
+    deleteClientNote,
     navigateTo,
-    backendConnected,
-    backendMetrics,
     auditLogs,
-    refreshBackendState,
   } = useStudio();
 
   const [pinInput, setPinInput] = useState('');
   const [pinError, setPinError] = useState('');
   const [activeTab, setActiveTab] = useState<
     | 'sections_profile'
-    | 'business_rules'
     | 'appointments'
-    | 'gallery'
+    | 'clients_crm'
+    | 'finance_box'
     | 'services'
+    | 'gallery'
+    | 'business_rules'
     | 'calendar'
-    | 'server_audit'
   >('sections_profile');
   const [appointmentFilter, setAppointmentFilter] = useState<'all' | 'today'>('today');
   const [appointmentSearch, setAppointmentSearch] = useState('');
@@ -208,7 +212,14 @@ export const AdminPage: React.FC = () => {
   const [scheduleDisplayForm, setScheduleDisplayForm] = useState(config.scheduleDisplay);
   const [adminPinForm, setAdminPinForm] = useState(config.adminPin || '1234');
 
-  // Sync local form state whenever config changes externally
+  // CRM Client Formula Form
+  const [crmClientName, setCrmClientName] = useState('');
+  const [crmWhatsapp, setCrmWhatsapp] = useState('');
+  const [crmFormulaSpec, setCrmFormulaSpec] = useState('');
+  const [crmHairType, setCrmHairType] = useState('Ondulado / Densidad media');
+  const [crmPreferredProducts, setCrmPreferredProducts] = useState('Polvo voluminizador mate');
+  const [crmSearch, setCrmSearch] = useState('');
+
   useEffect(() => {
     setBarberNameForm(config.authorName);
     setInstagramForm(config.instagram);
@@ -257,12 +268,12 @@ export const AdminPage: React.FC = () => {
     preparation: ['Cabello limpio y libre de fijadores pesados'],
     executionSteps: [
       '10 min · Diagnóstico personalizado y estudio de facciones',
-      '20 min · Corte preciso a tijera y transiciones suaves',
-      '10 min · Texturizado en seco para movimiento natural',
-      '05 min · Peinado final con acabado mate orgánico',
+      '20 min · Degradé limpio a máquina y conexión a tijera',
+      '10 min · Texturizado en seco para volumen y movimiento',
+      '05 min · Peinado final con acabado mate',
     ],
-    aftercare: 'Recomendamos control cada 3 a 4 semanas.',
-    productsUsed: 'Tijeras de corte y esculpir · Máquina de precisión · Arcilla mate orgánica',
+    aftercare: 'Mantiene estructura entre 2 y 3 semanas.',
+    productsUsed: 'Clippers de precisión · Tijeras de esculpir · Polvo mate',
   });
 
   // Quick Manual Appointment Form
@@ -305,7 +316,7 @@ export const AdminPage: React.FC = () => {
       setPinError('');
       setPinInput('');
     } else {
-      setPinError(`PIN incorrecto. El PIN actual es ${config.adminPin || '1234'}.`);
+      setPinError(`PIN incorrecto. El PIN activo es ${config.adminPin || '1234'}.`);
     }
   };
 
@@ -324,8 +335,8 @@ export const AdminPage: React.FC = () => {
       instagram: cleanIg,
       phoneDisplay: whatsappDisplayForm.trim() || resolvedWa.display,
       whatsappRaw: resolvedWa.digits,
-      studioTitle: studioTitleForm.trim() || `${cleanName} Estudio`,
-      brandKicker: brandKickerForm.trim() || 'Estudio de Corte & Autor',
+      studioTitle: studioTitleForm.trim() || 'Rodrigo Cutsss',
+      brandKicker: brandKickerForm.trim() || 'Peluquería & Barbería de Autor · Venado Tuerto',
       tagline: taglineForm.trim() || config.tagline,
       address: addressForm.trim() || config.address,
       neighborhood: neighborhoodForm.trim() || config.neighborhood,
@@ -337,9 +348,106 @@ export const AdminPage: React.FC = () => {
     });
 
     triggerToast(
-      `Cambios guardados y aplicados en el sitio (${cleanName} · ${addressForm.trim()})`
+      `Cambios guardados y aplicados en vivo (${studioTitleForm.trim() || 'Rodrigo Cutsss'})`
     );
   };
+
+  // Financial & Appointment metrics
+  const estimateAppPrice = (serviceNames: string[]) => {
+    const sum = serviceNames.reduce((acc, name) => {
+      const found = services.find((s) => s.name.toLowerCase() === name.toLowerCase());
+      return acc + (found ? found.price : 12000);
+    }, 0);
+    return sum > 0 ? sum : 12000;
+  };
+
+  const todayAppointments = appointments.filter((a) => a.date === todayStr);
+  const totalRevenueEst = appointments.reduce(
+    (acc, app) => acc + estimateAppPrice(app.serviceNames),
+    0
+  );
+  const todayRevenueEst = todayAppointments.reduce(
+    (acc, app) => acc + estimateAppPrice(app.serviceNames),
+    0
+  );
+  const depositCollectedARS = appointments
+    .filter((a) => a.paymentOption === 'deposit')
+    .reduce(
+      (acc, app) =>
+        acc + Math.round((estimateAppPrice(app.serviceNames) * config.depositPercentage) / 100),
+      0
+    );
+  const pendingBalanceInChairARS = Math.max(0, totalRevenueEst - depositCollectedARS);
+  const averageTicketARS =
+    appointments.length > 0 ? Math.round(totalRevenueEst / appointments.length) : 12000;
+
+  // Combined CRM Client Directory (merges saved formula notes + appointment history)
+  const combinedClients = useMemo(() => {
+    const map = new Map<
+      string,
+      {
+        id: string;
+        clientName: string;
+        whatsapp: string;
+        formulaSpec: string;
+        hairType: string;
+        preferredProducts: string;
+        visitsCount: number;
+        totalSpentARS: number;
+        lastDate: string;
+      }
+    >();
+
+    for (const note of clientNotes) {
+      const key = note.whatsapp.replace(/\D/g, '') || note.clientName.toLowerCase();
+      map.set(key, {
+        id: note.id,
+        clientName: note.clientName,
+        whatsapp: note.whatsapp,
+        formulaSpec: note.formulaSpec,
+        hairType: note.hairType,
+        preferredProducts: note.preferredProducts,
+        visitsCount: 1,
+        totalSpentARS: 12000,
+        lastDate: note.updatedAt,
+      });
+    }
+
+    for (const app of appointments) {
+      const key = app.whatsapp.replace(/\D/g, '') || app.clientName.toLowerCase();
+      const price = estimateAppPrice(app.serviceNames);
+      const existing = map.get(key);
+      if (existing) {
+        existing.visitsCount += 1;
+        existing.totalSpentARS += price;
+        if (app.date > existing.lastDate || !existing.lastDate.includes('-')) {
+          existing.lastDate = `${app.date} (${app.startTime} hs)`;
+        }
+      } else {
+        map.set(key, {
+          id: `crm-auto-${app.id}`,
+          clientName: app.clientName,
+          whatsapp: app.whatsapp,
+          formulaSpec: `Servicio habitual: ${app.serviceNames.join(' + ')}`,
+          hairType: 'Por especificar en próxima visita',
+          preferredProducts: 'Setup estándar Rodrigo Cutsss',
+          visitsCount: 1,
+          totalSpentARS: price,
+          lastDate: `${app.date} (${app.startTime} hs)`,
+        });
+      }
+    }
+
+    const list = Array.from(map.values());
+    if (!crmSearch.trim()) return list;
+    const q = crmSearch.toLowerCase();
+    return list.filter(
+      (c) =>
+        c.clientName.toLowerCase().includes(q) ||
+        c.whatsapp.toLowerCase().includes(q) ||
+        c.formulaSpec.toLowerCase().includes(q)
+    );
+  }, [clientNotes, appointments, crmSearch, services]);
 
   const handleExportAppointmentsCSV = () => {
     const headers = [
@@ -350,6 +458,7 @@ export const AdminPage: React.FC = () => {
       'WhatsApp',
       'Servicios',
       'Minutos',
+      'Valor ARS',
       'Modalidad Pago',
       'Estado',
     ];
@@ -361,6 +470,7 @@ export const AdminPage: React.FC = () => {
       `"${a.whatsapp}"`,
       `"${a.serviceNames.join(' + ')}"`,
       String(a.serviceMinutes),
+      String(estimateAppPrice(a.serviceNames)),
       a.paymentOption === 'deposit' ? 'Seña Transferencia' : 'Pago en Estudio',
       a.status,
     ]);
@@ -369,12 +479,12 @@ export const AdminPage: React.FC = () => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `agenda-estudio-${todayStr}.csv`;
+    link.download = `rodrigo-cutsss-caja-y-agenda-${todayStr}.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    triggerToast('Agenda exportada en archivo CSV');
+    triggerToast('Planilla CSV de turnos y caja descargada');
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -400,17 +510,17 @@ export const AdminPage: React.FC = () => {
 
     addGalleryItem({
       id: `gal-admin-${Date.now()}`,
-      title: photoTitle.trim() || `Obra en el Estudio · ${config.studioTitle}`,
-      category: photoCategory || 'General',
+      title: photoTitle.trim() || `Corte en ${config.studioTitle}`,
+      category: photoCategory || 'Cortes & Fades',
       imageUrl: photoPreviewUrl.trim(),
       description:
         photoDescription.trim() ||
-        `Trabajo realizado por ${config.authorName} en el estudio de ${config.address}, ${config.neighborhood}.`,
+        `Trabajo realizado por ${config.authorName} en ${config.studioTitle} (${config.address}, ${config.neighborhood}).`,
       technicalSpec:
-        photoTechnicalSpec.trim() || 'Corte a medida · Atención individual uno a uno',
-      dateLabel: 'Reciente · Estudio',
-      likes: 28,
-      tags: ['RodrigoEstudio', 'VenadoTuerto'],
+        photoTechnicalSpec.trim() || 'Fade de precisión · Atención 1 a 1',
+      dateLabel: 'Nuevo · Rodrigo Cutsss',
+      likes: 34,
+      tags: ['RodrigoCutsss', 'VenadoTuerto'],
       priceLabel: photoPriceTag.trim() || config.mainPriceDisplay,
       hideBuyButton: photoHideBuyButton,
       hidePrice: photoHidePrice,
@@ -423,45 +533,83 @@ export const AdminPage: React.FC = () => {
     setPhotoHideBuyButton(false);
     setPhotoHidePrice(false);
     setIsUploadModalOpen(false);
-    triggerToast('Obra publicada en el portafolio del sitio');
+    triggerToast('Foto publicada en la galería pública');
   };
 
-  // Metric computations for today
-  const todayAppointments = appointments.filter((a) => a.date === todayStr);
-  const totalRevenueEst = appointments.reduce((acc, app) => {
-    const matchedService = services.find((s) => app.serviceNames.includes(s.name));
-    return acc + (matchedService ? matchedService.price : 12000);
-  }, 0);
+  const handleSaveServiceModal = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!serviceFormData.name?.trim()) return;
+    if (editingService) {
+      updateService(editingService.id, {
+        ...serviceFormData,
+        name: serviceFormData.name.trim(),
+        price: Number(serviceFormData.price) || 12000,
+        durationMinutes: Number(serviceFormData.durationMinutes) || 45,
+      });
+      triggerToast(`Servicio "${serviceFormData.name}" actualizado`);
+    } else {
+      const nextIndex = String(services.length + 1).padStart(2, '0');
+      addService({
+        id: `srv-custom-${Date.now()}`,
+        index: nextIndex,
+        category: (serviceFormData.category as StudioService['category']) || 'Fades & Cortes',
+        name: serviceFormData.name.trim(),
+        durationMinutes: Number(serviceFormData.durationMinutes) || 45,
+        price: Number(serviceFormData.price) || 12000,
+        shortDescription:
+          serviceFormData.shortDescription?.trim() ||
+          'Atención personalizada en Rodrigo Cutsss.',
+        preparation: serviceFormData.preparation || ['Asesoramiento previo personalizado'],
+        executionSteps: serviceFormData.executionSteps || [
+          '10 min · Diagnóstico y asesoramiento',
+          '25 min · Ejecución técnica',
+          '10 min · Terminación y peinado',
+        ],
+        aftercare: serviceFormData.aftercare || 'Control sugerido cada 3 semanas.',
+        productsUsed:
+          serviceFormData.productsUsed || 'Clippers de precisión · Tijeras · Polvo mate',
+        imageUrl:
+          serviceFormData.imageUrl ||
+          '/src/assets/images/urban_streetwear_haircut_1793930882291.jpg',
+      });
+      triggerToast(`Nuevo servicio "${serviceFormData.name}" añadido a la carta`);
+    }
+    setIsNewServiceModalOpen(false);
+  };
 
   const igInfo = resolveInstagramInfo(config.instagram);
   const waInfo = resolveWhatsAppInfo(config.phoneDisplay, config.whatsappRaw);
   const normalizedOrder = normalizeSectionOrder(config.sectionOrder);
 
-  // If not authenticated, render refined Editorial Atelier PIN screen
+  // If not authenticated, render Aged-Paper & Retro Carmine PIN Gate
   if (!isAdminAuthenticated) {
     return (
-      <div className="py-16 md:py-24 px-4 flex items-center justify-center min-h-[72vh] atelier-paper-surface">
-        <div className="w-full max-w-md p-8 sm:p-10 border border-[#171513]/15 bg-[#EFEAE1] text-[#171513] shadow-[0_24px_60px_rgba(23,21,19,0.08)]">
-          <div className="w-12 h-12 bg-[#171513] text-[#F7F4EE] flex items-center justify-center mb-6">
-            <Lock className="w-5 h-5 text-[#C8A97E]" />
+      <div className="py-14 md:py-24 px-4 flex items-center justify-center min-h-[75vh] bg-[#F3ECE0] text-[#181512]">
+        <div className="w-full max-w-md p-7 sm:p-10 rounded-xl border border-[#C8BBA4] bg-[#FAF6EE] shadow-[0_22px_50px_rgba(24,21,18,0.12)] relative overflow-hidden">
+          <RetroCornerBandaBookmark size="lg" />
+
+          <div className="flex items-center gap-3.5 mb-5">
+            <RetroRiverCrestBadge size="md" />
+            <div>
+              <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-[#9E2A2B] font-semibold block">
+                Acceso Privado · {config.studioTitle}
+              </span>
+              <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-[#181512]">
+                Dirección del Estudio
+              </h1>
+            </div>
           </div>
 
-          <span className="font-mono text-xs uppercase tracking-[0.18em] text-[#96734E] font-medium block mb-1">
-            Gestión del Estudio · Control Integral
-          </span>
-          <h1 className="font-display text-3xl sm:text-4xl font-medium text-[#171513] mb-2">
-            Acceso de Administración
-          </h1>
-          <p className="text-xs sm:text-sm text-[#4A443E] leading-relaxed mb-6">
-            Ingresá tu PIN para editar textos, precios, banner rotativo, orden de secciones,
-            horarios y turnos en tiempo real.
+          <p className="text-xs sm:text-sm text-[#4F463B] leading-relaxed mb-6">
+            Sector reservado de {config.studioTitle}. Ingresá tu PIN para gestionar turnos en
+            tiempo real, fichas técnicas de clientes, caja diaria, precios y secciones.
           </p>
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <label
                 htmlFor="admin-pin"
-                className="block text-xs font-mono uppercase tracking-wider text-[#575049] mb-1.5 font-medium"
+                className="block text-xs font-mono uppercase tracking-wider text-[#4F463B] mb-1.5 font-semibold"
               >
                 PIN de Seguridad
               </label>
@@ -475,31 +623,38 @@ export const AdminPage: React.FC = () => {
                   setPinError('');
                 }}
                 placeholder="1234"
-                className="w-full h-12 px-4 text-center tracking-[0.4em] text-xl font-mono font-semibold border border-[#171513]/25 bg-[#F7F4EE] text-[#171513] focus:border-[#96734E] focus:outline-none"
+                className="w-full h-12 px-4 rounded-lg text-center tracking-[0.4em] text-xl font-mono font-bold border border-[#C8BBA4] bg-[#F3ECE0] text-[#181512] focus:border-[#9E2A2B] focus:outline-none"
                 autoFocus
               />
-              {pinError && <p className="text-xs text-[#A65D43] mt-2 font-mono">{pinError}</p>}
+              {pinError && (
+                <p className="text-xs text-[#9E2A2B] mt-2 font-mono font-bold">{pinError}</p>
+              )}
             </div>
 
             <button
               type="submit"
-              className="w-full h-12 uppercase font-medium text-xs tracking-[0.16em] bg-[#171513] text-[#F7F4EE] hover:bg-[#96734E] transition-colors cursor-pointer"
+              className="w-full h-12 rounded-lg uppercase font-mono font-semibold text-xs tracking-[0.16em] bg-[#9E2A2B] text-[#FAF6EE] hover:bg-[#822021] border border-[#781D1E] shadow-[0_3px_0_#5E1516] transition-all cursor-pointer"
             >
-              Ingresar al Panel del Estudio
+              Ingresar al Panel de {config.studioTitle}
             </button>
           </form>
 
-          <div className="mt-6 pt-5 border-t border-[#171513]/12 text-center">
-            <p className="text-xs font-mono text-[#655E57]">
-              PIN activo:{' '}
-              <strong className="text-[#96734E]">{config.adminPin || '1234'}</strong>
+          <div className="mt-6 pt-5 border-t border-dashed border-[#C8BBA4] text-center space-y-2">
+            <p className="text-xs font-mono text-[#4F463B]">
+              PIN por defecto:{' '}
+              <strong className="text-[#9E2A2B]">{config.adminPin || '1234'}</strong>
+            </p>
+            <p className="text-[11px] font-mono text-[#6E6355]">
+              Atajo rápido desde cualquier pantalla:{' '}
+              <kbd className="text-[#181512] font-semibold">Ctrl+Shift+A</kbd> o triple clic en el
+              escudo RC.
             </p>
             <button
               type="button"
               onClick={() => navigateTo('home')}
-              className="text-xs text-[#575049] hover:text-[#171513] mt-2.5 underline cursor-pointer"
+              className="text-xs font-mono text-[#4F463B] hover:text-[#9E2A2B] mt-2 underline cursor-pointer inline-block font-semibold"
             >
-              Volver a la portada del estudio
+              Volver al sitio público
             </button>
           </div>
         </div>
@@ -524,105 +679,118 @@ export const AdminPage: React.FC = () => {
     normalizedOrder.filter((id) => config[SECTION_ADMIN_META[id].key] !== false).length;
 
   return (
-    <div className="py-10 md:py-14 px-4 sm:px-8 max-w-[1360px] mx-auto text-[#171513] space-y-8">
+    <div className="min-h-screen bg-[#0B0D12] text-[#FAFAFA] border-t-4 border-[#9E2A2B]">
+      <div className="py-8 md:py-14 px-4 sm:px-8 max-w-7xl mx-auto text-[#FAFAFA] space-y-8">
       {/* Toast Notification */}
       {saveToast && (
         <div
           role="status"
           data-testid="admin-save-toast"
-          className="fixed bottom-6 right-6 z-50 px-5 py-3.5 bg-[#171513] text-[#F7F4EE] border border-[#C8A97E]/40 shadow-2xl text-xs font-mono flex items-center gap-2.5"
+          className="fixed bottom-6 right-6 z-50 px-5 py-3.5 rounded-xl bg-[#0C0E14] text-white border-2 border-[#E11D48] shadow-2xl text-xs font-mono flex items-center gap-2.5"
         >
-          <CheckCircle2 className="w-4 h-4 text-[#C8A97E]" />
+          <CheckCircle2 className="w-4 h-4 text-[#E11D48]" />
           <span>{saveToast}</span>
         </div>
       )}
 
-      {/* Top Bar for Admin */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-6 border-b border-[#171513]/15">
+      {/* Top Header Bar for Admin */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-6 border-b border-zinc-800">
         <div>
-          <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-[0.18em] text-[#96734E] font-medium mb-1">
+          <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-[0.18em] text-[#E11D48] font-bold mb-1">
             <Shield className="w-3.5 h-3.5" />
-            <span>DIRECCIÓN Y GESTIÓN DEL ESTUDIO · {config.authorName.toUpperCase()}</span>
+            <span>CENTRO DE COMANDO PRIVADO · {config.studioTitle.toUpperCase()}</span>
           </div>
-          <h1 className="font-display text-4xl md:text-5xl font-medium text-[#171513]">
-            Panel de Administración
+          <h1 className="font-display text-4xl md:text-5xl font-black uppercase tracking-tight text-white">
+            Panel de <span className="text-[#E11D48]">Administración</span>
           </h1>
+          <p className="text-xs font-mono text-zinc-400 mt-1 flex flex-wrap items-center gap-2">
+            <KeyRound className="w-3.5 h-3.5 text-[#F59E0B]" />
+            <span>
+              Acceso sigiloso activo (invisible para clientes): entrá con{' '}
+              <strong className="text-white">Ctrl + Shift + A</strong>, triple clic en el logo{' '}
+              <strong className="text-white">{config.studioTitle}</strong> o{' '}
+              <strong className="text-white">/#/admin</strong>.
+            </span>
+          </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
           <button
             type="button"
             onClick={() => setIsUploadModalOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-mono uppercase tracking-wider bg-[#96734E] text-[#F7F4EE] hover:bg-[#171513] transition-colors cursor-pointer"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-mono font-bold uppercase tracking-wider bg-[#E11D48] text-white hover:bg-[#BE123C] transition-colors cursor-pointer shadow-[0_6px_20px_rgba(225,29,72,0.35)]"
           >
             <Camera className="w-3.5 h-3.5" />
-            <span>+ Subir Obra a Galería</span>
+            <span>+ Subir Foto a Galería</span>
           </button>
 
           <button
             type="button"
             data-testid="admin-view-public-site"
             onClick={() => navigateTo('home')}
-            className="px-4 py-2.5 text-xs font-mono uppercase tracking-wider border border-[#171513]/25 bg-[#EFEAE1] hover:bg-[#171513] hover:text-[#F7F4EE] transition-colors cursor-pointer"
+            className="px-4 py-2.5 rounded-xl text-xs font-mono font-bold uppercase tracking-wider border border-zinc-700 bg-[#12151E] hover:border-white text-white transition-colors cursor-pointer"
           >
             Ver Sitio Público
           </button>
           <button
             type="button"
             onClick={logoutAdmin}
-            className="inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-mono uppercase tracking-wider bg-[#A65D43]/12 text-[#A65D43] border border-[#A65D43]/30 hover:bg-[#A65D43] hover:text-[#F7F4EE] transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-mono font-bold uppercase tracking-wider bg-[#E11D48]/15 text-[#F43F5E] border border-[#E11D48]/40 hover:bg-[#E11D48] hover:text-white transition-colors cursor-pointer"
           >
             <LogOut className="w-3.5 h-3.5" />
-            <span>Salir</span>
+            <span>Cerrar Sesión</span>
           </button>
         </div>
       </div>
 
       {/* Quick KPI Strip */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-5 border border-[#171513]/12 bg-[#EFEAE1]">
-          <span className="text-[10px] font-mono uppercase tracking-widest text-[#655E57] block">
+        <div className="p-5 rounded-2xl border border-zinc-800 bg-[#0C0E14] relative overflow-hidden">
+          <div className="absolute top-0 left-0 bottom-0 w-1 bg-[#E11D48]" />
+          <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-400 block">
             Turnos de Hoy ({todayStr})
           </span>
-          <p className="font-display text-3xl font-semibold text-[#171513] mt-1">
+          <p className="font-display text-3xl font-black uppercase text-white mt-1">
             {todayAppointments.length} Turnos Hoy
           </p>
-          <p className="text-xs font-mono text-[#96734E] mt-1">
-            {appointments.length} totales · {formatPriceARS(totalRevenueEst)} est.
+          <p className="text-xs font-mono text-[#E11D48] font-bold mt-1">
+            Hoy: {formatPriceARS(todayRevenueEst)} · Total: {formatPriceARS(totalRevenueEst)}
           </p>
         </div>
 
-        <div className="p-5 border border-[#171513]/12 bg-[#EFEAE1]">
-          <span className="text-[10px] font-mono uppercase tracking-widest text-[#655E57] block">
-            Secciones &amp; Ocupación
+        <div className="p-5 rounded-2xl border border-zinc-800 bg-[#0C0E14]">
+          <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-400 block">
+            Fichero CRM de Clientes
           </span>
-          <p className="font-display text-3xl font-semibold text-[#171513] mt-1 tabular-nums">
-            {visibleSectionsCount}/8 Secciones
+          <p className="font-display text-3xl font-black uppercase text-white mt-1 tabular-nums">
+            {combinedClients.length} Clientes
           </p>
-          <p className="text-xs font-mono text-[#4A443E] mt-1 truncate">
-            {backendMetrics
-              ? `Servicio Top: ${backendMetrics.topServiceName}`
-              : `Modo: ${config.layoutMode === 'tabs' ? 'Pestañas' : 'Flujo Completo'}`}
-          </p>
+          <button
+            type="button"
+            onClick={() => setActiveTab('clients_crm')}
+            className="text-xs font-mono text-[#E11D48] hover:text-white underline mt-1 cursor-pointer"
+          >
+            Ver fórmulas de corte y WhatsApp &rarr;
+          </button>
         </div>
 
-        <div className="p-5 border border-[#171513]/12 bg-[#EFEAE1]">
-          <span className="text-[10px] font-mono uppercase tracking-widest text-[#655E57] block">
-            Identidad &amp; Contacto Activo
+        <div className="p-5 rounded-2xl border border-zinc-800 bg-[#0C0E14]">
+          <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-400 block">
+            Secciones Activas ({visibleSectionsCount}/8)
           </span>
-          <p className="font-mono text-sm font-semibold text-[#171513] mt-1.5 truncate">
-            {config.authorName} · {igInfo.handle}
+          <p className="font-mono text-sm font-bold text-white mt-1.5 truncate">
+            {config.studioTitle} · {igInfo.handle}
           </p>
-          <p className="text-xs font-mono text-[#4A443E] mt-1 truncate">
+          <p className="text-xs font-mono text-zinc-400 mt-1 truncate">
             WA: {waInfo.display}
           </p>
         </div>
 
-        <div className="p-5 border border-[#171513]/12 bg-[#EFEAE1]">
-          <span className="text-[10px] font-mono uppercase tracking-widest text-[#655E57] block">
+        <div className="p-5 rounded-2xl border border-zinc-800 bg-[#0C0E14]">
+          <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-400 block">
             Disponibilidad Hoy en Portada
           </span>
-          <p className="font-display text-2xl font-semibold text-[#171513] mt-1">
+          <p className="font-display text-2xl font-black uppercase text-white mt-1">
             {config.walkInStatus === 'available' ? 'Turnos Abiertos' : 'Agenda Completa'}
           </p>
           <button
@@ -636,7 +804,7 @@ export const AdminPage: React.FC = () => {
                 }`
               );
             }}
-            className="text-xs font-mono text-[#96734E] hover:text-[#171513] underline mt-1 cursor-pointer"
+            className="text-xs font-mono text-[#E11D48] hover:text-white underline mt-1 cursor-pointer"
           >
             Cambiar disponibilidad en vivo &rarr;
           </button>
@@ -644,26 +812,47 @@ export const AdminPage: React.FC = () => {
       </div>
 
       {/* Tabs Navigation */}
-      <div className="flex flex-wrap items-center gap-2 pb-3 border-b border-[#171513]/15">
+      <div className="flex flex-wrap items-center gap-2 pb-3 border-b border-zinc-800">
         {[
           {
             id: 'sections_profile',
-            label: 'Secciones, Textos & Banner Rotativo',
+            label: 'Secciones, Textos & Banner',
             icon: Sliders,
           },
           {
+            id: 'appointments',
+            label: `Turnos & Recordatorios WA (${appointments.length})`,
+            icon: Calendar,
+          },
+          {
+            id: 'clients_crm',
+            label: `CRM Clientes & Fórmulas (${combinedClients.length})`,
+            icon: Users,
+          },
+          {
+            id: 'finance_box',
+            label: 'Caja, Señas & Finanzas',
+            icon: DollarSign,
+          },
+          {
+            id: 'services',
+            label: `Servicios & Precios (${services.length})`,
+            icon: TrendingUp,
+          },
+          {
+            id: 'gallery',
+            label: `Galería (${galleryItems.length})`,
+            icon: Camera,
+          },
+          {
             id: 'business_rules',
-            label: 'Horarios, Paleta & Efectos',
+            label: 'Horarios, PIN & Efectos',
             icon: Settings,
           },
-          { id: 'appointments', label: `Turnos en Vivo (${appointments.length})`, icon: Calendar },
-          { id: 'services', label: `Servicios & Precios (${services.length})`, icon: DollarSign },
-          { id: 'gallery', label: `Obras & Galería (${galleryItems.length})`, icon: Camera },
-          { id: 'calendar', label: `Bloqueos de Horario (${blockedSlots.length})`, icon: Clock },
           {
-            id: 'server_audit',
-            label: `Servidor & Métricas (${auditLogs.length})`,
-            icon: Shield,
+            id: 'calendar',
+            label: `Bloqueos (${blockedSlots.length})`,
+            icon: Clock,
           },
         ].map((tab) => {
           const Icon = tab.icon;
@@ -674,10 +863,10 @@ export const AdminPage: React.FC = () => {
               type="button"
               data-testid={`admin-tab-${tab.id}`}
               onClick={() => setActiveTab(tab.id as typeof activeTab)}
-              className={`inline-flex items-center gap-2 px-4 py-2.5 text-xs uppercase tracking-wider font-mono transition-colors cursor-pointer ${
+              className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs uppercase tracking-wider font-mono font-bold transition-all cursor-pointer ${
                 isActive
-                  ? 'bg-[#171513] text-[#F7F4EE] font-semibold'
-                  : 'bg-[#EFEAE1] border border-[#171513]/15 text-[#4A443E] hover:text-[#171513] hover:border-[#171513]'
+                  ? 'bg-[#E11D48] text-white shadow-[0_6px_18px_rgba(225,29,72,0.35)]'
+                  : 'bg-[#0C0E14] border border-zinc-800 text-zinc-300 hover:text-white hover:border-zinc-600'
               }`}
             >
               <Icon className="w-3.5 h-3.5" />
@@ -694,19 +883,18 @@ export const AdminPage: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Left Column: Live Section Reordering & Layout Architecture */}
           <div className="lg:col-span-6 space-y-6">
-            <div className="p-6 sm:p-7 border border-[#171513]/15 bg-[#EFEAE1] space-y-5">
-              <div className="border-b border-[#171513]/12 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="p-6 sm:p-7 rounded-2xl border border-zinc-800 bg-[#0C0E14] space-y-5">
+              <div className="border-b border-zinc-800 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <div className="flex items-center gap-2 text-[11px] font-mono uppercase tracking-widest text-[#96734E] font-medium mb-1">
+                  <div className="flex items-center gap-2 text-[11px] font-mono uppercase tracking-widest text-[#E11D48] font-bold mb-1">
                     <LayoutGrid className="w-3.5 h-3.5" />
                     <span>ESTRUCTURA Y JERARQUÍA DEL SITIO</span>
                   </div>
-                  <h2 className="font-display text-2xl sm:text-3xl font-medium text-[#171513]">
+                  <h2 className="font-display text-2xl sm:text-3xl font-black uppercase text-white">
                     Orden de Secciones &amp; Visibilidad
                   </h2>
-                  <p className="text-xs text-[#4A443E] mt-1">
-                    Reordená o activá/ocultá cada módulo. Todo cambio se refleja al instante en la
-                    portada principal.
+                  <p className="text-xs text-zinc-400 mt-1">
+                    Subí, bajá o apagá cualquier sección. Todo cambio impacta en vivo en la portada.
                   </p>
                 </div>
 
@@ -716,34 +904,34 @@ export const AdminPage: React.FC = () => {
                     updateConfig({ sectionOrder: [...DEFAULT_SECTION_ORDER] });
                     triggerToast('Orden recomendado restaurado');
                   }}
-                  className="px-3.5 py-2 border border-[#171513]/20 bg-[#F7F4EE] hover:border-[#171513] text-xs font-mono text-[#171513] flex items-center gap-1.5 cursor-pointer shrink-0"
+                  className="px-3.5 py-2 rounded-xl border border-zinc-700 bg-[#12151E] hover:border-white text-xs font-mono text-white flex items-center gap-1.5 cursor-pointer shrink-0"
                 >
-                  <RotateCcw className="w-3.5 h-3.5 text-[#96734E]" />
+                  <RotateCcw className="w-3.5 h-3.5 text-[#E11D48]" />
                   <span>Orden por Defecto</span>
                 </button>
               </div>
 
               {/* Site Layout Mode Selector */}
-              <div className="p-4 bg-[#F7F4EE] border border-[#171513]/12 space-y-2.5">
-                <span className="font-mono text-[11px] uppercase tracking-wider text-[#96734E] font-medium block">
-                  Modo de Navegación en Portada:
+              <div className="p-4 rounded-xl bg-[#12151E] border border-zinc-800 space-y-2.5">
+                <span className="font-mono text-[11px] uppercase tracking-wider text-[#E11D48] font-bold block">
+                  Modo de Visualización en Portada:
                 </span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <button
                     type="button"
                     onClick={() => {
                       updateConfig({ layoutMode: 'landing' });
-                      triggerToast('Estructura cambiada a Flujo Editorial Completo (Landing)');
+                      triggerToast('Modo cambiado a Landing Completa');
                     }}
-                    className={`p-3.5 border text-left font-mono text-xs transition-all cursor-pointer ${
+                    className={`p-3.5 rounded-xl border text-left font-mono text-xs transition-all cursor-pointer ${
                       (config.layoutMode || 'landing') === 'landing'
-                        ? 'border-[#171513] bg-[#171513] text-[#F7F4EE]'
-                        : 'border-[#171513]/15 bg-[#EFEAE1] text-[#4A443E] hover:border-[#171513]'
+                        ? 'border-[#E11D48] bg-[#E11D48]/15 text-white'
+                        : 'border-zinc-800 bg-[#0C0E14] text-zinc-400 hover:border-zinc-600'
                     }`}
                   >
-                    <span className="block font-semibold">1. Flujo Editorial Completo</span>
+                    <span className="block font-bold">1. Flujo Completo (Landing)</span>
                     <span className="text-[11px] opacity-80 block mt-0.5">
-                      Despliega todas las secciones activas en el orden configurado abajo.
+                      Muestra todas las secciones activas una debajo de otra.
                     </span>
                   </button>
 
@@ -751,36 +939,35 @@ export const AdminPage: React.FC = () => {
                     type="button"
                     onClick={() => {
                       updateConfig({ layoutMode: 'tabs' });
-                      triggerToast('Estructura cambiada a Vista por Pestañas Individuales');
+                      triggerToast('Modo cambiado a Navegación por Pestañas');
                     }}
-                    className={`p-3.5 border text-left font-mono text-xs transition-all cursor-pointer ${
+                    className={`p-3.5 rounded-xl border text-left font-mono text-xs transition-all cursor-pointer ${
                       config.layoutMode === 'tabs'
-                        ? 'border-[#171513] bg-[#171513] text-[#F7F4EE]'
-                        : 'border-[#171513]/15 bg-[#EFEAE1] text-[#4A443E] hover:border-[#171513]'
+                        ? 'border-[#E11D48] bg-[#E11D48]/15 text-white'
+                        : 'border-zinc-800 bg-[#0C0E14] text-zinc-400 hover:border-zinc-600'
                     }`}
                   >
-                    <span className="block font-semibold">2. Vista por Pestañas Individuales</span>
+                    <span className="block font-bold">2. Vista por Pestañas</span>
                     <span className="text-[11px] opacity-80 block mt-0.5">
-                      Muestra una barra de pestañas editoriales para ver una sección a la vez.
+                      Permite alternar entre secciones mediante botones superiores.
                     </span>
                   </button>
                 </div>
               </div>
 
               {/* Fixed Portada Switch */}
-              <div className="p-4 border border-[#171513]/15 bg-[#F7F4EE] flex items-center justify-between gap-4">
+              <div className="p-4 rounded-xl border border-zinc-800 bg-[#12151E] flex items-center justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 bg-[#96734E]/15 text-[#96734E] font-mono text-[10px] font-semibold">
+                    <span className="px-2 py-0.5 rounded bg-[#E11D48] text-white font-mono text-[10px] font-bold">
                       PORTADA
                     </span>
-                    <span className="font-mono text-xs font-semibold text-[#171513]">
-                      Hero Editorial &amp; Próximo Turno Libre (#inicio)
+                    <span className="font-mono text-xs font-bold text-white">
+                      Hero Principal &amp; Próximo Turno Libre (#inicio)
                     </span>
                   </div>
-                  <p className="text-[11px] text-[#575049] mt-1">
-                    Cabecera asimétrica con retrato parallax, titular serif e indicador de turno
-                    libre hoy.
+                  <p className="text-[11px] text-zinc-400 mt-1">
+                    Cabecera con mural urbano, banda roja diagonal y botón de turno inmediato.
                   </p>
                 </div>
 
@@ -795,11 +982,11 @@ export const AdminPage: React.FC = () => {
                     triggerToast(`Portada Principal: ${nextVal ? 'Visible' : 'Oculta'}`);
                   }}
                   className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
-                    config.showHeroSection !== false ? 'bg-[#171513]' : 'bg-[#C5BBAE]'
+                    config.showHeroSection !== false ? 'bg-[#E11D48]' : 'bg-zinc-700'
                   }`}
                 >
                   <span
-                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-[#F7F4EE] transition ${
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white transition ${
                       config.showHeroSection !== false ? 'translate-x-5' : 'translate-x-0'
                     }`}
                   />
@@ -814,13 +1001,12 @@ export const AdminPage: React.FC = () => {
                   return (
                     <div
                       key={secId}
-                      className={`p-4 border transition-all flex items-center justify-between gap-3 ${
+                      className={`p-4 rounded-xl border transition-all flex items-center justify-between gap-3 ${
                         isEnabled
-                          ? 'bg-[#F7F4EE] border-[#171513]/15'
-                          : 'bg-[#E4DDD1]/60 border-[#171513]/10 opacity-70'
+                          ? 'bg-[#12151E] border-zinc-800'
+                          : 'bg-[#0C0E14] border-zinc-900 opacity-60'
                       }`}
                     >
-                      {/* Up / Down Order Controls */}
                       <div className="flex flex-col gap-1 shrink-0">
                         <button
                           type="button"
@@ -830,7 +1016,7 @@ export const AdminPage: React.FC = () => {
                             triggerToast(`"${meta.label}" subida a posición #${index}`);
                           }}
                           title="Subir sección"
-                          className="w-7 h-7 border border-[#171513]/20 bg-[#EFEAE1] hover:border-[#171513] text-[#171513] flex items-center justify-center disabled:opacity-30 cursor-pointer"
+                          className="w-7 h-7 rounded border border-zinc-700 bg-[#0C0E14] hover:border-[#E11D48] text-white flex items-center justify-center disabled:opacity-30 cursor-pointer"
                         >
                           <ArrowUp className="w-3.5 h-3.5" />
                         </button>
@@ -842,7 +1028,7 @@ export const AdminPage: React.FC = () => {
                             triggerToast(`"${meta.label}" bajada a posición #${index + 2}`);
                           }}
                           title="Bajar sección"
-                          className="w-7 h-7 border border-[#171513]/20 bg-[#EFEAE1] hover:border-[#171513] text-[#171513] flex items-center justify-center disabled:opacity-30 cursor-pointer"
+                          className="w-7 h-7 rounded border border-zinc-700 bg-[#0C0E14] hover:border-[#E11D48] text-white flex items-center justify-center disabled:opacity-30 cursor-pointer"
                         >
                           <ArrowDown className="w-3.5 h-3.5" />
                         </button>
@@ -850,23 +1036,23 @@ export const AdminPage: React.FC = () => {
 
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="px-2 py-0.5 bg-[#171513] text-[#F7F4EE] font-mono text-[10px]">
+                          <span className="px-2 py-0.5 rounded bg-zinc-800 text-[#E11D48] font-mono text-[10px] font-bold">
                             #{index + 1}
                           </span>
-                          <span className="font-mono text-xs font-semibold text-[#171513]">
+                          <span className="font-mono text-xs font-bold text-white">
                             {meta.label}
                           </span>
                           <span
-                            className={`text-[10px] font-mono px-2 py-0.5 ${
+                            className={`text-[10px] font-mono px-2 py-0.5 rounded ${
                               isEnabled
-                                ? 'bg-[#3D4F43]/15 text-[#3D4F43]'
-                                : 'bg-[#C5BBAE]/40 text-[#655E57]'
+                                ? 'bg-[#10B981]/15 text-[#10B981]'
+                                : 'bg-zinc-800 text-zinc-400'
                             }`}
                           >
                             {isEnabled ? 'Visible' : 'Oculta'}
                           </span>
                         </div>
-                        <p className="text-[11px] text-[#575049] mt-1">{meta.description}</p>
+                        <p className="text-[11px] text-zinc-400 mt-1">{meta.description}</p>
                       </div>
 
                       <button
@@ -881,11 +1067,11 @@ export const AdminPage: React.FC = () => {
                           );
                         }}
                         className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
-                          isEnabled ? 'bg-[#171513]' : 'bg-[#C5BBAE]'
+                          isEnabled ? 'bg-[#E11D48]' : 'bg-zinc-700'
                         }`}
                       >
                         <span
-                          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-[#F7F4EE] transition ${
+                          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white transition ${
                             isEnabled ? 'translate-x-5' : 'translate-x-0'
                           }`}
                         />
@@ -897,23 +1083,23 @@ export const AdminPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Right Column: Form to update Identity, Texts, Rotating Banner & Card Switches */}
+          {/* Right Column: Form to update Identity, Texts & Rotating Banner */}
           <div className="lg:col-span-6 space-y-6">
             <form
               onSubmit={handleSaveProfileAndLinks}
-              className="p-6 sm:p-7 border border-[#171513]/15 bg-[#EFEAE1] space-y-5"
+              className="p-6 sm:p-7 rounded-2xl border border-zinc-800 bg-[#0C0E14] space-y-5"
             >
-              <div className="border-b border-[#171513]/12 pb-4">
-                <div className="flex items-center gap-2 text-[11px] font-mono uppercase tracking-widest text-[#96734E] font-medium mb-1">
+              <div className="border-b border-zinc-800 pb-4">
+                <div className="flex items-center gap-2 text-[11px] font-mono uppercase tracking-widest text-[#E11D48] font-bold mb-1">
                   <UserCheck className="w-3.5 h-3.5" />
                   <span>IDENTIDAD, TEXTOS Y BANNER ROTATIVO</span>
                 </div>
-                <h2 className="font-display text-2xl sm:text-3xl font-medium text-[#171513]">
-                  Datos del Estudio, Portada &amp; Contacto
+                <h2 className="font-display text-2xl sm:text-3xl font-black uppercase text-white">
+                  Datos de {config.studioTitle} &amp; Contacto
                 </h2>
-                <p className="text-xs text-[#4A443E] mt-1">
-                  Cualquier cambio que guardes acá actualiza la barra superior, el banner rotativo,
-                  la portada, el manifiesto, el turnero y el pie de página.
+                <p className="text-xs text-zinc-400 mt-1">
+                  Cualquier cambio que guardes acá actualiza la barra superior, el banner rotativo
+                  con parallax, la portada, el turnero y el pie de página.
                 </p>
               </div>
 
@@ -922,9 +1108,9 @@ export const AdminPage: React.FC = () => {
                   <div>
                     <label
                       htmlFor="admin-barber-name"
-                      className="block text-xs font-mono text-[#4A443E] mb-1 font-medium uppercase"
+                      className="block text-xs font-mono text-zinc-300 mb-1 font-bold uppercase"
                     >
-                      Nombre del Profesional *
+                      Nombre del Barbero *
                     </label>
                     <input
                       id="admin-barber-name"
@@ -933,23 +1119,23 @@ export const AdminPage: React.FC = () => {
                       required
                       value={barberNameForm}
                       onChange={(e) => setBarberNameForm(e.target.value)}
-                      className="w-full h-10 px-3 text-xs font-mono border border-[#171513]/20 bg-[#F7F4EE] text-[#171513]"
+                      className="w-full h-10 px-3 rounded-xl text-xs font-mono border border-zinc-700 bg-[#12151E] text-white"
                     />
                   </div>
 
                   <div>
                     <label
                       htmlFor="admin-studio-title"
-                      className="block text-xs font-mono text-[#4A443E] mb-1 font-medium uppercase"
+                      className="block text-xs font-mono text-zinc-300 mb-1 font-bold uppercase"
                     >
-                      Nombre del Estudio (Navbar / Marca) *
+                      Nombre de la Peluquería / Marca *
                     </label>
                     <input
                       id="admin-studio-title"
                       type="text"
                       value={studioTitleForm}
                       onChange={(e) => setStudioTitleForm(e.target.value)}
-                      className="w-full h-10 px-3 text-xs font-mono border border-[#171513]/20 bg-[#F7F4EE] text-[#171513]"
+                      className="w-full h-10 px-3 rounded-xl text-xs font-mono border border-zinc-700 bg-[#12151E] text-white"
                     />
                   </div>
                 </div>
@@ -957,7 +1143,7 @@ export const AdminPage: React.FC = () => {
                 <div>
                   <label
                     htmlFor="admin-promo-banner-text"
-                    className="block text-xs font-mono text-[#96734E] mb-1 font-semibold uppercase"
+                    className="block text-xs font-mono text-[#E11D48] mb-1 font-bold uppercase"
                   >
                     Texto Destacado del Banner Rotativo con Parallax
                   </label>
@@ -966,18 +1152,14 @@ export const AdminPage: React.FC = () => {
                     type="text"
                     value={promoBannerTextForm}
                     onChange={(e) => setPromoBannerTextForm(e.target.value)}
-                    placeholder="Ej. ATENCIÓN INDIVIDUAL UNO A UNO · VUELTA DE OBLIGADO 931"
-                    className="w-full h-10 px-3 text-xs font-mono border border-[#96734E]/40 bg-[#F7F4EE] text-[#171513]"
+                    placeholder="Ej. RODRIGO CUTSSS · LA BANDA DEL CORTE EN VUELTA DE OBLIGADO 931"
+                    className="w-full h-10 px-3 rounded-xl text-xs font-mono border border-[#E11D48]/50 bg-[#12151E] text-white"
                   />
-                  <span className="text-[11px] text-[#655E57] block mt-1">
-                    Se combina automáticamente con los precios de servicios, dirección y próximo
-                    turno libre.
-                  </span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-mono text-[#4A443E] mb-1 font-medium uppercase">
+                    <label className="block text-xs font-mono text-zinc-300 mb-1 font-bold uppercase">
                       Precio Base Destacado
                     </label>
                     <input
@@ -985,12 +1167,12 @@ export const AdminPage: React.FC = () => {
                       type="text"
                       value={mainPriceForm}
                       onChange={(e) => setMainPriceForm(e.target.value)}
-                      className="w-full h-10 px-3 text-xs font-mono border border-[#171513]/20 bg-[#F7F4EE] text-[#171513]"
+                      className="w-full h-10 px-3 rounded-xl text-xs font-mono border border-zinc-700 bg-[#12151E] text-white"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-mono text-[#4A443E] mb-1 font-medium uppercase">
+                    <label className="block text-xs font-mono text-zinc-300 mb-1 font-bold uppercase">
                       Dirección del Estudio
                     </label>
                     <input
@@ -998,12 +1180,12 @@ export const AdminPage: React.FC = () => {
                       type="text"
                       value={addressForm}
                       onChange={(e) => setAddressForm(e.target.value)}
-                      className="w-full h-10 px-3 text-xs font-mono border border-[#171513]/20 bg-[#F7F4EE] text-[#171513]"
+                      className="w-full h-10 px-3 rounded-xl text-xs font-mono border border-zinc-700 bg-[#12151E] text-white"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-mono text-[#4A443E] mb-1 font-medium uppercase">
+                    <label className="block text-xs font-mono text-zinc-300 mb-1 font-bold uppercase">
                       Ciudad y Provincia
                     </label>
                     <input
@@ -1011,12 +1193,12 @@ export const AdminPage: React.FC = () => {
                       type="text"
                       value={neighborhoodForm}
                       onChange={(e) => setNeighborhoodForm(e.target.value)}
-                      className="w-full h-10 px-3 text-xs font-mono border border-[#171513]/20 bg-[#F7F4EE] text-[#171513]"
+                      className="w-full h-10 px-3 rounded-xl text-xs font-mono border border-zinc-700 bg-[#12151E] text-white"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-mono text-[#4A443E] mb-1 font-medium uppercase">
+                    <label className="block text-xs font-mono text-zinc-300 mb-1 font-bold uppercase">
                       Alias de Transferencia / Seña
                     </label>
                     <input
@@ -1024,555 +1206,141 @@ export const AdminPage: React.FC = () => {
                       type="text"
                       value={transferAliasForm}
                       onChange={(e) => setTransferAliasForm(e.target.value)}
-                      className="w-full h-10 px-3 text-xs font-mono border border-[#171513]/20 bg-[#F7F4EE] text-[#171513]"
+                      className="w-full h-10 px-3 rounded-xl text-xs font-mono border border-zinc-700 bg-[#12151E] text-white"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-mono text-[#4A443E] mb-1 font-medium uppercase">
+                  <label className="block text-xs font-mono text-zinc-300 mb-1 font-bold uppercase">
                     Titular Principal de Portada (Hero)
                   </label>
                   <input
-                    id="admin-tagline"
                     type="text"
                     value={taglineForm}
                     onChange={(e) => setTaglineForm(e.target.value)}
-                    className="w-full h-10 px-3 text-xs font-mono border border-[#171513]/20 bg-[#F7F4EE] text-[#171513]"
+                    className="w-full h-10 px-3 rounded-xl text-xs font-mono border border-zinc-700 bg-[#12151E] text-white"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-mono text-[#4A443E] mb-1 font-medium uppercase">
-                    Bajada / Subtítulo de Portada
+                  <label className="block text-xs font-mono text-zinc-300 mb-1 font-bold uppercase">
+                    Bajada de Portada (Subtítulo Hero)
                   </label>
                   <textarea
                     rows={2}
                     value={heroSubtitleForm}
                     onChange={(e) => setHeroSubtitleForm(e.target.value)}
-                    className="w-full p-2.5 text-xs font-mono border border-[#171513]/20 bg-[#F7F4EE] text-[#171513]"
+                    className="w-full p-3 rounded-xl text-xs font-mono border border-zinc-700 bg-[#12151E] text-white"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-mono text-[#4A443E] mb-1 font-medium uppercase">
-                    Texto del Manifiesto / El Estudio (#estudio)
+                  <label className="block text-xs font-mono text-zinc-300 mb-1 font-bold uppercase">
+                    Biografía &amp; Presentación de {config.authorName}
                   </label>
                   <textarea
-                    rows={2}
+                    rows={3}
                     value={bioForm}
                     onChange={(e) => setBioForm(e.target.value)}
-                    className="w-full p-2.5 text-xs font-mono border border-[#171513]/20 bg-[#F7F4EE] text-[#171513]"
+                    className="w-full p-3 rounded-xl text-xs font-mono border border-zinc-700 bg-[#12151E] text-white"
                   />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-[#171513]/12">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label
-                      htmlFor="admin-instagram-link"
-                      className="block text-xs font-mono text-[#4A443E] mb-1 font-medium uppercase"
-                    >
-                      Instagram (Usuario o URL) *
+                    <label className="block text-xs font-mono text-zinc-300 mb-1 font-bold uppercase">
+                      Instagram (Usuario o URL)
                     </label>
                     <input
-                      id="admin-instagram-link"
-                      name="instagram"
                       type="text"
-                      required
                       value={instagramForm}
                       onChange={(e) => setInstagramForm(e.target.value)}
-                      className="w-full h-10 px-3 text-xs font-mono border border-[#171513]/20 bg-[#F7F4EE] text-[#171513]"
+                      className="w-full h-10 px-3 rounded-xl text-xs font-mono border border-zinc-700 bg-[#12151E] text-white"
                     />
                   </div>
 
                   <div>
-                    <label
-                      htmlFor="admin-whatsapp-display"
-                      className="block text-xs font-mono text-[#4A443E] mb-1 font-medium uppercase"
-                    >
-                      WhatsApp Directo *
+                    <label className="block text-xs font-mono text-zinc-300 mb-1 font-bold uppercase">
+                      WhatsApp Visible
                     </label>
                     <input
-                      id="admin-whatsapp-display"
-                      name="whatsapp"
                       type="text"
-                      required
                       value={whatsappDisplayForm}
                       onChange={(e) => {
-                        const val = e.target.value;
-                        setWhatsappDisplayForm(val);
-                        const digits = val.replace(/\D/g, '');
-                        if (digits.length >= 8) {
-                          setWhatsappRawForm(digits);
-                        }
+                        setWhatsappDisplayForm(e.target.value);
+                        setWhatsappRawForm(e.target.value.replace(/\D/g, ''));
                       }}
-                      className="w-full h-10 px-3 text-xs font-mono border border-[#171513]/20 bg-[#F7F4EE] text-[#171513]"
+                      className="w-full h-10 px-3 rounded-xl text-xs font-mono border border-zinc-700 bg-[#12151E] text-white"
                     />
                   </div>
                 </div>
               </div>
 
-              <div className="pt-3 border-t border-[#171513]/12 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2 text-xs font-mono text-[#575049]">
-                  <Instagram className="w-3.5 h-3.5 text-[#96734E]" />
-                  <span>{resolveInstagramInfo(instagramForm).handle}</span>
-                  <span>·</span>
-                  <MessageCircle className="w-3.5 h-3.5 text-[#3D4F43]" />
-                  <span>{whatsappDisplayForm}</span>
-                </div>
-
-                <button
-                  type="submit"
-                  data-testid="admin-save-profile-btn"
-                  className="inline-flex items-center gap-2 px-6 py-3 text-xs font-mono uppercase tracking-wider bg-[#171513] text-[#F7F4EE] hover:bg-[#96734E] transition-colors cursor-pointer"
-                >
-                  <Save className="w-4 h-4" />
-                  <span>Guardar Cambios</span>
-                </button>
-              </div>
+              <button
+                type="submit"
+                data-testid="admin-save-profile-btn"
+                className="w-full h-12 rounded-xl bg-[#E11D48] hover:bg-[#BE123C] text-white font-mono text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer shadow-[0_8px_24px_rgba(225,29,72,0.35)]"
+              >
+                Guardar y Aplicar en Vivo en Todo el Sitio
+              </button>
             </form>
-
-            {/* Card Elements Visibility Switches */}
-            <div className="p-6 sm:p-7 border border-[#171513]/15 bg-[#EFEAE1] space-y-4">
-              <div className="border-b border-[#171513]/12 pb-3">
-                <span className="text-[10px] font-mono uppercase tracking-widest text-[#96734E] font-medium block">
-                  ELEMENTOS DE CATÁLOGO Y PORTAFOLIO
-                </span>
-                <h3 className="font-display text-2xl font-medium text-[#171513]">
-                  Switches de Precios, Botones y Filtros
-                </h3>
-              </div>
-
-              <div className="space-y-2.5 text-xs font-mono">
-                {[
-                  {
-                    key: 'showServiceBookingButton' as const,
-                    label: 'Botón "Elegir servicio" en el Catálogo',
-                    desc: 'Muestra u oculta los botones de reserva directa en la carta de servicios',
-                  },
-                  {
-                    key: 'showServicePrice' as const,
-                    label: 'Precios en el Catálogo de Servicios y Banner',
-                    desc: 'Muestra u oculta los valores en pesos en la carta de servicios',
-                  },
-                  {
-                    key: 'showServiceDuration' as const,
-                    label: 'Duración (minutos) en el Catálogo de Servicios',
-                    desc: 'Muestra u oculta el tiempo estimado de cada sesión',
-                  },
-                  {
-                    key: 'showServiceProducts' as const,
-                    label: 'Detalle "Incluye:" en el Catálogo de Servicios',
-                    desc: 'Muestra las herramientas y productos botánicos de cada servicio',
-                  },
-                  {
-                    key: 'showGalleryFilter' as const,
-                    label: 'Pestañas de Categorías en Obras & Portafolio',
-                    desc: 'Permite filtrar las fotos por categoría en la sección #obras',
-                  },
-                  {
-                    key: 'showGalleryBookingButton' as const,
-                    label: 'Botón "Reservar" en Tarjetas de Obras',
-                    desc: 'Muestra u oculta el acceso al turnero debajo de cada obra',
-                  },
-                  {
-                    key: 'showGalleryPriceBadge' as const,
-                    label: 'Valor de Referencia en Tarjetas de Obras',
-                    desc: 'Muestra u oculta el precio junto a la fecha de cada obra',
-                  },
-                ].map((item) => {
-                  const enabled = Boolean(config[item.key]);
-                  return (
-                    <div
-                      key={item.key}
-                      className="p-3.5 border border-[#171513]/12 bg-[#F7F4EE] flex items-center justify-between gap-3"
-                    >
-                      <div>
-                        <span className="font-semibold text-[#171513] block">{item.label}</span>
-                        <span className="text-[11px] text-[#575049] block mt-0.5">{item.desc}</span>
-                      </div>
-                      <button
-                        type="button"
-                        role="switch"
-                        aria-checked={enabled}
-                        aria-label={item.label}
-                        onClick={() => {
-                          updateConfig({ [item.key]: !enabled });
-                          triggerToast(`${item.label}: ${!enabled ? 'Activo' : 'Oculto'}`);
-                        }}
-                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
-                          enabled ? 'bg-[#171513]' : 'bg-[#C5BBAE]'
-                        }`}
-                      >
-                        <span
-                          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-[#F7F4EE] transition ${
-                            enabled ? 'translate-x-5' : 'translate-x-0'
-                          }`}
-                        />
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
           </div>
         </div>
       )}
 
       {/* =========================================================================== */}
-      {/* TAB 1: HORARIOS, REGLAS DE NEGOCIO, PALETA EDITORIAL & EFECTOS              */}
-      {/* =========================================================================== */}
-      {activeTab === 'business_rules' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* Left: Business Rules, Opening/Closing Hours, Open Days, Buffer & PIN */}
-          <div className="lg:col-span-7 p-6 sm:p-7 border border-[#171513]/15 bg-[#EFEAE1] space-y-6">
-            <div className="border-b border-[#171513]/12 pb-4">
-              <div className="flex items-center gap-2 text-[11px] font-mono uppercase tracking-widest text-[#96734E] font-medium mb-1">
-                <Settings className="w-3.5 h-3.5" />
-                <span>REGLAS DE AGENDA Y ATENCIÓN</span>
-              </div>
-              <h2 className="font-display text-2xl sm:text-3xl font-medium text-[#171513]">
-                Horarios de Jornada, Días Abiertos, Señas y PIN
-              </h2>
-              <p className="text-xs text-[#4A443E] mt-1">
-                Estos parámetros gobiernan automáticamente los turnos libres que se calculan en
-                tiempo real en la portada y el turnero.
-              </p>
-            </div>
-
-            {/* Active Days of the Week */}
-            <div className="space-y-2">
-              <label className="block text-xs font-mono text-[#171513] font-semibold uppercase">
-                Días de Atención Activos en el Turnero:
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {WEEKDAYS_LIST.map((d) => {
-                  const isDayOpen = config.openDays.includes(d.day);
-                  return (
-                    <button
-                      key={d.day}
-                      type="button"
-                      onClick={() => {
-                        const nextDays = isDayOpen
-                          ? config.openDays.filter((x) => x !== d.day)
-                          : [...config.openDays, d.day].sort();
-                        if (nextDays.length === 0) {
-                          triggerToast('Debe haber al menos 1 día activo en la semana');
-                          return;
-                        }
-                        updateConfig({ openDays: nextDays });
-                        triggerToast(`Día ${d.full}: ${isDayOpen ? 'Cerrado' : 'Abierto'}`);
-                      }}
-                      className={`px-3.5 py-2 font-mono text-xs border transition-colors cursor-pointer ${
-                        isDayOpen
-                          ? 'bg-[#171513] text-[#F7F4EE] border-[#171513] font-semibold'
-                          : 'bg-[#F7F4EE] text-[#655E57] border-[#171513]/15 hover:text-[#171513]'
-                      }`}
-                    >
-                      {d.full}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Opening Hour, Closing Hour, Buffer & Courtesy */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-mono">
-              <div>
-                <label className="block text-[#4A443E] mb-1.5 font-semibold uppercase">
-                  Hora de Apertura (Formato 24h)
-                </label>
-                <input
-                  type="number"
-                  min={7}
-                  max={20}
-                  value={config.openingHour}
-                  onChange={(e) => {
-                    const val = Math.max(7, Math.min(20, Number(e.target.value)));
-                    updateConfig({ openingHour: val });
-                  }}
-                  className="w-full h-11 px-3.5 border border-[#171513]/20 bg-[#F7F4EE] text-[#171513] font-semibold"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[#4A443E] mb-1.5 font-semibold uppercase">
-                  Hora de Cierre (Formato 24h)
-                </label>
-                <input
-                  type="number"
-                  min={12}
-                  max={23}
-                  value={config.closingHour}
-                  onChange={(e) => {
-                    const val = Math.max(12, Math.min(23, Number(e.target.value)));
-                    updateConfig({ closingHour: val });
-                  }}
-                  className="w-full h-11 px-3.5 border border-[#171513]/20 bg-[#F7F4EE] text-[#171513] font-semibold"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[#4A443E] mb-1.5 font-semibold uppercase">
-                  Pausa de Acondicionamiento Entre Turnos (min)
-                </label>
-                <select
-                  value={config.cleanBufferMinutes}
-                  onChange={(e) => {
-                    updateConfig({ cleanBufferMinutes: Number(e.target.value) });
-                    triggerToast(`Pausa entre turnos actualizada a ${e.target.value} min`);
-                  }}
-                  className="w-full h-11 px-3.5 border border-[#171513]/20 bg-[#F7F4EE] text-[#171513] font-semibold"
-                >
-                  <option value={0}>0 min (Sin pausa)</option>
-                  <option value={5}>5 min</option>
-                  <option value={10}>10 min (Recomendado)</option>
-                  <option value={15}>15 min</option>
-                  <option value={20}>20 min</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-[#4A443E] mb-1.5 font-semibold uppercase">
-                  Porcentaje de Seña por Transferencia (%)
-                </label>
-                <select
-                  value={config.depositPercentage}
-                  onChange={(e) => {
-                    updateConfig({ depositPercentage: Number(e.target.value) });
-                    triggerToast(`Porcentaje de seña: ${e.target.value}%`);
-                  }}
-                  className="w-full h-11 px-3.5 border border-[#171513]/20 bg-[#F7F4EE] text-[#171513] font-semibold"
-                >
-                  <option value={20}>20% de seña</option>
-                  <option value={30}>30% de seña (Recomendado)</option>
-                  <option value={50}>50% de seña</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-[#4A443E] mb-1.5 font-semibold uppercase">
-                  Texto Visible de Horarios
-                </label>
-                <input
-                  type="text"
-                  value={scheduleDisplayForm}
-                  onChange={(e) => setScheduleDisplayForm(e.target.value)}
-                  onBlur={() => {
-                    updateConfig({ scheduleDisplay: scheduleDisplayForm });
-                    triggerToast('Texto de horarios actualizado');
-                  }}
-                  className="w-full h-11 px-3.5 border border-[#171513]/20 bg-[#F7F4EE] text-[#171513]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[#4A443E] mb-1.5 font-semibold uppercase">
-                  PIN Maestro del Panel Admin
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    maxLength={8}
-                    value={adminPinForm}
-                    onChange={(e) => setAdminPinForm(e.target.value)}
-                    className="flex-1 h-11 px-3.5 border border-[#171513]/20 bg-[#F7F4EE] text-[#96734E] font-semibold"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (!adminPinForm.trim()) return;
-                      updateConfig({ adminPin: adminPinForm.trim() });
-                      triggerToast(`Nuevo PIN guardado: ${adminPinForm.trim()}`);
-                    }}
-                    className="px-4 bg-[#171513] text-[#F7F4EE] font-semibold uppercase cursor-pointer"
-                  >
-                    Guardar PIN
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Right: Editorial Atmosphere Preset & Visual Effects Controls */}
-          <div className="lg:col-span-5 p-6 sm:p-7 border border-[#171513]/15 bg-[#EFEAE1] space-y-6">
-            <div className="border-b border-[#171513]/12 pb-4">
-              <div className="flex items-center gap-2 text-[11px] font-mono uppercase tracking-widest text-[#96734E] font-medium mb-1">
-                <Palette className="w-3.5 h-3.5" />
-                <span>DIRECCIÓN DE ARTE &amp; EFECTOS EDITORIALES</span>
-              </div>
-              <h2 className="font-display text-2xl sm:text-3xl font-medium text-[#171513]">
-                Atmósfera &amp; Animaciones
-              </h2>
-              <p className="text-xs text-[#4A443E] mt-1">
-                Personalizá el matiz del papel editorial, el banner rotativo con parallax y las
-                micro-interacciones del sitio.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {(
-                [
-                  {
-                    id: 'amber',
-                    name: 'Alabastro & Bronce Mate',
-                    desc: 'Hueso cálido original, carbón y bronce',
-                    swatch: '#96734E',
-                  },
-                  {
-                    id: 'crimson',
-                    name: 'Terracota & Lino Cálido',
-                    desc: 'Matiz terracota suave y papel lino',
-                    swatch: '#A65D43',
-                  },
-                  {
-                    id: 'volt',
-                    name: 'Salvia Botánico & Piedra',
-                    desc: 'Verde salvia de estudio y piedra clara',
-                    swatch: '#3D4F43',
-                  },
-                  {
-                    id: 'uv',
-                    name: 'Pergamino & Carbón Profundo',
-                    desc: 'Contraste editorial acentuado en pergamino',
-                    swatch: '#171513',
-                  },
-                ] as { id: UrbanThemePreset; name: string; desc: string; swatch: string }[]
-              ).map((preset) => {
-                const active = (config.urbanTheme || 'amber') === preset.id;
-                return (
-                  <button
-                    key={preset.id}
-                    type="button"
-                    onClick={() => {
-                      updateConfig({ urbanTheme: preset.id });
-                      triggerToast(`Atmósfera editorial activada: ${preset.name}`);
-                    }}
-                    className={`p-3.5 border text-left font-mono transition-all cursor-pointer ${
-                      active
-                        ? 'border-[#171513] bg-[#171513] text-[#F7F4EE]'
-                        : 'border-[#171513]/15 bg-[#F7F4EE] text-[#171513] hover:border-[#171513]'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 mb-1">
-                      <span
-                        className="w-3.5 h-3.5 rounded-full shrink-0 border border-white/30"
-                        style={{ backgroundColor: preset.swatch }}
-                      />
-                      <span className="text-xs font-semibold">{preset.name}</span>
-                    </div>
-                    <p className="text-[11px] opacity-80">{preset.desc}</p>
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="space-y-3 pt-2 border-t border-[#171513]/12 text-xs font-mono">
-              {[
-                {
-                  key: 'showPromoBanner' as const,
-                  label: 'Banner Rotativo Superior con Precios y Dirección',
-                  desc: 'Cinta animada continua en la cabecera con valores de servicios, dirección y horario',
-                },
-                {
-                  key: 'enableParallax' as const,
-                  label: 'Efecto Parallax en Retratos & Velocidad del Banner',
-                  desc: 'Desplazamiento suave en fotografías y aceleración del banner al hacer scroll',
-                },
-                {
-                  key: 'enableDripTrail' as const,
-                  label: 'Revelado de Película Cálida & Botones Magnéticos',
-                  desc: 'Transición analógica en fotografías y atracción magnética sutil en botones',
-                },
-              ].map((fx) => {
-                const isOn = config[fx.key] !== false;
-                return (
-                  <div
-                    key={fx.key}
-                    className="p-3.5 border border-[#171513]/12 bg-[#F7F4EE] flex items-center justify-between gap-3"
-                  >
-                    <div>
-                      <span className="font-semibold text-[#171513] block">{fx.label}</span>
-                      <span className="text-[11px] text-[#575049] block mt-0.5">{fx.desc}</span>
-                    </div>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={isOn}
-                      onClick={() => {
-                        updateConfig({ [fx.key]: !isOn });
-                        triggerToast(`${fx.label}: ${!isOn ? 'Activado' : 'Desactivado'}`);
-                      }}
-                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
-                        isOn ? 'bg-[#171513]' : 'bg-[#C5BBAE]'
-                      }`}
-                    >
-                      <span
-                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-[#F7F4EE] transition ${
-                          isOn ? 'translate-x-5' : 'translate-x-0'
-                        }`}
-                      />
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* =========================================================================== */}
-      {/* TAB 2: APPOINTMENTS (LIVE SLOTS + CSV EXPORT + SEARCH + MANUAL BOOKING)     */}
+      {/* TAB 1: APPOINTMENTS + 1-CLICK WHATSAPP REMINDERS                            */}
       {/* =========================================================================== */}
       {activeTab === 'appointments' && (
         <div className="space-y-6">
           {/* Quick Manual Appointment Creator */}
-          <div className="p-6 border border-[#171513]/15 bg-[#EFEAE1] space-y-4">
+          <div className="p-6 rounded-2xl border border-zinc-800 bg-[#0C0E14] space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <span className="text-[10px] font-mono uppercase tracking-widest text-[#96734E] font-medium block">
-                  CARGA MANUAL DE TURNO (ACTUALIZA LA AGENDA PÚBLICA AL INSTANTE)
+                <span className="text-[10px] font-mono uppercase tracking-widest text-[#E11D48] font-bold block">
+                  CARGA MANUAL DE TURNO (OCUPA EL HORARIO EN LA WEB AL INSTANTE)
                 </span>
-                <h3 className="font-display text-2xl font-medium text-[#171513]">
-                  Agendar Turno Manual (Cliente por WhatsApp o Presencial)
+                <h3 className="font-display text-2xl font-black uppercase text-white">
+                  Agendar Turno Manual (WhatsApp o Presencial)
                 </h3>
               </div>
 
               <button
                 type="button"
                 onClick={handleExportAppointmentsCSV}
-                className="inline-flex items-center gap-2 px-4 py-2.5 border border-[#171513] bg-[#F7F4EE] hover:bg-[#171513] text-[#171513] hover:text-[#F7F4EE] font-mono text-xs uppercase tracking-wider transition-colors cursor-pointer"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-zinc-700 bg-[#12151E] hover:border-[#E11D48] text-white font-mono text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer"
               >
-                <Download className="w-3.5 h-3.5" />
-                <span>Exportar Agenda CSV</span>
+                <Download className="w-3.5 h-3.5 text-[#E11D48]" />
+                <span>Exportar Planilla CSV</span>
               </button>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 text-xs font-mono">
               <div>
-                <label className="block text-[#575049] mb-1">Fecha</label>
+                <label className="block text-zinc-400 mb-1">Fecha</label>
                 <input
                   type="date"
                   value={manualDate}
                   onChange={(e) => setManualDate(e.target.value)}
-                  className="w-full h-10 px-3 border border-[#171513]/20 bg-[#F7F4EE] text-[#171513]"
+                  className="w-full h-10 px-3 rounded-xl border border-zinc-700 bg-[#12151E] text-white"
                 />
               </div>
               <div>
-                <label className="block text-[#575049] mb-1">Horario</label>
+                <label className="block text-zinc-400 mb-1">Horario</label>
                 <input
                   type="time"
                   value={manualTime}
                   onChange={(e) => setManualTime(e.target.value)}
-                  className="w-full h-10 px-3 border border-[#171513]/20 bg-[#F7F4EE] text-[#171513]"
+                  className="w-full h-10 px-3 rounded-xl border border-zinc-700 bg-[#12151E] text-white"
                 />
               </div>
               <div>
-                <label className="block text-[#575049] mb-1">Servicio</label>
+                <label className="block text-zinc-400 mb-1">Servicio</label>
                 <select
                   value={manualServiceId}
                   onChange={(e) => setManualServiceId(e.target.value)}
-                  className="w-full h-10 px-2.5 border border-[#171513]/20 bg-[#F7F4EE] text-[#171513]"
+                  className="w-full h-10 px-2.5 rounded-xl border border-zinc-700 bg-[#12151E] text-white"
                 >
                   {services.map((s) => (
                     <option key={s.id} value={s.id}>
@@ -1582,23 +1350,23 @@ export const AdminPage: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-[#575049] mb-1">Cliente</label>
+                <label className="block text-zinc-400 mb-1">Cliente</label>
                 <input
                   type="text"
                   value={manualClientName}
                   onChange={(e) => setManualClientName(e.target.value)}
                   placeholder="Ej. Franco Gómez"
-                  className="w-full h-10 px-3 border border-[#171513]/20 bg-[#F7F4EE] text-[#171513]"
+                  className="w-full h-10 px-3 rounded-xl border border-zinc-700 bg-[#12151E] text-white"
                 />
               </div>
               <div>
-                <label className="block text-[#575049] mb-1">WhatsApp</label>
+                <label className="block text-zinc-400 mb-1">WhatsApp</label>
                 <input
                   type="text"
                   value={manualClientWhatsapp}
                   onChange={(e) => setManualClientWhatsapp(e.target.value)}
                   placeholder="+54 9 3462 ..."
-                  className="w-full h-10 px-3 border border-[#171513]/20 bg-[#F7F4EE] text-[#171513]"
+                  className="w-full h-10 px-3 rounded-xl border border-zinc-700 bg-[#12151E] text-white"
                 />
               </div>
               <div className="flex items-end">
@@ -1615,7 +1383,7 @@ export const AdminPage: React.FC = () => {
                     const endMin =
                       timeToMinutes(manualTime) + srvMin + config.cleanBufferMinutes + 120;
                     addAppointment({
-                      id: `TK-${Date.now().toString().slice(-6)}`,
+                      id: `RC-${Date.now().toString().slice(-6)}`,
                       date: manualDate,
                       startTime: manualTime,
                       serviceMinutes: srvMin,
@@ -1631,7 +1399,7 @@ export const AdminPage: React.FC = () => {
                     setManualClientWhatsapp('');
                     triggerToast(`Turno agendado para ${manualDate} a las ${manualTime} hs`);
                   }}
-                  className="w-full h-10 bg-[#171513] hover:bg-[#96734E] text-[#F7F4EE] font-mono uppercase text-xs cursor-pointer transition-colors"
+                  className="w-full h-10 rounded-xl bg-[#E11D48] hover:bg-[#BE123C] text-white font-mono font-bold uppercase text-xs cursor-pointer transition-colors"
                 >
                   + Ocupar Turno
                 </button>
@@ -1641,32 +1409,34 @@ export const AdminPage: React.FC = () => {
 
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <h2 className="font-display text-3xl font-medium">Agenda de Turnos Confirmados</h2>
-              <p className="text-xs font-mono text-[#575049]">
-                Si cancelás un turno acá, ese horario vuelve a quedar libre inmediatamente en el
-                turnero público.
+              <h2 className="font-display text-3xl font-black uppercase text-white">
+                Agenda de Turnos &amp; Mensajes Rápidos WhatsApp
+              </h2>
+              <p className="text-xs font-mono text-zinc-400">
+                Enviá recordatorios o confirmaciones en 1 clic. Si cancelás un turno, el horario se
+                libera al instante.
               </p>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
               <div className="relative">
-                <Search className="w-3.5 h-3.5 text-[#8C8379] absolute left-3 top-1/2 -translate-y-1/2" />
+                <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   value={appointmentSearch}
                   onChange={(e) => setAppointmentSearch(e.target.value)}
                   placeholder="Buscar cliente o WhatsApp..."
-                  className="h-9 pl-8 pr-3 border border-[#171513]/20 bg-[#EFEAE1] text-xs font-mono text-[#171513] focus:border-[#96734E] focus:outline-none"
+                  className="h-9 pl-8 pr-3 rounded-xl border border-zinc-700 bg-[#0C0E14] text-xs font-mono text-white focus:border-[#E11D48] focus:outline-none"
                 />
               </div>
 
               <button
                 type="button"
                 onClick={() => setAppointmentFilter('today')}
-                className={`px-3 py-1.5 text-xs font-mono border transition-colors cursor-pointer ${
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-mono font-bold border transition-colors cursor-pointer ${
                   appointmentFilter === 'today'
-                    ? 'border-[#171513] bg-[#171513] text-[#F7F4EE]'
-                    : 'border-[#171513]/15 bg-[#EFEAE1] text-[#575049]'
+                    ? 'border-[#E11D48] bg-[#E11D48] text-white'
+                    : 'border-zinc-800 bg-[#0C0E14] text-zinc-400'
                 }`}
               >
                 Hoy {todayStr} ({todayAppointments.length})
@@ -1674,10 +1444,10 @@ export const AdminPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setAppointmentFilter('all')}
-                className={`px-3 py-1.5 text-xs font-mono border transition-colors cursor-pointer ${
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-mono font-bold border transition-colors cursor-pointer ${
                   appointmentFilter === 'all'
-                    ? 'border-[#171513] bg-[#171513] text-[#F7F4EE]'
-                    : 'border-[#171513]/15 bg-[#EFEAE1] text-[#575049]'
+                    ? 'border-[#E11D48] bg-[#E11D48] text-white'
+                    : 'border-zinc-800 bg-[#0C0E14] text-zinc-400'
                 }`}
               >
                 Todos ({appointments.length})
@@ -1686,12 +1456,12 @@ export const AdminPage: React.FC = () => {
           </div>
 
           {displayedAppointments.length === 0 ? (
-            <div className="p-8 border border-[#171513]/15 bg-[#EFEAE1] text-center space-y-2">
-              <p className="font-display text-2xl font-medium text-[#171513]">
+            <div className="p-8 rounded-2xl border border-zinc-800 bg-[#0C0E14] text-center space-y-2">
+              <p className="font-display text-2xl font-bold uppercase text-white">
                 No hay turnos registrados para este filtro
               </p>
-              <p className="text-xs font-mono text-[#655E57]">
-                Todos los horarios dentro de la jornada están disponibles en el turnero público.
+              <p className="text-xs font-mono text-zinc-400">
+                Todos los horarios dentro de la jornada están libres en el turnero público.
               </p>
             </div>
           ) : (
@@ -1700,34 +1470,36 @@ export const AdminPage: React.FC = () => {
                 const startMin = timeToMinutes(app.startTime);
                 const endMin = startMin + app.serviceMinutes + app.bufferMinutes;
                 const isFinished = app.status === 'completed';
+                const cleanDigits = app.whatsapp.replace(/\D/g, '');
+                const firstName = app.clientName.split(' ')[0];
 
                 return (
                   <div
                     key={app.id}
-                    className={`p-5 md:p-6 border transition-colors flex flex-col md:flex-row md:items-center justify-between gap-6 ${
+                    className={`p-5 md:p-6 rounded-2xl border transition-colors flex flex-col lg:flex-row lg:items-center justify-between gap-6 ${
                       isFinished
-                        ? 'border-[#171513]/10 bg-[#E4DDD1]/60 opacity-70'
-                        : 'border-[#171513]/15 bg-[#EFEAE1]'
+                        ? 'border-zinc-900 bg-[#0C0E14]/60 opacity-70'
+                        : 'border-zinc-800 bg-[#0C0E14]'
                     }`}
                   >
                     <div className="space-y-1.5">
                       <div className="flex flex-wrap items-center gap-2 text-xs font-mono">
-                        <span className="px-2.5 py-0.5 bg-[#171513] text-[#F7F4EE] font-semibold">
+                        <span className="px-2.5 py-0.5 rounded bg-[#E11D48] text-white font-bold">
                           {app.date}
                         </span>
-                        <span className="font-semibold text-[#171513]">
+                        <span className="font-bold text-white">
                           {app.startTime} a {minutesToTime(endMin)} hs
                         </span>
-                        <span className="text-[#8C8379]">·</span>
-                        <span className="text-[#575049]">
-                          {app.serviceMinutes}m servicio + {app.bufferMinutes}m pausa
+                        <span className="text-zinc-600">·</span>
+                        <span className="text-zinc-400">
+                          {app.serviceMinutes}m + {app.bufferMinutes}m pausa
                         </span>
-                        <span className="text-[#8C8379]">·</span>
+                        <span className="text-zinc-600">·</span>
                         <span
                           className={
                             app.paymentOption === 'deposit'
-                              ? 'text-[#3D4F43] font-semibold'
-                              : 'text-[#655E57]'
+                              ? 'text-[#10B981] font-bold'
+                              : 'text-zinc-300'
                           }
                         >
                           {app.paymentOption === 'deposit'
@@ -1736,39 +1508,51 @@ export const AdminPage: React.FC = () => {
                         </span>
                       </div>
 
-                      <h3 className="font-display text-2xl font-medium text-[#171513]">
+                      <h3 className="font-display text-2xl font-black uppercase text-white">
                         {app.clientName}
                       </h3>
 
-                      <p className="text-xs font-mono text-[#4A443E]">
+                      <p className="text-xs font-mono text-zinc-300">
                         Servicio:{' '}
-                        <span className="text-[#171513] font-semibold">
+                        <span className="text-white font-bold">
                           {app.serviceNames.join(' + ')}
+                        </span>{' '}
+                        ·{' '}
+                        <span className="text-[#E11D48] font-bold">
+                          {formatPriceARS(estimateAppPrice(app.serviceNames))}
                         </span>
                       </p>
 
-                      <div className="flex items-center gap-4 text-xs font-mono text-[#655E57] pt-1">
+                      <div className="flex items-center gap-4 text-xs font-mono text-zinc-400 pt-1">
                         <span>WhatsApp: {app.whatsapp}</span>
                       </div>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+                    <div className="flex flex-wrap items-center gap-2 shrink-0">
+                      {/* 1-Click WhatsApp Reminder */}
                       <a
-                        href={`https://wa.me/${app.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(
-                          `Hola ${
-                            app.clientName.split(' ')[0]
-                          }! Te escribe ${config.authorName} de ${
-                            config.studioTitle
-                          } para confirmar tu turno del ${app.date} a las ${
-                            app.startTime
-                          } hs en ${config.address}.`
+                        href={`https://wa.me/${cleanDigits}?text=${encodeURIComponent(
+                          `Hola ${firstName}! Te escribimos de ${config.studioTitle} para recordarte tu turno del ${app.date} a las ${app.startTime} hs (${app.serviceNames.join(' + ')}) en ${config.address}. ¡Te esperamos!`
                         )}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="px-3.5 py-2 border border-[#3D4F43]/40 bg-[#3D4F43]/10 text-[#3D4F43] text-xs font-mono font-medium hover:bg-[#3D4F43] hover:text-[#F7F4EE] transition-colors flex items-center gap-1.5"
+                        className="px-3 py-2 rounded-xl border border-[#10B981]/50 bg-[#10B981]/15 text-[#10B981] text-xs font-mono font-bold hover:bg-[#10B981] hover:text-zinc-950 transition-colors flex items-center gap-1.5"
                       >
-                        <MessageCircle className="w-3.5 h-3.5" />
-                        <span>WhatsApp</span>
+                        <BellRing className="w-3.5 h-3.5" />
+                        <span>Recordatorio WA</span>
+                      </a>
+
+                      {/* 1-Click Post-Cut Review Request */}
+                      <a
+                        href={`https://wa.me/${cleanDigits}?text=${encodeURIComponent(
+                          `Hola ${firstName}! Gracias por pasar hoy por ${config.studioTitle}. Si te gustó cómo quedó el corte, te agradecemos un montón tu reseña en nuestra web. ¡Nos vemos la próxima!`
+                        )}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3 py-2 rounded-xl border border-[#F59E0B]/40 bg-[#F59E0B]/10 text-[#F59E0B] text-xs font-mono font-bold hover:bg-[#F59E0B] hover:text-zinc-950 transition-colors flex items-center gap-1.5"
+                      >
+                        <Star className="w-3.5 h-3.5" />
+                        <span>Pedir Reseña</span>
                       </a>
 
                       <button
@@ -1780,13 +1564,13 @@ export const AdminPage: React.FC = () => {
                           );
                           triggerToast(
                             isFinished
-                              ? 'Cita marcada como pendiente'
-                              : 'Cita marcada como completada'
+                              ? 'Turno marcado como pendiente'
+                              : 'Turno marcado como completado'
                           );
                         }}
-                        className="px-3.5 py-2 text-xs font-mono border border-[#171513]/25 bg-[#F7F4EE] text-[#171513] hover:bg-[#171513] hover:text-[#F7F4EE] transition-colors cursor-pointer"
+                        className="px-3.5 py-2 rounded-xl text-xs font-mono font-bold border border-zinc-700 bg-[#12151E] text-white hover:border-white transition-colors cursor-pointer"
                       >
-                        {isFinished ? 'Reabrir' : 'Completado'}
+                        {isFinished ? 'Reabrir' : 'Completado ✓'}
                       </button>
 
                       <button
@@ -1797,10 +1581,10 @@ export const AdminPage: React.FC = () => {
                             `Turno de ${app.clientName} (${app.startTime} hs) cancelado y horario liberado`
                           );
                         }}
-                        className="px-3.5 py-2 text-xs font-mono text-[#A65D43] hover:text-[#F7F4EE] border border-[#A65D43]/35 hover:bg-[#A65D43] transition-colors flex items-center gap-1.5 cursor-pointer"
+                        className="px-3.5 py-2 rounded-xl text-xs font-mono font-bold text-[#F43F5E] hover:text-white border border-[#E11D48]/40 hover:bg-[#E11D48] transition-colors flex items-center gap-1.5 cursor-pointer"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
-                        <span>Cancelar y Liberar</span>
+                        <span>Liberar</span>
                       </button>
                     </div>
                   </div>
@@ -1812,138 +1596,343 @@ export const AdminPage: React.FC = () => {
       )}
 
       {/* =========================================================================== */}
-      {/* TAB 3: GALLERY MANAGEMENT                                                   */}
+      {/* TAB 2: CRM FICHERO DE CLIENTES & FÓRMULAS TÉCNICAS DE CORTE                 */}
       {/* =========================================================================== */}
-      {activeTab === 'gallery' && (
+      {activeTab === 'clients_crm' && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Left 5 Cols: Add / Update Client Formula */}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!crmClientName.trim() || !crmFormulaSpec.trim()) {
+                triggerToast('Completá el nombre del cliente y su fórmula de corte');
+                return;
+              }
+              saveClientNote({
+                id: `crm-${Date.now()}`,
+                clientName: crmClientName.trim(),
+                whatsapp: crmWhatsapp.trim() || '+54 9 3462',
+                formulaSpec: crmFormulaSpec.trim(),
+                hairType: crmHairType.trim() || 'Densidad media',
+                preferredProducts: crmPreferredProducts.trim() || 'Polvo mate',
+                updatedAt: `Actualizado ${todayStr}`,
+              });
+              setCrmClientName('');
+              setCrmWhatsapp('');
+              setCrmFormulaSpec('');
+              triggerToast('Ficha técnica de cliente guardada en el CRM');
+            }}
+            className="lg:col-span-5 p-6 sm:p-7 rounded-2xl border border-zinc-800 bg-[#0C0E14] space-y-4"
+          >
+            <div className="border-b border-zinc-800 pb-4">
+              <span className="text-[11px] font-mono uppercase tracking-widest text-[#E11D48] font-bold block mb-1">
+                FICHERO TÉCNICO · {config.studioTitle}
+              </span>
+              <h2 className="font-display text-2xl sm:text-3xl font-black uppercase text-white">
+                Registrar Fórmula de Cliente
+              </h2>
+              <p className="text-xs text-zinc-400 mt-1">
+                Guardá qué alzada usa cada cliente, sus remolinos y su producto favorito para
+                repetir su corte exacto en cada visita.
+              </p>
+            </div>
+
+            <div className="space-y-3 text-xs font-mono">
+              <div>
+                <label className="block text-zinc-300 mb-1 font-bold uppercase">
+                  Nombre y Apellido *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={crmClientName}
+                  onChange={(e) => setCrmClientName(e.target.value)}
+                  placeholder="Ej. Ignacio Varela"
+                  className="w-full h-10 px-3 rounded-xl border border-zinc-700 bg-[#12151E] text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-zinc-300 mb-1 font-bold uppercase">
+                  WhatsApp del Cliente
+                </label>
+                <input
+                  type="text"
+                  value={crmWhatsapp}
+                  onChange={(e) => setCrmWhatsapp(e.target.value)}
+                  placeholder="+54 9 3462 521984"
+                  className="w-full h-10 px-3 rounded-xl border border-zinc-700 bg-[#12151E] text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-zinc-300 mb-1 font-bold uppercase">
+                  Fórmula Técnica de Corte / Alzadas / Remolinos *
+                </label>
+                <textarea
+                  rows={3}
+                  required
+                  value={crmFormulaSpec}
+                  onChange={(e) => setCrmFormulaSpec(e.target.value)}
+                  placeholder="Ej. Mid Drop Fade desde 0.0mm a 1.5mm · Arriba 4cm a tijera · Cuidar remolino derecho"
+                  className="w-full p-3 rounded-xl border border-zinc-700 bg-[#12151E] text-white"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-zinc-300 mb-1 font-bold uppercase">
+                    Tipo de Pelo / Barba
+                  </label>
+                  <input
+                    type="text"
+                    value={crmHairType}
+                    onChange={(e) => setCrmHairType(e.target.value)}
+                    className="w-full h-10 px-3 rounded-xl border border-zinc-700 bg-[#12151E] text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-zinc-300 mb-1 font-bold uppercase">
+                    Acabado / Producto
+                  </label>
+                  <input
+                    type="text"
+                    value={crmPreferredProducts}
+                    onChange={(e) => setCrmPreferredProducts(e.target.value)}
+                    className="w-full h-10 px-3 rounded-xl border border-zinc-700 bg-[#12151E] text-white"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="w-full h-11 rounded-xl bg-[#E11D48] hover:bg-[#BE123C] text-white font-mono text-xs font-bold uppercase tracking-wider cursor-pointer transition-colors"
+            >
+              + Guardar Ficha Técnica
+            </button>
+          </form>
+
+          {/* Right 7 Cols: Client Formulas List */}
+          <div className="lg:col-span-7 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h3 className="font-display text-3xl font-black uppercase text-white">
+                  Directorio &amp; Historial ({combinedClients.length})
+                </h3>
+                <p className="text-xs font-mono text-zinc-400">
+                  Sincronizado automáticamente con las reservas del turnero.
+                </p>
+              </div>
+              <div className="relative">
+                <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={crmSearch}
+                  onChange={(e) => setCrmSearch(e.target.value)}
+                  placeholder="Buscar cliente o fórmula..."
+                  className="h-10 pl-9 pr-4 rounded-xl border border-zinc-700 bg-[#0C0E14] text-xs font-mono text-white"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {combinedClients.map((client) => {
+                const digits = client.whatsapp.replace(/\D/g, '');
+                return (
+                  <div
+                    key={client.id}
+                    className="p-5 rounded-2xl border border-zinc-800 bg-[#0C0E14] space-y-3"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <h4 className="font-display text-2xl font-black uppercase text-white">
+                          {client.clientName}
+                        </h4>
+                        <span className="text-xs font-mono text-zinc-400">
+                          WA: {client.whatsapp} · {client.lastDate}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2 font-mono text-xs">
+                        <span className="px-2.5 py-1 rounded bg-[#E11D48]/15 text-[#E11D48] font-bold">
+                          {client.visitsCount} {client.visitsCount === 1 ? 'visita' : 'visitas'}
+                        </span>
+                        <span className="px-2.5 py-1 rounded bg-zinc-800 text-white font-bold">
+                          {formatPriceARS(client.totalSpentARS)}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="p-3.5 rounded-xl bg-[#12151E] border border-zinc-800 text-xs font-mono space-y-1.5">
+                      <p className="text-white">
+                        <strong className="text-[#E11D48] uppercase">Fórmula: </strong>
+                        {client.formulaSpec}
+                      </p>
+                      <p className="text-zinc-400">
+                        <strong>Pelo/Barba:</strong> {client.hairType} ·{' '}
+                        <strong>Producto:</strong> {client.preferredProducts}
+                      </p>
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCrmClientName(client.clientName);
+                            setCrmWhatsapp(client.whatsapp);
+                            setCrmFormulaSpec(client.formulaSpec);
+                            setCrmHairType(client.hairType);
+                            setCrmPreferredProducts(client.preferredProducts);
+                          }}
+                          className="px-3 py-1.5 rounded-lg border border-zinc-700 hover:border-white text-xs font-mono text-zinc-200 cursor-pointer"
+                        >
+                          Editar Ficha
+                        </button>
+
+                        {digits.length >= 8 && (
+                          <a
+                            href={`https://wa.me/${digits}?text=${encodeURIComponent(
+                              `Hola ${client.clientName.split(' ')[0]}! Te escribe ${config.authorName} de ${config.studioTitle}. ¿Cómo viene creciendo ese corte? Cuando quieras renovar tu lugar te espero por el estudio.`
+                            )}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-3 py-1.5 rounded-lg border border-[#10B981]/40 bg-[#10B981]/10 text-[#10B981] text-xs font-mono font-bold inline-flex items-center gap-1.5"
+                          >
+                            <MessageCircle className="w-3.5 h-3.5" />
+                            <span>Seguimiento WA</span>
+                          </a>
+                        )}
+                      </div>
+
+                      {!client.id.startsWith('crm-auto-') && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            deleteClientNote(client.id);
+                            triggerToast('Ficha eliminada');
+                          }}
+                          className="text-xs font-mono text-[#F43F5E] hover:underline cursor-pointer"
+                        >
+                          Eliminar
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================================== */}
+      {/* TAB 3: CAJA DIARIA, SEÑAS & REPORTE FINANCIERO                              */}
+      {/* =========================================================================== */}
+      {activeTab === 'finance_box' && (
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h2 className="font-display text-3xl font-medium">
-                Obras &amp; Portafolio del Estudio (#obras)
+              <span className="text-xs font-mono uppercase tracking-widest text-[#E11D48] font-bold block">
+                CONTROL DE CAJA Y FACTURACIÓN · {config.studioTitle}
+              </span>
+              <h2 className="font-display text-3xl sm:text-4xl font-black uppercase text-white">
+                Balance de Caja, Señas ({config.depositPercentage}%) &amp; Servicios
               </h2>
-              <p className="text-xs text-[#575049] font-mono">
-                Subí nuevas fotografías o controlá la visibilidad individual de cada obra, su
-                precio y su botón de reserva.
-              </p>
             </div>
+
             <button
               type="button"
-              onClick={() => setIsUploadModalOpen(true)}
-              className="inline-flex items-center gap-2 px-5 py-3 text-xs font-mono uppercase tracking-wider bg-[#171513] text-[#F7F4EE] hover:bg-[#96734E] cursor-pointer"
+              onClick={handleExportAppointmentsCSV}
+              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-[#E11D48] hover:bg-[#BE123C] text-white font-mono text-xs font-bold uppercase tracking-wider cursor-pointer shadow-[0_8px_24px_rgba(225,29,72,0.35)]"
             >
-              <Upload className="w-4 h-4" />
-              <span>Subir Nueva Obra</span>
+              <Download className="w-4 h-4" />
+              <span>Descargar Planilla Excel (.CSV)</span>
             </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {galleryItems.map((item) => (
-              <div
-                key={item.id}
-                className={`border overflow-hidden flex flex-col justify-between transition-all ${
-                  item.hidden
-                    ? 'border-[#171513]/10 bg-[#E4DDD1]/60 opacity-60'
-                    : 'border-[#171513]/15 bg-[#EFEAE1]'
-                }`}
-              >
-                <div className="h-52 overflow-hidden relative bg-[#171513]">
-                  <img
-                    src={item.imageUrl}
-                    alt={item.title}
-                    referrerPolicy="no-referrer"
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute top-3 left-3 flex items-center gap-1.5">
-                    <span className="px-2.5 py-1 bg-[#171513]/85 text-[#F7F4EE] font-mono text-[10px]">
-                      {item.category}
-                    </span>
-                    {item.hidden && (
-                      <span className="px-2 py-1 bg-[#A65D43] text-[#F7F4EE] font-mono text-[10px] uppercase">
-                        OCULTA
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="p-6 rounded-2xl border border-zinc-800 bg-[#0C0E14]">
+              <span className="text-xs font-mono uppercase text-zinc-400 block">
+                Caja Estimada Hoy ({todayStr})
+              </span>
+              <p className="font-mono text-3xl font-black text-white mt-2 tabular-nums">
+                {formatPriceARS(todayRevenueEst)}
+              </p>
+              <span className="text-xs font-mono text-[#10B981] mt-1 block">
+                {todayAppointments.length} turnos programados hoy
+              </span>
+            </div>
+
+            <div className="p-6 rounded-2xl border border-zinc-800 bg-[#0C0E14]">
+              <span className="text-xs font-mono uppercase text-zinc-400 block">
+                Facturación Total en Agenda
+              </span>
+              <p className="font-mono text-3xl font-black text-[#E11D48] mt-2 tabular-nums">
+                {formatPriceARS(totalRevenueEst)}
+              </p>
+              <span className="text-xs font-mono text-zinc-400 mt-1 block">
+                Ticket promedio: {formatPriceARS(averageTicketARS)}
+              </span>
+            </div>
+
+            <div className="p-6 rounded-2xl border border-zinc-800 bg-[#0C0E14]">
+              <span className="text-xs font-mono uppercase text-zinc-400 block">
+                Señas por Transferencia ({config.depositPercentage}%)
+              </span>
+              <p className="font-mono text-3xl font-black text-[#10B981] mt-2 tabular-nums">
+                {formatPriceARS(depositCollectedARS)}
+              </p>
+              <span className="text-xs font-mono text-zinc-400 mt-1 block">
+                Alias activo: {config.transferAlias}
+              </span>
+            </div>
+
+            <div className="p-6 rounded-2xl border border-zinc-800 bg-[#0C0E14]">
+              <span className="text-xs font-mono uppercase text-zinc-400 block">
+                Saldo a Cobrar en el Estudio
+              </span>
+              <p className="font-mono text-3xl font-black text-white mt-2 tabular-nums">
+                {formatPriceARS(pendingBalanceInChairARS)}
+              </p>
+              <span className="text-xs font-mono text-zinc-400 mt-1 block">
+                Efectivo o transferencia al terminar
+              </span>
+            </div>
+          </div>
+
+          {/* Breakdown by Service */}
+          <div className="p-6 sm:p-8 rounded-2xl border border-zinc-800 bg-[#0C0E14] space-y-5">
+            <h3 className="font-display text-2xl font-black uppercase text-white">
+              Rendimiento por Servicio del Catálogo
+            </h3>
+            <div className="divide-y divide-zinc-800 font-mono text-xs">
+              {services.map((srv) => {
+                const count = appointments.filter((a) =>
+                  a.serviceNames.some((n) => n.toLowerCase() === srv.name.toLowerCase())
+                ).length;
+                const rev = count * srv.price;
+                return (
+                  <div
+                    key={srv.id}
+                    className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+                  >
+                    <div>
+                      <span className="text-[#E11D48] font-bold mr-2">{srv.index}.</span>
+                      <span className="text-white font-bold">{srv.name}</span>
+                      <span className="text-zinc-500 ml-2">({formatPriceARS(srv.price)})</span>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <span className="text-zinc-400">{count} turnos reservados</span>
+                      <span className="text-white font-bold tabular-nums">
+                        {formatPriceARS(rev)}
                       </span>
-                    )}
-                  </div>
-                </div>
-
-                <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
-                  <div>
-                    <h3 className="font-display text-xl font-medium text-[#171513] mb-1">
-                      {item.title}
-                    </h3>
-                    <p className="text-xs text-[#4A443E] line-clamp-2">{item.description}</p>
-                  </div>
-
-                  <div className="pt-3 border-t border-[#171513]/12 space-y-2">
-                    <span className="text-[10px] font-mono uppercase text-[#655E57] block">
-                      Opciones en esta obra:
-                    </span>
-                    <div className="flex flex-wrap gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          updateGalleryItem(item.id, { hidden: !item.hidden });
-                          triggerToast(
-                            !item.hidden
-                              ? 'Obra ocultada del portafolio público'
-                              : 'Obra visible en el portafolio público'
-                          );
-                        }}
-                        className="px-2.5 py-1 font-mono text-[10px] border border-[#171513]/20 bg-[#F7F4EE] text-[#171513] cursor-pointer flex items-center gap-1"
-                      >
-                        {item.hidden ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-                        <span>{item.hidden ? 'Oculta' : 'Visible'}</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          updateGalleryItem(item.id, {
-                            hideBuyButton: !item.hideBuyButton,
-                          });
-                          triggerToast(
-                            !item.hideBuyButton
-                              ? 'Botón Reservar ocultado en esta obra'
-                              : 'Botón Reservar visible en esta obra'
-                          );
-                        }}
-                        className="px-2.5 py-1 font-mono text-[10px] border border-[#171513]/20 bg-[#F7F4EE] text-[#171513] cursor-pointer"
-                      >
-                        {item.hideBuyButton ? 'Sin Botón Reservar' : 'Con Botón Reservar'}
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          updateGalleryItem(item.id, { hidePrice: !item.hidePrice });
-                          triggerToast(
-                            !item.hidePrice
-                              ? 'Precio ocultado en esta obra'
-                              : 'Precio visible en esta obra'
-                          );
-                        }}
-                        className="px-2.5 py-1 font-mono text-[10px] border border-[#171513]/20 bg-[#F7F4EE] text-[#171513] cursor-pointer"
-                      >
-                        {item.hidePrice ? 'Precio Oculto' : 'Precio Visible'}
-                      </button>
-                    </div>
-
-                    <div className="pt-2 flex items-center justify-end">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          deleteGalleryItem(item.id);
-                          triggerToast('Obra eliminada de la galería');
-                        }}
-                        className="inline-flex items-center gap-1 text-[11px] font-mono text-[#A65D43] hover:underline cursor-pointer"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        <span>Eliminar obra</span>
-                      </button>
                     </div>
                   </div>
-                </div>
-              </div>
-            ))}
+                );
+              })}
+            </div>
           </div>
         </div>
       )}
@@ -1955,19 +1944,19 @@ export const AdminPage: React.FC = () => {
         <div className="space-y-6">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div>
-              <h2 className="font-display text-3xl font-medium">
+              <h2 className="font-display text-3xl font-black uppercase text-white">
                 Catálogo de Servicios, Precios y Ajuste Masivo
               </h2>
-              <p className="text-xs text-[#575049] font-mono">
+              <p className="text-xs text-zinc-400 font-mono">
                 Editá cada servicio o aplicá un ajuste porcentual en 1 clic a toda la carta y al
                 banner rotativo (redondeado a múltiplos de $500 ARS).
               </p>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <div className="flex items-center gap-1.5 p-1.5 bg-[#EFEAE1] border border-[#171513]/15 font-mono text-xs">
-                <span className="px-2 text-[#4A443E] font-semibold flex items-center gap-1">
-                  <TrendingUp className="w-3.5 h-3.5 text-[#96734E]" />
+              <div className="flex items-center gap-1.5 p-1.5 rounded-xl bg-[#0C0E14] border border-zinc-800 font-mono text-xs">
+                <span className="px-2 text-zinc-300 font-bold flex items-center gap-1">
+                  <TrendingUp className="w-3.5 h-3.5 text-[#E11D48]" />
                   <span>Ajuste Masivo:</span>
                 </span>
                 {[-10, 10, 15, 20].map((pct) => (
@@ -1983,7 +1972,7 @@ export const AdminPage: React.FC = () => {
                         }`
                       );
                     }}
-                    className="px-2.5 py-1.5 bg-[#F7F4EE] hover:bg-[#171513] text-[#171513] hover:text-[#F7F4EE] font-semibold border border-[#171513]/15 transition-colors cursor-pointer"
+                    className="px-2.5 py-1.5 rounded-lg bg-[#12151E] hover:bg-[#E11D48] text-white font-bold border border-zinc-700 transition-colors cursor-pointer"
                   >
                     {pct > 0 ? `+${pct}%` : `${pct}%`}
                   </button>
@@ -2001,18 +1990,10 @@ export const AdminPage: React.FC = () => {
                     durationMinutes: 45,
                     price: 12000,
                     shortDescription: '',
-                    preparation: ['Cabello limpio y libre de fijadores pesados'],
-                    executionSteps: [
-                      '10 min · Diagnóstico personalizado y estudio de facciones',
-                      '25 min · Desarrollo del corte a tijera y máquina',
-                      '10 min · Lavado y acabado con pomada mate botánica',
-                    ],
-                    aftercare: 'Recomendamos control cada 3 semanas.',
-                    productsUsed: 'Tijera de autor · Máquina de precisión · Arcilla mate orgánica',
                   });
                   setIsNewServiceModalOpen(true);
                 }}
-                className="inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-mono uppercase tracking-wider bg-[#171513] text-[#F7F4EE] hover:bg-[#96734E] cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-mono font-bold uppercase tracking-wider bg-[#E11D48] text-white hover:bg-[#BE123C] cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Añadir Servicio</span>
@@ -2024,35 +2005,35 @@ export const AdminPage: React.FC = () => {
             {services.map((srv) => (
               <div
                 key={srv.id}
-                className={`p-6 border flex flex-col justify-between transition-all ${
+                className={`p-6 rounded-2xl border flex flex-col justify-between transition-all ${
                   srv.hidden
-                    ? 'border-[#171513]/10 bg-[#E4DDD1]/60 opacity-60'
-                    : 'border-[#171513]/15 bg-[#EFEAE1]'
+                    ? 'border-zinc-900 bg-[#0C0E14]/50 opacity-60'
+                    : 'border-zinc-800 bg-[#0C0E14]'
                 }`}
               >
                 <div>
-                  <div className="flex items-center justify-between gap-4 font-mono text-xs text-[#655E57] mb-2">
-                    <span className="text-[#96734E] font-semibold">
+                  <div className="flex items-center justify-between gap-4 font-mono text-xs text-zinc-400 mb-2">
+                    <span className="text-[#E11D48] font-bold">
                       {srv.index}. {srv.category}
                     </span>
-                    <span className="text-lg font-semibold text-[#171513]">
+                    <span className="text-lg font-black text-white">
                       {formatPriceARS(srv.price)}
                     </span>
                   </div>
 
-                  <h3 className="font-display text-2xl font-medium text-[#171513] mb-1">
+                  <h3 className="font-display text-2xl font-black uppercase text-white mb-1">
                     {srv.name}
                   </h3>
-                  <p className="text-xs font-mono text-[#575049] mb-2">
+                  <p className="text-xs font-mono text-zinc-400 mb-2">
                     Duración en agenda: {srv.durationMinutes} minutos
                   </p>
-                  <p className="text-xs text-[#4A443E] leading-relaxed mb-4">
+                  <p className="text-xs text-zinc-300 leading-relaxed mb-4">
                     {srv.shortDescription}
                   </p>
 
-                  <div className="p-3.5 bg-[#F7F4EE] border border-[#171513]/12 space-y-2 mb-3">
-                    <span className="text-[10px] font-mono uppercase text-[#655E57] block">
-                      Opciones en este servicio:
+                  <div className="p-3.5 rounded-xl bg-[#12151E] border border-zinc-800 space-y-2 mb-3">
+                    <span className="text-[10px] font-mono uppercase text-zinc-400 block">
+                      Visibilidad en este servicio:
                     </span>
                     <div className="flex flex-wrap gap-1.5">
                       <button
@@ -2065,7 +2046,7 @@ export const AdminPage: React.FC = () => {
                               : 'Servicio activado en la carta pública'
                           );
                         }}
-                        className="px-2.5 py-1 font-mono text-[10px] border border-[#171513]/20 bg-[#EFEAE1] text-[#171513] cursor-pointer"
+                        className="px-2.5 py-1 rounded font-mono text-[10px] border border-zinc-700 bg-[#0C0E14] text-white cursor-pointer"
                       >
                         {srv.hidden ? 'Servicio Oculto' : 'Servicio Visible'}
                       </button>
@@ -2082,7 +2063,7 @@ export const AdminPage: React.FC = () => {
                               : 'Botón Elegir servicio visible'
                           );
                         }}
-                        className="px-2.5 py-1 font-mono text-[10px] border border-[#171513]/20 bg-[#EFEAE1] text-[#171513] cursor-pointer"
+                        className="px-2.5 py-1 rounded font-mono text-[10px] border border-zinc-700 bg-[#0C0E14] text-white cursor-pointer"
                       >
                         {srv.hideBuyButton ? 'Botón Reservar Oculto' : 'Botón Reservar Activo'}
                       </button>
@@ -2097,7 +2078,7 @@ export const AdminPage: React.FC = () => {
                               : 'Precio visible en este servicio'
                           );
                         }}
-                        className="px-2.5 py-1 font-mono text-[10px] border border-[#171513]/20 bg-[#EFEAE1] text-[#171513] cursor-pointer"
+                        className="px-2.5 py-1 rounded font-mono text-[10px] border border-zinc-700 bg-[#0C0E14] text-white cursor-pointer"
                       >
                         {srv.hidePrice ? 'Precio Oculto' : 'Precio Visible'}
                       </button>
@@ -2105,8 +2086,8 @@ export const AdminPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="pt-4 mt-2 border-t border-[#171513]/12 flex items-center justify-between">
-                  <span className="text-xs text-[#655E57] font-mono">ID: {srv.id}</span>
+                <div className="pt-4 mt-2 border-t border-zinc-800 flex items-center justify-between">
+                  <span className="text-xs text-zinc-500 font-mono">ID: {srv.id}</span>
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
@@ -2115,7 +2096,7 @@ export const AdminPage: React.FC = () => {
                         setServiceFormData(srv);
                         setIsNewServiceModalOpen(true);
                       }}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-mono border border-[#171513]/25 bg-[#F7F4EE] hover:bg-[#171513] hover:text-[#F7F4EE] transition-colors cursor-pointer"
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-mono border border-zinc-700 bg-[#12151E] hover:border-white text-white transition-colors cursor-pointer"
                     >
                       <Edit3 className="w-3.5 h-3.5" />
                       <span>Editar</span>
@@ -2126,7 +2107,7 @@ export const AdminPage: React.FC = () => {
                         deleteService(srv.id);
                         triggerToast('Servicio eliminado del catálogo');
                       }}
-                      className="p-1.5 text-[#A65D43] border border-[#A65D43]/30 hover:bg-[#A65D43] hover:text-[#F7F4EE] cursor-pointer"
+                      className="p-1.5 rounded-lg text-[#F43F5E] border border-[#E11D48]/30 hover:bg-[#E11D48] hover:text-white cursor-pointer"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -2139,126 +2120,111 @@ export const AdminPage: React.FC = () => {
       )}
 
       {/* =========================================================================== */}
-      {/* TAB 5: CALENDAR & BLOCKED SLOTS                                             */}
+      {/* TAB 5: GALLERY MANAGEMENT                                                   */}
       {/* =========================================================================== */}
-      {activeTab === 'calendar' && (
+      {activeTab === 'gallery' && (
         <div className="space-y-6">
-          <div>
-            <h2 className="font-display text-3xl font-medium mb-1">
-              Bloqueos de Horario &amp; Pausas del Estudio
-            </h2>
-            <p className="text-xs text-[#575049] font-mono">
-              Bloqueá franjas para almuerzo o diligencias. Esos horarios dejan de ofrecerse al
-              instante en el turnero público.
-            </p>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 className="font-display text-3xl font-black uppercase text-white">
+                Galería &amp; Trabajos de {config.studioTitle} (#obras)
+              </h2>
+              <p className="text-xs text-zinc-400 font-mono">
+                Subí nuevas fotos o controlá la visibilidad individual de cada tarjeta, su precio y
+                su botón de reserva.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsUploadModalOpen(true)}
+              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-xs font-mono font-bold uppercase tracking-wider bg-[#E11D48] text-white hover:bg-[#BE123C] cursor-pointer"
+            >
+              <Upload className="w-4 h-4" />
+              <span>Subir Nueva Foto</span>
+            </button>
           </div>
 
-          <div className="p-6 border border-[#171513]/15 bg-[#EFEAE1]">
-            <h3 className="font-mono text-xs uppercase tracking-widest text-[#96734E] font-medium mb-4">
-              Bloquear Franja Horaria Específica
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div>
-                <label className="block text-xs font-mono text-[#4A443E] mb-1 font-medium">
-                  Fecha
-                </label>
-                <input
-                  type="date"
-                  value={newBlockedDate}
-                  onChange={(e) => setNewBlockedDate(e.target.value)}
-                  className="w-full h-10 px-3 text-xs font-mono border border-[#171513]/20 bg-[#F7F4EE] text-[#171513]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-mono text-[#4A443E] mb-1 font-medium">
-                  Hora de Inicio
-                </label>
-                <input
-                  type="time"
-                  value={newBlockedTime}
-                  onChange={(e) => setNewBlockedTime(e.target.value)}
-                  className="w-full h-10 px-3 text-xs font-mono border border-[#171513]/20 bg-[#F7F4EE] text-[#171513]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-mono text-[#4A443E] mb-1 font-medium">
-                  Duración (minutos)
-                </label>
-                <input
-                  type="number"
-                  step={15}
-                  value={newBlockedDuration}
-                  onChange={(e) => setNewBlockedDuration(Number(e.target.value))}
-                  className="w-full h-10 px-3 text-xs font-mono border border-[#171513]/20 bg-[#F7F4EE] text-[#171513]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-mono text-[#4A443E] mb-1 font-medium">
-                  Motivo
-                </label>
-                <input
-                  type="text"
-                  value={newBlockedReason}
-                  onChange={(e) => setNewBlockedReason(e.target.value)}
-                  className="w-full h-10 px-3 text-xs font-mono border border-[#171513]/20 bg-[#F7F4EE] text-[#171513]"
-                />
-              </div>
-            </div>
-
-            <div className="mt-4 flex justify-end">
-              <button
-                type="button"
-                onClick={() => {
-                  if (!newBlockedDate || !newBlockedTime) return;
-                  addBlockedSlot({
-                    id: `block-${Date.now()}`,
-                    date: newBlockedDate,
-                    startTime: newBlockedTime,
-                    durationMinutes: newBlockedDuration,
-                    reason: newBlockedReason,
-                  });
-                  triggerToast('Franja horaria bloqueada en el turnero público');
-                }}
-                className="px-5 py-2.5 text-xs font-mono uppercase tracking-wider bg-[#171513] text-[#F7F4EE] hover:bg-[#96734E] cursor-pointer"
-              >
-                Bloquear Horario
-              </button>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <h3 className="font-display text-2xl font-medium">
-              Bloqueos Activos ({blockedSlots.length})
-            </h3>
-            {blockedSlots.map((b) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {galleryItems.map((item) => (
               <div
-                key={b.id}
-                className="p-4 border border-[#171513]/15 bg-[#EFEAE1] flex items-center justify-between gap-4 font-mono text-xs"
+                key={item.id}
+                className={`rounded-2xl border overflow-hidden flex flex-col justify-between transition-all ${
+                  item.hidden
+                    ? 'border-zinc-900 bg-[#0C0E14]/50 opacity-60'
+                    : 'border-zinc-800 bg-[#0C0E14]'
+                }`}
               >
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-[#171513]">
-                      {b.date} · {b.startTime} hs
+                <div className="h-52 overflow-hidden relative bg-[#07080C]">
+                  <img
+                    src={item.imageUrl}
+                    alt={item.title}
+                    referrerPolicy="no-referrer"
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute top-3 left-3 flex items-center gap-1.5">
+                    <span className="px-2.5 py-1 rounded bg-[#07080C]/90 text-white font-mono text-[10px]">
+                      {item.category}
                     </span>
-                    <span className="text-[#96734E]">({b.durationMinutes} minutos)</span>
+                    {item.hidden && (
+                      <span className="px-2 py-1 rounded bg-[#E11D48] text-white font-mono text-[10px] uppercase">
+                        OCULTA
+                      </span>
+                    )}
                   </div>
-                  <p className="text-[#575049] mt-0.5">{b.reason || 'Pausa de estudio'}</p>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    deleteBlockedSlot(b.id);
-                    triggerToast('Bloqueo eliminado y horario liberado');
-                  }}
-                  className="text-[#A65D43] hover:bg-[#A65D43] hover:text-[#F7F4EE] px-3 py-1.5 border border-[#A65D43]/35 cursor-pointer flex items-center gap-1 transition-colors"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  <span>Liberar</span>
-                </button>
+                <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
+                  <div>
+                    <h3 className="font-display text-xl font-bold uppercase text-white mb-1">
+                      {item.title}
+                    </h3>
+                    <p className="text-xs text-zinc-400 line-clamp-2">{item.description}</p>
+                  </div>
+
+                  <div className="pt-3 border-t border-zinc-800 space-y-2">
+                    <div className="flex flex-wrap gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          updateGalleryItem(item.id, { hidden: !item.hidden });
+                          triggerToast(
+                            !item.hidden ? 'Foto ocultada de la galería' : 'Foto visible'
+                          );
+                        }}
+                        className="px-2.5 py-1 rounded font-mono text-[10px] border border-zinc-700 bg-[#12151E] text-white cursor-pointer flex items-center gap-1"
+                      >
+                        {item.hidden ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                        <span>{item.hidden ? 'Oculta' : 'Visible'}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          updateGalleryItem(item.id, {
+                            hideBuyButton: !item.hideBuyButton,
+                          });
+                        }}
+                        className="px-2.5 py-1 rounded font-mono text-[10px] border border-zinc-700 bg-[#12151E] text-white cursor-pointer"
+                      >
+                        {item.hideBuyButton ? 'Sin Botón Reservar' : 'Con Botón Reservar'}
+                      </button>
+                    </div>
+
+                    <div className="pt-2 flex items-center justify-end">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          deleteGalleryItem(item.id);
+                          triggerToast('Foto eliminada de la galería');
+                        }}
+                        className="inline-flex items-center gap-1 text-[11px] font-mono text-[#F43F5E] hover:underline cursor-pointer"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Eliminar foto</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
@@ -2266,465 +2232,599 @@ export const AdminPage: React.FC = () => {
       )}
 
       {/* =========================================================================== */}
-      {/* TAB 6: SERVER TELEMETRY, REAL-TIME BUSINESS METRICS & SECURITY AUDIT LOGS   */}
+      {/* TAB 6: HORARIOS, TEMA RIVER PLATE, EFECTOS Y PIN                            */}
       {/* =========================================================================== */}
-      {activeTab === 'server_audit' && (
-        <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h2 className="font-display text-3xl font-medium">
-                Estado del Servidor, Métricas &amp; Registro de Operaciones
+      {activeTab === 'business_rules' && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Left: Schedule, Open Days, PIN */}
+          <div className="lg:col-span-7 p-6 sm:p-7 rounded-2xl border border-zinc-800 bg-[#0C0E14] space-y-6">
+            <div className="border-b border-zinc-800 pb-4">
+              <span className="text-[11px] font-mono uppercase tracking-widest text-[#E11D48] font-bold block mb-1">
+                REGLAS OPERATIVAS Y HORARIOS
+              </span>
+              <h2 className="font-display text-2xl sm:text-3xl font-black uppercase text-white">
+                Días de Atención, Horarios &amp; PIN
               </h2>
-              <p className="text-xs text-[#575049] font-mono">
-                Monitoreo del motor de reservas anti-colisión, sincronización con Firebase y
-                persistencia en el servidor.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                refreshBackendState();
-                triggerToast('Estado y métricas sincronizados con el servidor');
-              }}
-              className="px-4 py-2.5 bg-[#171513] text-[#F7F4EE] font-mono text-xs uppercase tracking-wider cursor-pointer"
-            >
-              Sincronizar Ahora
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 font-mono text-xs">
-            <div className="p-5 bg-[#EFEAE1] border border-[#171513]/15">
-              <span className="text-[#655E57] uppercase text-[10px] block">Conexión API /api/*</span>
-              <p className="font-display text-2xl font-semibold text-[#3D4F43] mt-1">
-                {backendConnected ? 'ONLINE · SINCRONIZADO' : 'MODO LOCAL ACTIVO'}
-              </p>
-              <span className="text-[11px] text-[#575049] block mt-0.5">
-                Validación y sanitización activas
-              </span>
             </div>
 
-            <div className="p-5 bg-[#EFEAE1] border border-[#171513]/15">
-              <span className="text-[#655E57] uppercase text-[10px] block">
-                Ocupación de Jornada Hoy
+            <div>
+              <span className="block text-xs font-mono text-zinc-300 mb-2 font-bold uppercase">
+                Días Hábiles de Atención en el Turnero:
               </span>
-              <p className="font-display text-3xl font-semibold text-[#171513] mt-1 tabular-nums">
-                {backendMetrics ? `${backendMetrics.todayOccupancyPercentage}%` : '25%'}
-              </p>
-              <span className="text-[11px] text-[#575049] block mt-0.5">
-                {backendMetrics
-                  ? `${backendMetrics.freeSlotsTodayCount} horarios libres hoy`
-                  : 'Cálculo dinámico por bloques'}
-              </span>
-            </div>
-
-            <div className="p-5 bg-[#EFEAE1] border border-[#171513]/15">
-              <span className="text-[#655E57] uppercase text-[10px] block">
-                Facturación Estimada Hoy
-              </span>
-              <p className="font-display text-3xl font-semibold text-[#96734E] mt-1 tabular-nums">
-                {formatPriceARS(
-                  backendMetrics ? backendMetrics.todayEstimatedRevenueARS : totalRevenueEst
-                )}
-              </p>
-              <span className="text-[11px] text-[#575049] block mt-0.5">
-                Acumulado:{' '}
-                {formatPriceARS(
-                  backendMetrics ? backendMetrics.totalEstimatedRevenueARS : totalRevenueEst
-                )}
-              </span>
-            </div>
-
-            <div className="p-5 bg-[#EFEAE1] border border-[#171513]/15">
-              <span className="text-[#655E57] uppercase text-[10px] block">Modalidades Elegidas</span>
-              <p className="font-display text-2xl font-semibold text-[#171513] mt-1 tabular-nums">
-                {backendMetrics
-                  ? `${backendMetrics.depositAppointmentsCount} Seña / ${backendMetrics.commitmentAppointmentsCount} Estudio`
-                  : `${appointments.length} Turnos Activos`}
-              </p>
-              <span className="text-[11px] text-[#3D4F43] block mt-0.5 truncate">
-                {backendMetrics ? backendMetrics.nextAvailableSlotLabel : 'Agenda verificada'}
-              </span>
-            </div>
-          </div>
-
-          <div className="p-6 bg-[#EFEAE1] border border-[#171513]/15 space-y-4">
-            <div className="flex items-center justify-between border-b border-[#171513]/12 pb-3">
-              <h3 className="font-display text-2xl font-medium text-[#171513]">
-                Registro de Operaciones ({auditLogs.length})
-              </h3>
-              <span className="text-xs font-mono text-[#96734E]">Persistencia Atómica JSON</span>
-            </div>
-
-            {auditLogs.length === 0 ? (
-              <p className="text-xs font-mono text-[#655E57]">
-                No hay eventos registrados aún en esta sesión.
-              </p>
-            ) : (
-              <div className="space-y-2 max-h-96 overflow-y-auto pr-1 font-mono text-xs">
-                {auditLogs.slice(0, 35).map((log) => (
-                  <div
-                    key={log.id}
-                    className="p-3 bg-[#F7F4EE] border border-[#171513]/12 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
-                  >
-                    <div className="space-y-0.5">
-                      <div className="flex items-center gap-2">
-                        <span className="px-2 py-0.5 bg-[#171513] text-[#F7F4EE] text-[10px] uppercase">
-                          {log.action}
-                        </span>
-                        <span className="text-[10px] uppercase text-[#655E57]">
-                          Actor: {log.actor}
-                        </span>
-                      </div>
-                      <p className="text-[#171513]">{log.details}</p>
-                    </div>
-                    <span className="text-[11px] text-[#655E57] tabular-nums shrink-0">
-                      {new Date(log.timestamp).toLocaleString('es-AR')}
-                    </span>
-                  </div>
-                ))}
+              <div className="flex flex-wrap gap-2">
+                {WEEKDAYS_LIST.map((d) => {
+                  const isDayOpen = config.openDays.includes(d.day);
+                  return (
+                    <button
+                      key={d.day}
+                      type="button"
+                      onClick={() => {
+                        const nextDays = isDayOpen
+                          ? config.openDays.filter((x) => x !== d.day)
+                          : [...config.openDays, d.day].sort();
+                        if (nextDays.length === 0) {
+                          triggerToast('Debe haber al menos 1 día activo');
+                          return;
+                        }
+                        updateConfig({ openDays: nextDays });
+                        triggerToast(`Día ${d.full}: ${isDayOpen ? 'Cerrado' : 'Abierto'}`);
+                      }}
+                      className={`px-3.5 py-2 rounded-xl font-mono text-xs border transition-colors cursor-pointer ${
+                        isDayOpen
+                          ? 'bg-[#E11D48] text-white border-[#E11D48] font-bold'
+                          : 'bg-[#12151E] text-zinc-400 border-zinc-800 hover:text-white'
+                      }`}
+                    >
+                      {d.full}
+                    </button>
+                  );
+                })}
               </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* =========================================================================== */}
-      {/* MODAL: ADMIN PHOTO UPLOAD TO GALLERY                                        */}
-      {/* =========================================================================== */}
-      {isUploadModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#171513]/75 backdrop-blur-xs">
-          <div className="w-full max-w-lg bg-[#F7F4EE] border border-[#171513]/20 text-[#171513] p-6 sm:p-8 max-h-[90vh] overflow-y-auto shadow-2xl">
-            <div className="flex items-center justify-between pb-4 mb-4 border-b border-[#171513]/12">
-              <div>
-                <span className="text-[10px] font-mono uppercase tracking-widest text-[#96734E] block">
-                  ARCHIVO VISUAL DEL ESTUDIO
-                </span>
-                <h3 className="font-display text-2xl font-medium">
-                  Subir Nueva Obra al Portafolio
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsUploadModalOpen(false)}
-                className="p-1 text-[#655E57] hover:text-[#171513] cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
             </div>
 
-            <form onSubmit={handleCreateGalleryPhoto} className="space-y-4 text-xs font-mono">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-mono">
               <div>
-                <label className="block text-[#171513] mb-1.5 font-semibold">
-                  1. Elegir Foto desde tu Dispositivo o pegar URL *
+                <label className="block text-zinc-300 mb-1.5 font-bold uppercase">
+                  Hora de Apertura (24h)
                 </label>
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                    className="hidden"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="px-4 py-2.5 bg-[#EFEAE1] border border-[#171513]/25 text-[#171513] font-semibold hover:border-[#171513] cursor-pointer flex items-center justify-center gap-2"
-                  >
-                    <Upload className="w-4 h-4 text-[#96734E]" />
-                    <span>
-                      {isCompressingPhoto ? 'Procesando imagen...' : 'Seleccionar Archivo'}
-                    </span>
-                  </button>
-                  <input
-                    type="text"
-                    value={photoPreviewUrl}
-                    onChange={(e) => setPhotoPreviewUrl(e.target.value)}
-                    placeholder="O pegá la URL de una imagen..."
-                    className="flex-1 h-10 px-3 border border-[#171513]/20 bg-[#EFEAE1] text-[#171513]"
-                  />
-                </div>
-                {photoPreviewUrl && (
-                  <div className="mt-3 h-40 overflow-hidden border border-[#171513]/15 bg-[#171513]">
-                    <img
-                      src={photoPreviewUrl}
-                      alt="Vista previa"
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                )}
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[#575049] mb-1">Título de la Obra</label>
-                  <input
-                    type="text"
-                    value={photoTitle}
-                    onChange={(e) => setPhotoTitle(e.target.value)}
-                    placeholder="Ej. Corte a Tijera & Textura"
-                    className="w-full h-10 px-3 border border-[#171513]/20 bg-[#EFEAE1] text-[#171513]"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[#575049] mb-1">Categoría</label>
-                  <select
-                    value={photoCategory}
-                    onChange={(e) => setPhotoCategory(e.target.value as GalleryItemCategory)}
-                    className="w-full h-10 px-3 border border-[#171513]/20 bg-[#EFEAE1] text-[#171513]"
-                  >
-                    <option value="Cortes & Fades">Cortes &amp; Fades</option>
-                    <option value="El Estudio & Local">El Estudio &amp; Local</option>
-                    <option value="Máquinas & Setup">Máquinas &amp; Setup</option>
-                    <option value="Color & Diseños">Color &amp; Diseños</option>
-                    <option value="Cultura & Streetwear">Cultura &amp; Streetwear</option>
-                    <option value="General">General</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[#575049] mb-1">Especificación Técnica</label>
-                  <input
-                    type="text"
-                    value={photoTechnicalSpec}
-                    onChange={(e) => setPhotoTechnicalSpec(e.target.value)}
-                    placeholder="Ej. Tijera japonesa · Acabado mate"
-                    className="w-full h-10 px-3 border border-[#171513]/20 bg-[#EFEAE1] text-[#171513]"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[#575049] mb-1">Etiqueta de Valor</label>
-                  <input
-                    type="text"
-                    value={photoPriceTag}
-                    onChange={(e) => setPhotoPriceTag(e.target.value)}
-                    className="w-full h-10 px-3 border border-[#171513]/20 bg-[#EFEAE1] text-[#171513]"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[#575049] mb-1">Descripción breve</label>
-                <textarea
-                  rows={2}
-                  value={photoDescription}
-                  onChange={(e) => setPhotoDescription(e.target.value)}
-                  placeholder="Descripción del trabajo realizado en el estudio..."
-                  className="w-full p-2.5 border border-[#171513]/20 bg-[#EFEAE1] text-[#171513]"
+                <input
+                  type="number"
+                  min={7}
+                  max={20}
+                  value={config.openingHour}
+                  onChange={(e) => {
+                    const val = Math.max(7, Math.min(20, Number(e.target.value)));
+                    updateConfig({ openingHour: val });
+                  }}
+                  className="w-full h-11 px-3.5 rounded-xl border border-zinc-700 bg-[#12151E] text-white font-bold"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3 pt-1">
-                <label className="flex items-center gap-2 p-2.5 border border-[#171513]/15 bg-[#EFEAE1] cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={photoHideBuyButton}
-                    onChange={(e) => setPhotoHideBuyButton(e.target.checked)}
-                  />
-                  <span>Ocultar botón Reservar</span>
+              <div>
+                <label className="block text-zinc-300 mb-1.5 font-bold uppercase">
+                  Hora de Cierre (24h)
                 </label>
-                <label className="flex items-center gap-2 p-2.5 border border-[#171513]/15 bg-[#EFEAE1] cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={photoHidePrice}
-                    onChange={(e) => setPhotoHidePrice(e.target.checked)}
-                  />
-                  <span>Ocultar valor en foto</span>
-                </label>
+                <input
+                  type="number"
+                  min={12}
+                  max={23}
+                  value={config.closingHour}
+                  onChange={(e) => {
+                    const val = Math.max(12, Math.min(23, Number(e.target.value)));
+                    updateConfig({ closingHour: val });
+                  }}
+                  className="w-full h-11 px-3.5 rounded-xl border border-zinc-700 bg-[#12151E] text-white font-bold"
+                />
               </div>
 
-              <div className="pt-4 border-t border-[#171513]/12 flex items-center justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => setIsUploadModalOpen(false)}
-                  className="px-4 py-2 text-xs font-mono border border-[#171513]/20 text-[#575049] hover:text-[#171513] cursor-pointer"
+              <div>
+                <label className="block text-zinc-300 mb-1.5 font-bold uppercase">
+                  Pausa Entre Turnos (min)
+                </label>
+                <select
+                  value={config.cleanBufferMinutes}
+                  onChange={(e) => {
+                    updateConfig({ cleanBufferMinutes: Number(e.target.value) });
+                    triggerToast(`Pausa actualizada a ${e.target.value} min`);
+                  }}
+                  className="w-full h-11 px-3.5 rounded-xl border border-zinc-700 bg-[#12151E] text-white font-bold"
                 >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2.5 text-xs font-mono uppercase tracking-wider bg-[#171513] text-[#F7F4EE] hover:bg-[#96734E] cursor-pointer"
-                >
-                  Publicar Obra Ahora
-                </button>
+                  <option value={0}>0 min</option>
+                  <option value={5}>5 min</option>
+                  <option value={10}>10 min (Recomendado)</option>
+                  <option value={15}>15 min</option>
+                </select>
               </div>
-            </form>
+
+              <div>
+                <label className="block text-zinc-300 mb-1.5 font-bold uppercase">
+                  PIN Maestro del Panel Admin
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    maxLength={8}
+                    value={adminPinForm}
+                    onChange={(e) => setAdminPinForm(e.target.value)}
+                    className="flex-1 h-11 px-3.5 rounded-xl border border-zinc-700 bg-[#12151E] text-[#E11D48] font-bold"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!adminPinForm.trim()) return;
+                      updateConfig({ adminPin: adminPinForm.trim() });
+                      triggerToast(`Nuevo PIN guardado: ${adminPinForm.trim()}`);
+                    }}
+                    className="px-4 rounded-xl bg-[#E11D48] text-white font-bold uppercase cursor-pointer"
+                  >
+                    Guardar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right: River Plate Visual Presets & Interactive Effects */}
+          <div className="lg:col-span-5 p-6 sm:p-7 rounded-2xl border border-zinc-800 bg-[#0C0E14] space-y-6">
+            <div className="border-b border-zinc-800 pb-4">
+              <div className="flex items-center gap-2 text-[11px] font-mono uppercase tracking-widest text-[#E11D48] font-bold mb-1">
+                <Palette className="w-3.5 h-3.5" />
+                <span>ESTÉTICA RIVER PLATE &amp; EFECTOS URBANOS</span>
+              </div>
+              <h2 className="font-display text-2xl sm:text-3xl font-black uppercase text-white">
+                Atmósfera &amp; Animaciones
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {(
+                [
+                  {
+                    id: 'crimson',
+                    name: 'La Banda Roja (Oficial)',
+                    desc: 'Obsidiana Monumental, Blanco Puro y Rojo River',
+                    swatch: '#E11D48',
+                  },
+                  {
+                    id: 'uv',
+                    name: 'Noche de Copa (Luz Roja)',
+                    desc: 'Resplandor carmesí intenso y alto contraste',
+                    swatch: '#F43F5E',
+                  },
+                  {
+                    id: 'amber',
+                    name: 'Edición Campeón (Dorado)',
+                    desc: 'Detalles en oro campeón, rojo y negro',
+                    swatch: '#F59E0B',
+                  },
+                  {
+                    id: 'volt',
+                    name: 'Acero Monumental',
+                    desc: 'Plata metálica, blanco y rojo carmesí',
+                    swatch: '#D4D4D8',
+                  },
+                ] as { id: UrbanThemePreset; name: string; desc: string; swatch: string }[]
+              ).map((preset) => {
+                const active = (config.urbanTheme || 'crimson') === preset.id;
+                return (
+                  <button
+                    key={preset.id}
+                    type="button"
+                    onClick={() => {
+                      updateConfig({ urbanTheme: preset.id });
+                      triggerToast(`Tema visual activado: ${preset.name}`);
+                    }}
+                    className={`p-3.5 rounded-xl border text-left font-mono transition-all cursor-pointer ${
+                      active
+                        ? 'border-[#E11D48] bg-[#E11D48]/15 text-white'
+                        : 'border-zinc-800 bg-[#12151E] text-zinc-300 hover:border-zinc-600'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <span
+                        className="w-3.5 h-3.5 rounded-full shrink-0 border border-white/40"
+                        style={{ backgroundColor: preset.swatch }}
+                      />
+                      <span className="text-xs font-bold">{preset.name}</span>
+                    </div>
+                    <p className="text-[11px] text-zinc-400">{preset.desc}</p>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="space-y-3 pt-2 border-t border-zinc-800 text-xs font-mono">
+              {[
+                {
+                  key: 'showPromoBanner' as const,
+                  label: 'Banner Rotativo Superior con Precios y Dirección',
+                  desc: 'Cinta continua con valores de servicios, dirección y próximo turno',
+                },
+                {
+                  key: 'enableParallax' as const,
+                  label: 'Efecto Parallax & Aceleración del Banner al Scrollear',
+                  desc: 'Movimiento multicapa en el fondo urbano y retrato principal',
+                },
+                {
+                  key: 'enableDripTrail' as const,
+                  label: 'Rastro Aerosol & Botones Magnéticos',
+                  desc: 'Efecto de aerosol interactivo en colores rojo y blanco al mover el cursor',
+                },
+              ].map((fx) => {
+                const isOn = config[fx.key] !== false;
+                return (
+                  <div
+                    key={fx.key}
+                    className="p-3.5 rounded-xl border border-zinc-800 bg-[#12151E] flex items-center justify-between gap-3"
+                  >
+                    <div>
+                      <span className="font-bold text-white block">{fx.label}</span>
+                      <span className="text-[11px] text-zinc-400 block mt-0.5">{fx.desc}</span>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={isOn}
+                      onClick={() => {
+                        updateConfig({ [fx.key]: !isOn });
+                        triggerToast(`${fx.label}: ${!isOn ? 'Activado' : 'Desactivado'}`);
+                      }}
+                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
+                        isOn ? 'bg-[#E11D48]' : 'bg-zinc-700'
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white transition ${
+                          isOn ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       )}
 
       {/* =========================================================================== */}
-      {/* MODAL: SERVICE CREATE / EDIT                                                */}
+      {/* TAB 7: CALENDAR & BLOCKED SLOTS                                             */}
       {/* =========================================================================== */}
+      {activeTab === 'calendar' && (
+        <div className="space-y-6">
+          <div>
+            <h2 className="font-display text-3xl font-black uppercase text-white mb-1">
+              Bloqueos de Horario &amp; Pausas del Estudio
+            </h2>
+            <p className="text-xs text-zinc-400 font-mono">
+              Bloqueá franjas para almuerzo o trámites. Esos horarios dejan de ofrecerse al
+              instante en el turnero público.
+            </p>
+          </div>
+
+          <div className="p-6 rounded-2xl border border-zinc-800 bg-[#0C0E14] space-y-4">
+            <h3 className="font-mono text-xs uppercase tracking-widest text-[#E11D48] font-bold">
+              Bloquear Franja Horaria Específica
+            </h3>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-xs font-mono">
+              <div>
+                <label className="block text-zinc-400 mb-1">Fecha</label>
+                <input
+                  type="date"
+                  value={newBlockedDate}
+                  onChange={(e) => setNewBlockedDate(e.target.value)}
+                  className="w-full h-10 px-3 rounded-xl border border-zinc-700 bg-[#12151E] text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-zinc-400 mb-1">Hora de Inicio</label>
+                <input
+                  type="time"
+                  value={newBlockedTime}
+                  onChange={(e) => setNewBlockedTime(e.target.value)}
+                  className="w-full h-10 px-3 rounded-xl border border-zinc-700 bg-[#12151E] text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-zinc-400 mb-1">Duración (min)</label>
+                <select
+                  value={newBlockedDuration}
+                  onChange={(e) => setNewBlockedDuration(Number(e.target.value))}
+                  className="w-full h-10 px-3 rounded-xl border border-zinc-700 bg-[#12151E] text-white"
+                >
+                  <option value={30}>30 minutos</option>
+                  <option value={60}>60 minutos</option>
+                  <option value={90}>90 minutos</option>
+                  <option value={120}>2 horas</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-zinc-400 mb-1">Motivo</label>
+                <input
+                  type="text"
+                  value={newBlockedReason}
+                  onChange={(e) => setNewBlockedReason(e.target.value)}
+                  className="w-full h-10 px-3 rounded-xl border border-zinc-700 bg-[#12151E] text-white"
+                />
+              </div>
+              <div className="flex items-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    addBlockedSlot({
+                      id: `block-${Date.now()}`,
+                      date: newBlockedDate,
+                      startTime: newBlockedTime,
+                      durationMinutes: newBlockedDuration,
+                      reason: newBlockedReason.trim() || 'Bloqueo administrativo',
+                    });
+                    triggerToast(`Horario ${newBlockedTime} hs bloqueado el ${newBlockedDate}`);
+                  }}
+                  className="w-full h-10 rounded-xl bg-[#E11D48] hover:bg-[#BE123C] text-white font-mono font-bold uppercase text-xs cursor-pointer"
+                >
+                  + Bloquear Franja
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {blockedSlots.map((slot) => (
+              <div
+                key={slot.id}
+                className="p-5 rounded-2xl border border-zinc-800 bg-[#0C0E14] flex items-center justify-between gap-4"
+              >
+                <div className="space-y-1 font-mono text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded bg-[#E11D48] text-white font-bold">
+                      {slot.date}
+                    </span>
+                    <span className="text-white font-bold">
+                      {slot.startTime} hs ({slot.durationMinutes} min)
+                    </span>
+                  </div>
+                  <p className="text-zinc-400">{slot.reason}</p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    deleteBlockedSlot(slot.id);
+                    triggerToast('Bloqueo eliminado y horario habilitado');
+                  }}
+                  className="px-3 py-2 rounded-xl border border-zinc-700 hover:border-[#E11D48] text-xs font-mono text-[#F43F5E] cursor-pointer"
+                >
+                  Desbloquear
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Modal for Adding/Editing Service */}
       {isNewServiceModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#171513]/75 backdrop-blur-xs">
-          <div className="w-full max-w-lg bg-[#F7F4EE] border border-[#171513]/20 text-[#171513] p-6 sm:p-8 max-h-[90vh] overflow-y-auto shadow-2xl">
-            <div className="flex items-center justify-between pb-4 mb-4 border-b border-[#171513]/12">
-              <h3 className="font-display text-2xl font-medium">
-                {editingService ? 'Editar Servicio del Catálogo' : 'Nuevo Servicio del Catálogo'}
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <form
+            onSubmit={handleSaveServiceModal}
+            className="w-full max-w-lg rounded-2xl border-2 border-[#E11D48]/50 bg-[#0C0E14] p-6 sm:p-8 space-y-4 text-xs font-mono"
+          >
+            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+              <h3 className="font-display text-2xl font-black uppercase text-white">
+                {editingService ? 'Editar Servicio' : 'Nuevo Servicio'}
               </h3>
               <button
                 type="button"
                 onClick={() => setIsNewServiceModalOpen(false)}
-                className="p-1 text-[#655E57] hover:text-[#171513]"
+                className="text-zinc-400 hover:text-white cursor-pointer"
               >
-                <X className="w-5 h-5" />
+                ✕
               </button>
             </div>
 
-            <div className="space-y-4 text-xs font-mono">
+            <div>
+              <label className="block text-zinc-300 mb-1 font-bold uppercase">
+                Nombre del Servicio *
+              </label>
+              <input
+                type="text"
+                required
+                value={serviceFormData.name || ''}
+                onChange={(e) =>
+                  setServiceFormData((prev) => ({ ...prev, name: e.target.value }))
+                }
+                className="w-full h-10 px-3 rounded-xl border border-zinc-700 bg-[#12151E] text-white"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-[#4A443E] mb-1 font-semibold">
-                  Nombre del Servicio *
-                </label>
-                <input
-                  type="text"
-                  value={serviceFormData.name || ''}
-                  onChange={(e) =>
-                    setServiceFormData((prev) => ({ ...prev, name: e.target.value }))
-                  }
-                  placeholder="Ej. Corte de Autor / Clásico"
-                  className="w-full h-10 px-3 border border-[#171513]/20 bg-[#EFEAE1] text-[#171513] text-sm"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[#4A443E] mb-1 font-semibold">Categoría</label>
-                  <select
-                    value={serviceFormData.category || 'Fades & Cortes'}
-                    onChange={(e) =>
-                      setServiceFormData((prev) => ({
-                        ...prev,
-                        category: e.target.value as StudioService['category'],
-                      }))
-                    }
-                    className="w-full h-10 px-3 border border-[#171513]/20 bg-[#EFEAE1] text-[#171513]"
-                  >
-                    <option value="Fades & Cortes">Fades &amp; Cortes</option>
-                    <option value="Corte & Barba">Corte &amp; Barba</option>
-                    <option value="Color & Platinados">Color &amp; Platinados</option>
-                    <option value="Detalles & Barba">Detalles &amp; Barba</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-[#4A443E] mb-1 font-semibold">
-                    Duración (minutos) *
-                  </label>
-                  <input
-                    type="number"
-                    step={5}
-                    value={serviceFormData.durationMinutes || 45}
-                    onChange={(e) =>
-                      setServiceFormData((prev) => ({
-                        ...prev,
-                        durationMinutes: Number(e.target.value),
-                      }))
-                    }
-                    className="w-full h-10 px-3 border border-[#171513]/20 bg-[#EFEAE1] text-[#171513]"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[#4A443E] mb-1 font-semibold">
-                  Precio en Pesos (ARS) *
+                <label className="block text-zinc-300 mb-1 font-bold uppercase">
+                  Precio (ARS) *
                 </label>
                 <input
                   type="number"
-                  step={500}
+                  required
                   value={serviceFormData.price || 12000}
+                  onChange={(e) =>
+                    setServiceFormData((prev) => ({ ...prev, price: Number(e.target.value) }))
+                  }
+                  className="w-full h-10 px-3 rounded-xl border border-zinc-700 bg-[#12151E] text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-zinc-300 mb-1 font-bold uppercase">
+                  Duración (min) *
+                </label>
+                <input
+                  type="number"
+                  required
+                  value={serviceFormData.durationMinutes || 45}
                   onChange={(e) =>
                     setServiceFormData((prev) => ({
                       ...prev,
-                      price: Number(e.target.value),
+                      durationMinutes: Number(e.target.value),
                     }))
                   }
-                  className="w-full h-10 px-3 border border-[#171513]/20 bg-[#EFEAE1] text-[#171513]"
+                  className="w-full h-10 px-3 rounded-xl border border-zinc-700 bg-[#12151E] text-white"
                 />
               </div>
+            </div>
 
+            <div>
+              <label className="block text-zinc-300 mb-1 font-bold uppercase">Descripción</label>
+              <textarea
+                rows={3}
+                value={serviceFormData.shortDescription || ''}
+                onChange={(e) =>
+                  setServiceFormData((prev) => ({
+                    ...prev,
+                    shortDescription: e.target.value,
+                  }))
+                }
+                className="w-full p-3 rounded-xl border border-zinc-700 bg-[#12151E] text-white"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsNewServiceModalOpen(false)}
+                className="px-4 py-2.5 rounded-xl border border-zinc-700 text-zinc-300 cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                className="px-6 py-2.5 rounded-xl bg-[#E11D48] text-white font-bold uppercase cursor-pointer"
+              >
+                Guardar Servicio
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Modal for Uploading Gallery Photo */}
+      {isUploadModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <form
+            onSubmit={handleCreateGalleryPhoto}
+            className="w-full max-w-lg rounded-2xl border-2 border-[#E11D48]/50 bg-[#0C0E14] p-6 sm:p-8 space-y-4 text-xs font-mono"
+          >
+            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+              <h3 className="font-display text-2xl font-black uppercase text-white">
+                Subir Foto a Galería · {config.studioTitle}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsUploadModalOpen(false)}
+                className="text-zinc-400 hover:text-white cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div>
+              <label className="block text-zinc-300 mb-1 font-bold uppercase">
+                Título del Trabajo
+              </label>
+              <input
+                type="text"
+                value={photoTitle}
+                onChange={(e) => setPhotoTitle(e.target.value)}
+                placeholder="Ej. Mid Drop Fade & Textura"
+                className="w-full h-10 px-3 rounded-xl border border-zinc-700 bg-[#12151E] text-white"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-[#4A443E] mb-1 font-semibold">
-                  Elementos Incluidos ("Incluye:")
+                <label className="block text-zinc-300 mb-1 font-bold uppercase">Categoría</label>
+                <select
+                  value={photoCategory}
+                  onChange={(e) => setPhotoCategory(e.target.value as GalleryItemCategory)}
+                  className="w-full h-10 px-3 rounded-xl border border-zinc-700 bg-[#12151E] text-white"
+                >
+                  <option value="Cortes & Fades">Cortes &amp; Fades</option>
+                  <option value="El Estudio & Local">El Estudio &amp; Local</option>
+                  <option value="Máquinas & Setup">Máquinas &amp; Setup</option>
+                  <option value="Color & Diseños">Color &amp; Diseños</option>
+                  <option value="Cultura & Streetwear">Cultura &amp; Streetwear</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-zinc-300 mb-1 font-bold uppercase">
+                  Etiqueta de Precio
                 </label>
                 <input
                   type="text"
-                  value={serviceFormData.productsUsed || ''}
-                  onChange={(e) =>
-                    setServiceFormData((prev) => ({
-                      ...prev,
-                      productsUsed: e.target.value,
-                    }))
-                  }
-                  className="w-full h-10 px-3 border border-[#171513]/20 bg-[#EFEAE1] text-[#171513]"
+                  value={photoPriceTag}
+                  onChange={(e) => setPhotoPriceTag(e.target.value)}
+                  className="w-full h-10 px-3 rounded-xl border border-zinc-700 bg-[#12151E] text-white"
                 />
               </div>
+            </div>
 
-              <div>
-                <label className="block text-[#4A443E] mb-1 font-semibold">
-                  Descripción en el Catálogo
-                </label>
-                <textarea
-                  rows={3}
-                  value={serviceFormData.shortDescription || ''}
-                  onChange={(e) =>
-                    setServiceFormData((prev) => ({
-                      ...prev,
-                      shortDescription: e.target.value,
-                    }))
-                  }
-                  className="w-full p-2.5 border border-[#171513]/20 bg-[#EFEAE1] text-[#171513]"
+            <div>
+              <label className="block text-zinc-300 mb-1 font-bold uppercase">
+                Seleccionar Foto desde tu Celular/PC o pegar URL
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={photoPreviewUrl}
+                  onChange={(e) => setPhotoPreviewUrl(e.target.value)}
+                  placeholder="https://... o subí archivo"
+                  className="flex-1 h-10 px-3 rounded-xl border border-zinc-700 bg-[#12151E] text-white"
                 />
-              </div>
-
-              <div className="pt-4 border-t border-[#171513]/12 flex items-center justify-end gap-3">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
                 <button
                   type="button"
-                  onClick={() => setIsNewServiceModalOpen(false)}
-                  className="px-4 py-2 text-xs font-mono border border-[#171513]/20 text-[#575049] cursor-pointer"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="px-4 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white font-bold cursor-pointer"
                 >
-                  Cancelar
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!serviceFormData.name) return;
-                    if (editingService) {
-                      updateService(editingService.id, serviceFormData);
-                      triggerToast('Servicio actualizado en el catálogo y turnero');
-                    } else {
-                      addService({
-                        id: `srv-${Date.now()}`,
-                        index: String(services.length + 1).padStart(2, '0'),
-                        category:
-                          (serviceFormData.category as StudioService['category']) ||
-                          'Fades & Cortes',
-                        name: serviceFormData.name,
-                        durationMinutes: serviceFormData.durationMinutes || 45,
-                        price: serviceFormData.price || 12000,
-                        shortDescription: serviceFormData.shortDescription || '',
-                        preparation: serviceFormData.preparation || [],
-                        executionSteps: serviceFormData.executionSteps || [],
-                        aftercare: serviceFormData.aftercare || '',
-                        productsUsed: serviceFormData.productsUsed || '',
-                      });
-                      triggerToast('Nuevo servicio publicado en el catálogo');
-                    }
-                    setIsNewServiceModalOpen(false);
-                  }}
-                  className="px-5 py-2 text-xs font-mono uppercase tracking-wider bg-[#171513] text-[#F7F4EE] hover:bg-[#96734E] cursor-pointer"
-                >
-                  Guardar Servicio
+                  {isCompressingPhoto ? '...' : 'Archivo'}
                 </button>
               </div>
             </div>
-          </div>
+
+            <div>
+              <label className="block text-zinc-300 mb-1 font-bold uppercase">Descripción</label>
+              <textarea
+                rows={2}
+                value={photoDescription}
+                onChange={(e) => setPhotoDescription(e.target.value)}
+                className="w-full p-3 rounded-xl border border-zinc-700 bg-[#12151E] text-white"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsUploadModalOpen(false)}
+                className="px-4 py-2.5 rounded-xl border border-zinc-700 text-zinc-300 cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                className="px-6 py-2.5 rounded-xl bg-[#E11D48] text-white font-bold uppercase cursor-pointer"
+              >
+                Publicar en Galería
+              </button>
+            </div>
+          </form>
         </div>
       )}
+      </div>
     </div>
   );
 };

@@ -215,7 +215,7 @@ export class RateLimiter {
  */
 export function createInitialDatabaseState(): StudioDatabaseSchema {
   return {
-    version: 5,
+    version: 8,
     updatedAt: new Date().toISOString(),
     config: {
       ...INITIAL_STUDIO_CONFIG,
@@ -232,7 +232,7 @@ export function createInitialDatabaseState(): StudioDatabaseSchema {
         timestamp: new Date().toISOString(),
         action: 'SYSTEM_BOOT',
         actor: 'system',
-        details: 'Motor backend de Rodrigo Estudio inicializado y sincronizado.',
+        details: 'Motor backend de Rodrigo Cutsss inicializado y sincronizado.',
       },
     ],
   };
@@ -575,9 +575,9 @@ export class StudioRepository {
       if (fs.existsSync(this.filePath)) {
         const raw = fs.readFileSync(this.filePath, 'utf8');
         const parsed = JSON.parse(raw) as Partial<StudioDatabaseSchema>;
-        if (parsed && typeof parsed === 'object' && parsed.config && parsed.version === 5) {
+        if (parsed && typeof parsed === 'object' && parsed.config && parsed.version === 7) {
           return {
-            version: 5,
+            version: 7,
             updatedAt: parsed.updatedAt || new Date().toISOString(),
             config: {
               ...fallback.config,

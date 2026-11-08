@@ -5,10 +5,12 @@ import {
   GoogleReview,
   AppointmentRecord,
   StudioGalleryItem,
+  ClientFormulaNote,
   STUDIO_SERVICES,
   LOOKBOOK_ITEMS,
   GOOGLE_REVIEWS,
   STUDIO_GALLERY_ITEMS,
+  INITIAL_CLIENT_NOTES,
 } from '../data/studioData';
 import {
   StudioConfig,
@@ -121,6 +123,9 @@ interface StudioContextType {
   blockedSlots: BlockedSlot[];
   addBlockedSlot: (slot: BlockedSlot) => void;
   deleteBlockedSlot: (id: string) => void;
+  clientNotes: ClientFormulaNote[];
+  saveClientNote: (note: ClientFormulaNote) => void;
+  deleteClientNote: (id: string) => void;
   isAdminAuthenticated: boolean;
   loginAdmin: (pin: string) => boolean;
   logoutAdmin: () => void;
@@ -175,7 +180,7 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const [config, setConfig] = useState<StudioConfig>(() => {
     try {
-      const saved = localStorage.getItem('vm_atelier_v5_config');
+      const saved = localStorage.getItem('vm_atelier_v8_config');
       if (saved) {
         const parsed = JSON.parse(saved);
         return {
@@ -192,7 +197,7 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const [services, setServices] = useState<StudioService[]>(() => {
     try {
-      const saved = localStorage.getItem('vm_atelier_v5_services');
+      const saved = localStorage.getItem('vm_atelier_v8_services');
       if (saved) return JSON.parse(saved);
     } catch {
       /* fallback */
@@ -202,7 +207,7 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const [galleryItems, setGalleryItems] = useState<StudioGalleryItem[]>(() => {
     try {
-      const saved = localStorage.getItem('vm_atelier_v5_gallery');
+      const saved = localStorage.getItem('vm_atelier_v8_gallery');
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
@@ -215,7 +220,7 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const [likedGalleryIds, setLikedGalleryIds] = useState<Record<string, boolean>>(() => {
     try {
-      const saved = localStorage.getItem('vm_atelier_v5_gallery_likes');
+      const saved = localStorage.getItem('vm_atelier_v8_gallery_likes');
       if (saved) return JSON.parse(saved);
     } catch {
       /* fallback */
@@ -225,7 +230,7 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const [lookbook, setLookbook] = useState<LookbookItem[]>(() => {
     try {
-      const saved = localStorage.getItem('vm_atelier_v5_lookbook');
+      const saved = localStorage.getItem('vm_atelier_v8_lookbook');
       if (saved) return JSON.parse(saved);
     } catch {
       /* fallback */
@@ -235,7 +240,7 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const [reviews, setReviews] = useState<GoogleReview[]>(() => {
     try {
-      const saved = localStorage.getItem('vm_atelier_v5_reviews');
+      const saved = localStorage.getItem('vm_atelier_v8_reviews');
       if (saved) return JSON.parse(saved);
     } catch {
       /* fallback */
@@ -245,7 +250,7 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const [appointments, setAppointments] = useState<AppointmentRecord[]>(() => {
     try {
-      const saved = localStorage.getItem('vm_atelier_v5_appointments');
+      const saved = localStorage.getItem('vm_atelier_v8_appointments');
       if (saved) return JSON.parse(saved);
     } catch {
       /* fallback */
@@ -255,12 +260,22 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const [blockedSlots, setBlockedSlots] = useState<BlockedSlot[]>(() => {
     try {
-      const saved = localStorage.getItem('vm_atelier_v5_blocked_slots');
+      const saved = localStorage.getItem('vm_atelier_v8_blocked_slots');
       if (saved) return JSON.parse(saved);
     } catch {
       /* fallback */
     }
     return INITIAL_BLOCKED_SLOTS;
+  });
+
+  const [clientNotes, setClientNotes] = useState<ClientFormulaNote[]>(() => {
+    try {
+      const saved = localStorage.getItem('vm_atelier_v8_client_notes');
+      if (saved) return JSON.parse(saved);
+    } catch {
+      /* fallback */
+    }
+    return INITIAL_CLIENT_NOTES;
   });
 
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>(['srv-01']);
@@ -397,16 +412,18 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const handleStorage = (e: StorageEvent) => {
       if (!e.newValue) return;
       try {
-        if (e.key === 'vm_atelier_v5_appointments') {
+        if (e.key === 'vm_atelier_v8_appointments') {
           setAppointments(JSON.parse(e.newValue));
-        } else if (e.key === 'vm_atelier_v5_blocked_slots') {
+        } else if (e.key === 'vm_atelier_v8_blocked_slots') {
           setBlockedSlots(JSON.parse(e.newValue));
-        } else if (e.key === 'vm_atelier_v5_config') {
+        } else if (e.key === 'vm_atelier_v8_config') {
           setConfig((prev) => ({ ...prev, ...JSON.parse(e.newValue!) }));
-        } else if (e.key === 'vm_atelier_v5_services') {
+        } else if (e.key === 'vm_atelier_v8_services') {
           setServices(JSON.parse(e.newValue));
-        } else if (e.key === 'vm_atelier_v5_gallery') {
+        } else if (e.key === 'vm_atelier_v8_gallery') {
           setGalleryItems(JSON.parse(e.newValue));
+        } else if (e.key === 'vm_atelier_v8_client_notes') {
+          setClientNotes(JSON.parse(e.newValue));
         }
       } catch {
         // Ignore malformed storage payload
@@ -418,42 +435,46 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   // Sync state to local storage
   useEffect(() => {
-    localStorage.setItem('vm_atelier_v5_config', JSON.stringify(config));
+    localStorage.setItem('vm_atelier_v8_config', JSON.stringify(config));
   }, [config]);
 
   useEffect(() => {
-    localStorage.setItem('vm_atelier_v5_services', JSON.stringify(services));
+    localStorage.setItem('vm_atelier_v8_services', JSON.stringify(services));
   }, [services]);
 
   useEffect(() => {
     try {
-      localStorage.setItem('vm_atelier_v5_gallery', JSON.stringify(galleryItems));
+      localStorage.setItem('vm_atelier_v8_gallery', JSON.stringify(galleryItems));
     } catch {
       // Handle storage quota gracefully
     }
   }, [galleryItems]);
 
   useEffect(() => {
-    localStorage.setItem('vm_atelier_v5_gallery_likes', JSON.stringify(likedGalleryIds));
+    localStorage.setItem('vm_atelier_v8_gallery_likes', JSON.stringify(likedGalleryIds));
   }, [likedGalleryIds]);
 
   useEffect(() => {
-    localStorage.setItem('vm_atelier_v5_lookbook', JSON.stringify(lookbook));
+    localStorage.setItem('vm_atelier_v8_lookbook', JSON.stringify(lookbook));
   }, [lookbook]);
 
   useEffect(() => {
-    localStorage.setItem('vm_atelier_v5_reviews', JSON.stringify(reviews));
+    localStorage.setItem('vm_atelier_v8_reviews', JSON.stringify(reviews));
   }, [reviews]);
 
   useEffect(() => {
-    localStorage.setItem('vm_atelier_v5_appointments', JSON.stringify(appointments));
+    localStorage.setItem('vm_atelier_v8_appointments', JSON.stringify(appointments));
   }, [appointments]);
 
   useEffect(() => {
-    localStorage.setItem('vm_atelier_v5_blocked_slots', JSON.stringify(blockedSlots));
+    localStorage.setItem('vm_atelier_v8_blocked_slots', JSON.stringify(blockedSlots));
   }, [blockedSlots]);
 
-  // Dark mode & UV Street Neon mode effect
+  useEffect(() => {
+    localStorage.setItem('vm_atelier_v8_client_notes', JSON.stringify(clientNotes));
+  }, [clientNotes]);
+
+  // Dark mode & River Plate Red / Monumental mode effect
   useEffect(() => {
     const root = document.documentElement;
     if (isDark) {
@@ -465,7 +486,7 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   useEffect(() => {
     const root = document.documentElement;
-    root.dataset.urbanTheme = config.urbanTheme || 'amber';
+    root.dataset.urbanTheme = config.urbanTheme || 'crimson';
     if (uvNeonMode || config.urbanTheme === 'uv') {
       root.classList.add('uv-neon-mode');
     } else {
@@ -480,7 +501,7 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const toggleUvNeonMode = () => {
     setUvNeonMode((prev) => {
       const next = !prev;
-      const nextTheme = next ? 'uv' : 'amber';
+      const nextTheme = next ? 'uv' : 'crimson';
       setConfig((c) => ({ ...c, urbanTheme: nextTheme }));
       fetch('/api/config', {
         method: 'PUT',
@@ -492,7 +513,7 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   // History & Section Navigation sync
-  const navigateTo = (page: AppPage, sectionId?: string) => {
+  const navigateTo = useCallback((page: AppPage, sectionId?: string) => {
     setCurrentPage(page);
     window.location.hash = `#/${page}`;
     if (sectionId) {
@@ -505,7 +526,21 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     } else {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-  };
+  }, []);
+
+  // Discreet Keyboard Shortcut for Admin Access (Ctrl + Shift + A or Alt + A)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const isCtrlShiftA = (e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'a';
+      const isAltA = e.altKey && !e.ctrlKey && !e.metaKey && e.key.toLowerCase() === 'a';
+      if (isCtrlShiftA || isAltA) {
+        e.preventDefault();
+        navigateTo('admin');
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [navigateTo]);
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -772,7 +807,6 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       });
       const data = await res.json();
       if (!res.ok || !data.ok) {
-        // Rollback optimistic insertion if server detected a slot collision
         setAppointments((prev) => prev.filter((a) => a.id !== appointment.id));
         return {
           ok: false,
@@ -860,6 +894,26 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       .catch(() => {});
   };
 
+  const saveClientNote = (note: ClientFormulaNote) => {
+    setClientNotes((prev) => {
+      const idx = prev.findIndex(
+        (n) =>
+          n.id === note.id ||
+          (note.whatsapp && n.whatsapp.replace(/\D/g, '') === note.whatsapp.replace(/\D/g, ''))
+      );
+      if (idx >= 0) {
+        const next = [...prev];
+        next[idx] = { ...next[idx], ...note };
+        return next;
+      }
+      return [note, ...prev];
+    });
+  };
+
+  const deleteClientNote = (id: string) => {
+    setClientNotes((prev) => prev.filter((n) => n.id !== id));
+  };
+
   const toggleSelectService = (id: string) => {
     setSelectedServiceIds((prev) =>
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
@@ -899,6 +953,9 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         blockedSlots,
         addBlockedSlot,
         deleteBlockedSlot,
+        clientNotes,
+        saveClientNote,
+        deleteClientNote,
         isAdminAuthenticated,
         loginAdmin,
         logoutAdmin,
