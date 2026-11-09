@@ -1,0 +1,247 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Default-Deny Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // =========================================================================
+    // PRIMITIVE HELPERS
+    // =========================================================================
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isVerifiedUser() && (
+        request.auth.token.email == 'hz.mdiego@gmail.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    // =========================================================================
+    // VALIDATION BLUEPRINTS (ANTI-UPDATE-GAP)
+    // =========================================================================
+
+    function isValidUserProfile(data) {
+      return data.keys().hasAll(['uid', 'email', 'displayName', 'role', 'updatedAt']) &&
+        data.keys().hasOnly(['uid', 'email', 'displayName', 'photoURL', 'role', 'studioName', 'updatedAt']) &&
+        data.uid is string && data.uid.size() >= 1 && data.uid.size() <= 128 &&
+        data.email is string && data.email.size() >= 3 && data.email.size() <= 160 &&
+        data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 100 &&
+        (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() <= 600)) &&
+        data.role in ['admin', 'client'] &&
+        (!('studioName' in data) || (data.studioName is string && data.studioName.size() <= 120)) &&
+        data.updatedAt is string && data.updatedAt.size() >= 4 && data.updatedAt.size() <= 64;
+    }
+
+    function isValidAppointment(data) {
+      return data.keys().hasAll([
+          'id', 'date', 'startTime', 'serviceMinutes', 'bufferMinutes',
+          'clientName', 'whatsapp', 'serviceNames', 'paymentOption', 'status'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'date', 'startTime', 'serviceMinutes', 'bufferMinutes',
+          'clientName', 'whatsapp', 'serviceNames', 'paymentOption', 'status',
+          'reviewLoopScheduledAt'
+        ]) &&
+        data.id is string && data.id.size() >= 2 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.date is string && data.date.size() == 10 && data.date.matches('^\\d{4}-\\d{2}-\\d{2}$') &&
+        data.startTime is string && data.startTime.size() == 5 && data.startTime.matches('^\\d{2}:\\d{2}$') &&
+        data.serviceMinutes is number && data.serviceMinutes >= 10 && data.serviceMinutes <= 360 &&
+        data.bufferMinutes is number && data.bufferMinutes >= 0 && data.bufferMinutes <= 60 &&
+        data.clientName is string && data.clientName.size() >= 2 && data.clientName.size() <= 80 &&
+        data.whatsapp is string && data.whatsapp.size() >= 6 && data.whatsapp.size() <= 32 &&
+        data.serviceNames is list && data.serviceNames.size() >= 1 && data.serviceNames.size() <= 6 &&
+        data.serviceNames[0] is string && data.serviceNames[0].size() >= 2 && data.serviceNames[0].size() <= 120 &&
+        data.paymentOption in ['deposit', 'full', 'studio', 'commitment'] &&
+        data.status in ['confirmed', 'completed'] &&
+        (!('reviewLoopScheduledAt' in data) || (data.reviewLoopScheduledAt is string && data.reviewLoopScheduledAt.size() <= 32));
+    }
+
+    function isValidCrmClientNote(data) {
+      return data.keys().hasAll(['id', 'clientName', 'whatsapp', 'formulaSpec', 'hairType', 'preferredProducts', 'updatedAt']) &&
+        data.keys().hasOnly(['id', 'clientName', 'whatsapp', 'formulaSpec', 'hairType', 'preferredProducts', 'updatedAt']) &&
+        data.id is string && data.id.size() >= 2 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.clientName is string && data.clientName.size() >= 2 && data.clientName.size() <= 80 &&
+        data.whatsapp is string && data.whatsapp.size() >= 6 && data.whatsapp.size() <= 32 &&
+        data.formulaSpec is string && data.formulaSpec.size() >= 2 && data.formulaSpec.size() <= 600 &&
+        data.hairType is string && data.hairType.size() >= 1 && data.hairType.size() <= 200 &&
+        data.preferredProducts is string && data.preferredProducts.size() >= 1 && data.preferredProducts.size() <= 200 &&
+        data.updatedAt is string && data.updatedAt.size() >= 2 && data.updatedAt.size() <= 64;
+    }
+
+    function isValidTransformationCase(data) {
+      return data.keys().hasAll([
+          'id', 'title', 'shortTabTitle', 'tag', 'serviceId', 'priceDisplay',
+          'duration', 'idealFor', 'beforeLabel', 'beforeDetail', 'afterLabel',
+          'afterDetail', 'beforeImage', 'afterImage', 'formulaSteps'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'title', 'shortTabTitle', 'tag', 'serviceId', 'priceDisplay',
+          'duration', 'idealFor', 'beforeLabel', 'beforeDetail', 'afterLabel',
+          'afterDetail', 'beforeImage', 'afterImage', 'formulaSteps'
+        ]) &&
+        data.id is string && data.id.size() >= 2 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.title is string && data.title.size() >= 3 && data.title.size() <= 140 &&
+        data.shortTabTitle is string && data.shortTabTitle.size() >= 2 && data.shortTabTitle.size() <= 60 &&
+        data.tag is string && data.tag.size() >= 2 && data.tag.size() <= 80 &&
+        data.serviceId is string && data.serviceId.size() >= 2 && data.serviceId.size() <= 64 &&
+        data.priceDisplay is string && data.priceDisplay.size() >= 2 && data.priceDisplay.size() <= 40 &&
+        data.duration is string && data.duration.size() >= 2 && data.duration.size() <= 40 &&
+        data.idealFor is string && data.idealFor.size() >= 3 && data.idealFor.size() <= 240 &&
+        data.beforeLabel is string && data.beforeLabel.size() >= 2 && data.beforeLabel.size() <= 80 &&
+        data.beforeDetail is string && data.beforeDetail.size() >= 3 && data.beforeDetail.size() <= 300 &&
+        data.afterLabel is string && data.afterLabel.size() >= 2 && data.afterLabel.size() <= 80 &&
+        data.afterDetail is string && data.afterDetail.size() >= 3 && data.afterDetail.size() <= 300 &&
+        data.beforeImage is string && data.beforeImage.size() >= 5 && data.beforeImage.size() <= 450000 &&
+        data.afterImage is string && data.afterImage.size() >= 5 && data.afterImage.size() <= 450000 &&
+        data.formulaSteps is list && data.formulaSteps.size() >= 1 && data.formulaSteps.size() <= 6 &&
+        data.formulaSteps[0] is string && data.formulaSteps[0].size() <= 160;
+    }
+
+    function isValidGalleryItem(data) {
+      return data.keys().hasAll(['id', 'title', 'category', 'imageUrl']) &&
+        data.keys().hasOnly([
+          'id', 'title', 'category', 'imageUrl', 'description', 'dateLabel',
+          'tags', 'technicalSpec', 'serviceId', 'priceLabel', 'likes',
+          'featured', 'hidden', 'hideBuyButton', 'hidePrice', 'hideSpec'
+        ]) &&
+        data.id is string && data.id.size() >= 2 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.title is string && data.title.size() >= 2 && data.title.size() <= 120 &&
+        data.category is string && data.category.size() >= 2 && data.category.size() <= 60 &&
+        data.imageUrl is string && data.imageUrl.size() >= 5 && data.imageUrl.size() <= 450000 &&
+        (!('description' in data) || (data.description is string && data.description.size() <= 400)) &&
+        (!('dateLabel' in data) || (data.dateLabel is string && data.dateLabel.size() <= 60)) &&
+        (!('likes' in data) || (data.likes is number && data.likes >= 0 && data.likes <= 1000000));
+    }
+
+    // =========================================================================
+    // COLLECTION RULES
+    // =========================================================================
+
+    // Connection health check endpoint
+    match /test/{docId} {
+      allow get: if isValidId(docId);
+      allow list, write: if false;
+    }
+
+    // Trusted Admin Roster
+    match /admins/{adminUid} {
+      allow get: if isValidId(adminUid) && (isOwner(adminUid) || isAdmin());
+      allow list: if isAdmin();
+      allow create, update, delete: if isAdmin() && isValidId(adminUid);
+    }
+
+    // 1. User Profiles (PII Isolated to Owner or Admin)
+    match /studio_users/{userId} {
+      allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isVerifiedUser() &&
+        isValidId(userId) &&
+        isOwner(userId) &&
+        isValidUserProfile(incoming()) &&
+        incoming().uid == request.auth.uid &&
+        (incoming().role == 'client' || isAdmin());
+      allow update: if isVerifiedUser() &&
+        isValidId(userId) &&
+        isValidUserProfile(incoming()) &&
+        incoming().uid == existing().uid &&
+        (
+          isAdmin() ||
+          (
+            isOwner(userId) &&
+            incoming().role == existing().role &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoURL', 'studioName', 'updatedAt'])
+          )
+        );
+      allow delete: if isAdmin() && isValidId(userId);
+    }
+
+    // 2. Studio Appointments (Real-Time Schedule & Booking Engine)
+    match /studio_appointments/{appointmentId} {
+      allow get, list: if true;
+      allow create: if isValidId(appointmentId) &&
+        isValidAppointment(incoming()) &&
+        incoming().id == appointmentId &&
+        incoming().status == 'confirmed';
+      allow update: if isValidId(appointmentId) &&
+        isValidAppointment(incoming()) &&
+        incoming().id == existing().id &&
+        (
+          isAdmin() ||
+          (
+            existing().status != 'completed' &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['date', 'startTime', 'status'])
+          )
+        );
+      allow delete: if isValidId(appointmentId);
+    }
+
+    // 3. Private Barber CRM & Haircut Formulas (Strictly Admin)
+    match /studio_crm_notes/{noteId} {
+      allow get: if isValidId(noteId) && isAdmin();
+      allow list: if isAdmin();
+      allow create: if isValidId(noteId) &&
+        isAdmin() &&
+        isValidCrmClientNote(incoming()) &&
+        incoming().id == noteId;
+      allow update: if isValidId(noteId) &&
+        isValidCrmClientNote(incoming()) &&
+        isAdmin() &&
+        incoming().id == existing().id;
+      allow delete: if isValidId(noteId) && isAdmin();
+    }
+
+    // 4. Before & After Transformations Showcase
+    match /studio_transformations/{caseId} {
+      allow get, list: if true;
+      allow create: if isValidId(caseId) &&
+        isValidTransformationCase(incoming()) &&
+        incoming().id == caseId;
+      allow update: if isValidId(caseId) &&
+        isValidTransformationCase(incoming()) &&
+        incoming().id == existing().id;
+      allow delete: if isValidId(caseId);
+    }
+
+    // 5. Public Barbershop Photo Gallery
+    match /studio_gallery/{itemId} {
+      allow get, list: if true;
+      allow create: if isValidId(itemId) &&
+        isValidGalleryItem(incoming()) &&
+        incoming().id == itemId;
+      allow update: if isValidId(itemId) &&
+        isValidGalleryItem(incoming()) &&
+        incoming().id == existing().id &&
+        (
+          isAdmin() ||
+          incoming().diff(existing()).affectedKeys().hasOnly(['likes', 'hidden', 'featured', 'title', 'category', 'description'])
+        );
+      allow delete: if isValidId(itemId);
+    }
+  }
+}

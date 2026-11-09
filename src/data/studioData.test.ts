@@ -444,4 +444,13 @@ test('INITIAL_TRANSFORMATION_CASES provides complete before/after transformation
   }
 });
 
+test('src/services/firebase.ts initializes Firestore and Auth with provisioned project configuration', async () => {
+  const { firebaseConfig, isFirebaseConfigured, db, auth } = await import('../services/firebase');
+  const { formatBytesLabel } = await import('../utils/imageOptimizer');
 
+  assert.equal(isFirebaseConfigured, true);
+  assert.equal(firebaseConfig.projectId, 'clear-air-3mzf6');
+  assert.ok(db !== null, 'Firestore db instance must be initialized');
+  assert.ok(auth !== null, 'Firebase Auth instance must be initialized');
+  assert.equal(formatBytesLabel(153600), '150 KB');
+});

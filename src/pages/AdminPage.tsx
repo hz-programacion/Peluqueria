@@ -58,32 +58,26 @@ import {
   RetroCornerBandaBookmark,
   RetroRiverCrestBadge,
 } from '../components/RetroPaperBanda';
+import {
+  compressImageFile as optimizeImageFile,
+  formatBytesLabel,
+} from '../utils/imageOptimizer';
 
-const compressImageFile = (file: File): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 1080;
-        const scale = img.width > MAX_WIDTH ? MAX_WIDTH / img.width : 1;
-        canvas.width = Math.round(img.width * scale);
-        canvas.height = Math.round(img.height * scale);
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-          resolve(event.target?.result as string);
-          return;
-        }
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL('image/jpeg', 0.84));
-      };
-      img.onerror = reject;
-      img.src = event.target?.result as string;
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
+const compressImageFile = async (
+  file: File,
+  onStats?: (summary: string) => void
+): Promise<string> => {
+  const result = await optimizeImageFile(file, {
+    maxDimension: 1080,
+    quality: 0.82,
+    maxCharLength: 360_000,
   });
+  if (onStats) {
+    onStats(
+      `Foto optimizada (${formatBytesLabel(result.compressedBytes)}, ahorro ${result.savingsPercent}%)`
+    );
+  }
+  return result.dataUrl;
 };
 
 const SECTION_ADMIN_META: Record<
@@ -197,6 +191,11 @@ export const AdminPage: React.FC = () => {
     clientNotes,
     saveClientNote,
     deleteClientNote,
+    firestoreConnected,
+    firebaseUserEmail,
+    signInWithGoogleAdmin,
+    signOutGoogleAdmin,
+    syncAllToFirestoreCloud,
     navigateTo,
   } = useStudio();
 
@@ -565,7 +564,7 @@ export const AdminPage: React.FC = () => {
     if (!file) return;
     try {
       setIsCompressingPhoto(true);
-      const dataUrl = await compressImageFile(file);
+      const dataUrl = await compressImageFile(file, (msg) => triggerToast(msg));
       setPhotoPreviewUrl(dataUrl);
     } catch {
       triggerToast('No se pudo procesar la imagen seleccionada');
@@ -751,9 +750,30 @@ export const AdminPage: React.FC = () => {
             >
               Ingresar al Panel de {config.studioTitle}
             </button>
+
+            <button
+              type="button"
+              onClick={async () => {
+                const ok = await signInWithGoogleAdmin();
+                if (ok) {
+                  triggerToast('Sesión Google vinculada con Firebase Cloud');
+                } else {
+                  setPinError('No se pudo iniciar sesión con Google. Podés ingresar con tu PIN.');
+                }
+              }}
+              className="w-full h-11 rounded-lg uppercase font-mono font-semibold text-[11px] tracking-[0.14em] bg-[#F3ECE0] text-[#181512] hover:border-[#9E2A2B] border border-[#C8BBA4] transition-all cursor-pointer flex items-center justify-center gap-2"
+            >
+              <Globe className="w-3.5 h-3.5 text-[#9E2A2B]" />
+              <span>Vincular Cuenta Google &amp; Firebase Cloud</span>
+            </button>
           </form>
 
           <div className="mt-6 pt-5 border-t border-dashed border-[#C8BBA4] text-center space-y-2">
+            <p className="text-xs font-mono text-[#1F6E43] font-semibold">
+              {firestoreConnected
+                ? '✓ Base de datos Firebase Firestore conectada en la nube'
+                : 'Modo local activo'}
+            </p>
             <p className="text-xs font-mono text-[#4F463B]">
               PIN por defecto:{' '}
               <strong className="text-[#9E2A2B]">{config.adminPin || '1234'}</strong>
@@ -913,6 +933,59 @@ export const AdminPage: React.FC = () => {
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+            <div className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-[#1F6E43]/60 bg-[#1F6E43]/20 text-[11px] font-mono text-[#A7F3D0]">
+              <span className="w-2 h-2 rounded-full bg-[#34D399]" />
+              <span>
+                {firebaseUserEmail
+                  ? `Firebase Cloud (${firebaseUserEmail})`
+                  : firestoreConnected
+                  ? 'Firebase Firestore Conectado'
+                  : 'Servidor Local Activo'}
+              </span>
+            </div>
+
+            <button
+              type="button"
+              data-testid="admin-sync-firestore-btn"
+              onClick={async () => {
+                const count = await syncAllToFirestoreCloud();
+                triggerToast(
+                  `Sincronización en la nube completada (${count} registros en Firestore)`
+                );
+              }}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-lg text-xs font-mono font-semibold uppercase tracking-wider border border-[#4F463B] bg-[#24201C] hover:border-[#9E2A2B] text-[#FAF6EE] transition-colors cursor-pointer"
+            >
+              <Globe className="w-3.5 h-3.5 text-[#E06D6E]" />
+              <span>Sincronizar Nube</span>
+            </button>
+
+            {!firebaseUserEmail ? (
+              <button
+                type="button"
+                onClick={async () => {
+                  const ok = await signInWithGoogleAdmin();
+                  if (ok) {
+                    triggerToast('Cuenta de Google vinculada para CRM y Admin en la nube');
+                  }
+                }}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-lg text-xs font-mono font-semibold uppercase tracking-wider border border-[#4F463B] bg-[#24201C] hover:border-[#9E2A2B] text-[#FAF6EE] transition-colors cursor-pointer"
+              >
+                <UserCheck className="w-3.5 h-3.5 text-[#E06D6E]" />
+                <span>Google Auth</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={async () => {
+                  await signOutGoogleAdmin();
+                  triggerToast('Sesión de Google desconectada');
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-mono border border-[#4F463B] bg-[#24201C] text-[#C8BBA4] hover:text-[#FAF6EE] cursor-pointer"
+              >
+                <span>Desvincular Google</span>
+              </button>
+            )}
+
             <button
               type="button"
               onClick={() => setIsUploadModalOpen(true)}
@@ -2609,7 +2682,9 @@ export const AdminPage: React.FC = () => {
                           onChange={async (e) => {
                             const f = e.target.files?.[0];
                             if (f) {
-                              const dataUrl = await compressImageFile(f);
+                              const dataUrl = await compressImageFile(f, (msg) =>
+                                triggerToast(`Foto Antes: ${msg}`)
+                              );
                               setTransBeforeImg(dataUrl);
                             }
                           }}
@@ -2645,7 +2720,9 @@ export const AdminPage: React.FC = () => {
                           onChange={async (e) => {
                             const f = e.target.files?.[0];
                             if (f) {
-                              const dataUrl = await compressImageFile(f);
+                              const dataUrl = await compressImageFile(f, (msg) =>
+                                triggerToast(`Foto Después: ${msg}`)
+                              );
                               setTransAfterImg(dataUrl);
                             }
                           }}

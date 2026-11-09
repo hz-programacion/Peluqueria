@@ -1,0 +1,312 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Authenticated user or barber admin profile stored in Firestore.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID of the user.",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Verified email address of the user.",
+          "maxLength": 160
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Full display name of the user or barber.",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "Profile avatar URL.",
+          "maxLength": 600
+        },
+        "role": {
+          "type": "string",
+          "description": "Role within Rodrigo Cutsss studio.",
+          "enum": ["admin", "client"]
+        },
+        "studioName": {
+          "type": "string",
+          "description": "Associated studio brand name.",
+          "maxLength": 120
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "ISO timestamp of last profile update.",
+          "maxLength": 64
+        }
+      },
+      "required": ["uid", "email", "displayName", "role", "updatedAt"]
+    },
+    "Appointment": {
+      "title": "Appointment",
+      "description": "Client haircut or beard appointment booking record.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 2,
+          "maxLength": 128
+        },
+        "date": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+          "minLength": 10,
+          "maxLength": 10
+        },
+        "startTime": {
+          "type": "string",
+          "pattern": "^\\d{2}:\\d{2}$",
+          "minLength": 5,
+          "maxLength": 5
+        },
+        "serviceMinutes": {
+          "type": "number",
+          "description": "Total duration of selected services in minutes."
+        },
+        "bufferMinutes": {
+          "type": "number",
+          "description": "Sanitization buffer minutes after appointment."
+        },
+        "clientName": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 80
+        },
+        "whatsapp": {
+          "type": "string",
+          "minLength": 6,
+          "maxLength": 32
+        },
+        "serviceNames": {
+          "type": "array",
+          "description": "List of booked service names (bounded to max 6)."
+        },
+        "paymentOption": {
+          "type": "string",
+          "enum": ["deposit", "full", "studio", "commitment"]
+        },
+        "status": {
+          "type": "string",
+          "enum": ["confirmed", "completed"]
+        },
+        "reviewLoopScheduledAt": {
+          "type": "string",
+          "maxLength": 32
+        }
+      },
+      "required": [
+        "id",
+        "date",
+        "startTime",
+        "serviceMinutes",
+        "bufferMinutes",
+        "clientName",
+        "whatsapp",
+        "serviceNames",
+        "paymentOption",
+        "status"
+      ]
+    },
+    "CrmClientNote": {
+      "title": "CrmClientNote",
+      "description": "Private barber technical formula note and CRM card for a client.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 2,
+          "maxLength": 128
+        },
+        "clientName": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 80
+        },
+        "whatsapp": {
+          "type": "string",
+          "minLength": 6,
+          "maxLength": 32
+        },
+        "formula": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 600
+        },
+        "crownSwirlNotes": {
+          "type": "string",
+          "maxLength": 400
+        },
+        "preferredDrink": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "lastVisit": {
+          "type": "string",
+          "maxLength": 32
+        }
+      },
+      "required": ["id", "clientName", "whatsapp", "formula", "lastVisit"]
+    },
+    "TransformationCase": {
+      "title": "TransformationCase",
+      "description": "Before and After haircut transformation record for the public comparison showcase.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 2,
+          "maxLength": 128
+        },
+        "tag": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 80
+        },
+        "title": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 140
+        },
+        "beforeLabel": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 80
+        },
+        "afterLabel": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 80
+        },
+        "beforeImage": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 450000
+        },
+        "afterImage": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 450000
+        },
+        "beforeSpec": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 300
+        },
+        "afterSpec": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 300
+        },
+        "duration": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 40
+        },
+        "serviceId": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 64
+        },
+        "priceLabel": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 40
+        },
+        "idealFor": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 240
+        }
+      },
+      "required": [
+        "id",
+        "tag",
+        "title",
+        "beforeLabel",
+        "afterLabel",
+        "beforeImage",
+        "afterImage",
+        "beforeSpec",
+        "afterSpec",
+        "duration",
+        "serviceId",
+        "priceLabel",
+        "idealFor"
+      ]
+    },
+    "GalleryItem": {
+      "title": "GalleryItem",
+      "description": "Public gallery photo uploaded by the barber.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 2,
+          "maxLength": 128
+        },
+        "title": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 120
+        },
+        "category": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 60
+        },
+        "imageUrl": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 450000
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 400
+        },
+        "dateLabel": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "likes": {
+          "type": "number"
+        }
+      },
+      "required": ["id", "title", "category", "imageUrl"]
+    }
+  },
+  "firestore": {
+    "/studio_users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Stores authenticated user and barber admin profiles, isolated by userId."
+    },
+    "/studio_appointments/{appointmentId}": {
+      "schema": { "$ref": "#/entities/Appointment" },
+      "description": "Stores client appointments for real-time schedule synchronization."
+    },
+    "/studio_crm_notes/{noteId}": {
+      "schema": { "$ref": "#/entities/CrmClientNote" },
+      "description": "Stores private barber CRM notes and haircut formulas, restricted strictly to verified studio admins."
+    },
+    "/studio_transformations/{caseId}": {
+      "schema": { "$ref": "#/entities/TransformationCase" },
+      "description": "Stores Before & After haircut transformations visible on the public showcase and editable by admins."
+    },
+    "/studio_gallery/{itemId}": {
+      "schema": { "$ref": "#/entities/GalleryItem" },
+      "description": "Stores public barbershop gallery items."
+    }
+  }
+}

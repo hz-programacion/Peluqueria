@@ -1,6 +1,6 @@
 {
   "version": 8,
-  "updatedAt": "2026-11-08T23:16:36.910Z",
+  "updatedAt": "2026-11-09T09:43:28.226Z",
   "config": {
     "authorName": "Rodrigo",
     "studioTitle": "Rodrigo Cutsss",
@@ -191,7 +191,7 @@
   "appointments": [
     {
       "id": "TK-841920",
-      "date": "2026-11-08",
+      "date": "2026-11-09",
       "startTime": "13:00",
       "serviceMinutes": 45,
       "bufferMinutes": 10,
@@ -206,7 +206,7 @@
     },
     {
       "id": "TK-904312",
-      "date": "2026-11-08",
+      "date": "2026-11-09",
       "startTime": "17:00",
       "serviceMinutes": 60,
       "bufferMinutes": 10,
@@ -221,7 +221,7 @@
     },
     {
       "id": "TK-773105",
-      "date": "2026-11-09",
+      "date": "2026-11-10",
       "startTime": "12:00",
       "serviceMinutes": 60,
       "bufferMinutes": 10,
@@ -238,14 +238,14 @@
   "blockedSlots": [
     {
       "id": "block-1",
-      "date": "2026-11-08",
+      "date": "2026-11-09",
       "startTime": "14:30",
       "durationMinutes": 30,
       "reason": "Pausa de mediodía y acondicionamiento del estudio"
     },
     {
       "id": "block-2",
-      "date": "2026-11-09",
+      "date": "2026-11-10",
       "startTime": "19:00",
       "durationMinutes": 60,
       "reason": "Sesión fotográfica de archivo editorial"
@@ -366,7 +366,7 @@
       "city": "Venado Tuerto",
       "verified": true,
       "comment": "Una experiencia completamente distinta en Venado Tuerto. Sin ruidos ni gente esperando encima tuyo: llegás a tu hora en Vuelta de Obligado 931, te reciben con un café y Rodrigo se toma todo el tiempo para lograr exactamente el corte que buscás.",
-      "createdAtISO": "2026-11-05T23:16:18.890Z"
+      "createdAtISO": "2026-11-06T09:41:20.393Z"
     },
     {
       "id": "rev-seed-2",
@@ -378,7 +378,7 @@
       "city": "Venado Tuerto",
       "verified": true,
       "comment": "La precisión con la tijera y el cuidado en el perfilado de barba con toalla tibia son de otro nivel. El corte crece prolijo durante semanas sin perder la forma.",
-      "createdAtISO": "2026-11-03T23:16:18.891Z"
+      "createdAtISO": "2026-11-04T09:41:20.393Z"
     },
     {
       "id": "rev-seed-3",
@@ -390,7 +390,7 @@
       "city": "Venado Tuerto",
       "verified": true,
       "comment": "Buscaba unos reflejos muy sutiles que no dañaran el pelo y el resultado superó lo que imaginaba. Ambiente tranquilo, trato personalizado y productos de primera línea.",
-      "createdAtISO": "2026-11-01T23:16:18.891Z"
+      "createdAtISO": "2026-11-02T09:41:20.393Z"
     },
     {
       "id": "rev-seed-4",
@@ -402,20 +402,27 @@
       "city": "Venado Tuerto",
       "verified": true,
       "comment": "Reservar desde el celular es comodísimo y la puntualidad es total. El lavado nutritivo con masaje capilar al final del corte hace que salgas renovado.",
-      "createdAtISO": "2026-10-25T23:16:18.891Z"
+      "createdAtISO": "2026-10-26T09:41:20.393Z"
     }
   ],
   "auditLogs": [
     {
-      "id": "audit-1794179796910",
-      "timestamp": "2026-11-08T23:16:36.910Z",
+      "id": "audit-1794217408226",
+      "timestamp": "2026-11-09T09:43:28.226Z",
+      "action": "ADMIN_LOGIN_SUCCESS",
+      "actor": "admin",
+      "details": "Sesión administrativa iniciada correctamente."
+    },
+    {
+      "id": "audit-1794217295426",
+      "timestamp": "2026-11-09T09:41:35.426Z",
       "action": "ADMIN_LOGIN_SUCCESS",
       "actor": "admin",
       "details": "Sesión administrativa iniciada correctamente."
     },
     {
       "id": "audit-init",
-      "timestamp": "2026-11-08T23:16:18.893Z",
+      "timestamp": "2026-11-09T09:41:20.395Z",
       "action": "SYSTEM_BOOT",
       "actor": "system",
       "details": "Motor backend de Rodrigo Cutsss inicializado y sincronizado."

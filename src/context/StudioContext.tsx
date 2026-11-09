@@ -22,16 +22,28 @@ import {
   INITIAL_APPOINTMENTS_STORE,
   INITIAL_BLOCKED_SLOTS,
 } from '../data/studioStore';
-import { db } from '../lib/firebase';
+import {
+  db,
+  isFirebaseConfigured,
+  StudioUserProfile,
+  signInStudioWithGoogle,
+  signOutStudioUser,
+  subscribeToAuthChanges,
+  syncAppointmentToFirestore,
+  deleteAppointmentFromFirestore,
+  subscribeToFirestoreAppointments,
+  syncTransformationToFirestore,
+  deleteTransformationFromFirestore,
+  subscribeToFirestoreTransformations,
+  syncCrmNoteToFirestore,
+  deleteCrmNoteFromFirestore,
+  subscribeToFirestoreCrmNotes,
+  syncGalleryItemToFirestore,
+  deleteGalleryItemFromFirestore,
+} from '../services/firebase';
 import {
   collection,
-  addDoc,
-  deleteDoc,
-  doc,
   onSnapshot,
-  query,
-  orderBy,
-  serverTimestamp,
 } from 'firebase/firestore';
 
 export interface BlockedSlot {
@@ -158,6 +170,13 @@ interface StudioContextType {
   preselectedSlot: { date: string; time: string } | null;
   setPreselectedSlot: React.Dispatch<React.SetStateAction<{ date: string; time: string } | null>>;
   backendConnected: boolean;
+  firestoreConnected: boolean;
+  firebaseUserEmail: string | null;
+  firebaseUserDisplayName: string | null;
+  firebaseUserProfile: StudioUserProfile | null;
+  signInWithGoogleAdmin: () => Promise<boolean>;
+  signOutGoogleAdmin: () => Promise<void>;
+  syncAllToFirestoreCloud: () => Promise<number>;
   backendMetrics: BackendMetricsSummary | null;
   auditLogs: AuditLogRecord[];
   refreshBackendState: () => Promise<void>;
@@ -203,6 +222,10 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return localStorage.getItem('vm_admin_token') || '';
   });
   const [backendConnected, setBackendConnected] = useState<boolean>(false);
+  const [firestoreConnected, setFirestoreConnected] = useState<boolean>(isFirebaseConfigured);
+  const [firebaseUserEmail, setFirebaseUserEmail] = useState<string | null>(null);
+  const [firebaseUserDisplayName, setFirebaseUserDisplayName] = useState<string | null>(null);
+  const [firebaseUserProfile, setFirebaseUserProfile] = useState<StudioUserProfile | null>(null);
   const [backendMetrics, setBackendMetrics] = useState<BackendMetricsSummary | null>(null);
   const [auditLogs, setAuditLogs] = useState<AuditLogRecord[]>([]);
 
@@ -410,20 +433,37 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     refreshBackendState();
   }, [refreshBackendState]);
 
-  // Sync with Firestore studio_gallery collection if available
+  // Sync with Firebase Auth & Real-Time Firestore Collections (Gallery, Appointments, Transformations, CRM)
   useEffect(() => {
-    if (!db) return;
-    let unsubscribe: (() => void) | undefined;
+    const unsubAuth = subscribeToAuthChanges((user) => {
+      if (user) {
+        setFirebaseUserEmail(user.email || null);
+        setFirebaseUserDisplayName(user.displayName || user.email || null);
+        setFirestoreConnected(true);
+      } else {
+        setFirebaseUserEmail(null);
+        setFirebaseUserDisplayName(null);
+        setFirebaseUserProfile(null);
+      }
+    });
+
+    if (!db) {
+      return () => {
+        unsubAuth();
+      };
+    }
+
+    let unsubGallery: (() => void) | undefined;
     try {
-      const q = query(collection(db, 'studio_gallery'), orderBy('createdAt', 'desc'));
-      unsubscribe = onSnapshot(
-        q,
+      unsubGallery = onSnapshot(
+        collection(db, 'studio_gallery'),
         (snapshot) => {
+          setFirestoreConnected(true);
           if (!snapshot.empty) {
             const remoteItems: StudioGalleryItem[] = snapshot.docs.map((d) => {
               const data = d.data();
               return {
-                id: d.id,
+                id: data.id || d.id,
                 title: data.title || 'Trabajo en el Estudio',
                 category: data.category || 'Cortes & Fades',
                 imageUrl:
@@ -457,10 +497,45 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     } catch {
       // Offline / local fallback
     }
+
+    const unsubAppointments = subscribeToFirestoreAppointments((remoteAppointments) => {
+      setFirestoreConnected(true);
+      if (remoteAppointments.length > 0) {
+        setAppointments((prev) => {
+          const map = new Map<string, AppointmentRecord>();
+          for (const a of prev) map.set(a.id, a);
+          for (const r of remoteAppointments) map.set(r.id, r);
+          return Array.from(map.values());
+        });
+      }
+    });
+
+    const unsubTransformations = subscribeToFirestoreTransformations((remoteTransformations) => {
+      setFirestoreConnected(true);
+      if (remoteTransformations.length > 0) {
+        setTransformations(remoteTransformations);
+      }
+    });
+
+    const unsubCrm = subscribeToFirestoreCrmNotes((remoteNotes) => {
+      if (remoteNotes.length > 0) {
+        setClientNotes((prev) => {
+          const map = new Map<string, ClientFormulaNote>();
+          for (const n of prev) map.set(n.id, n);
+          for (const r of remoteNotes) map.set(r.id, r);
+          return Array.from(map.values());
+        });
+      }
+    });
+
     return () => {
-      if (unsubscribe) unsubscribe();
+      unsubAuth();
+      if (unsubGallery) unsubGallery();
+      unsubAppointments();
+      unsubTransformations();
+      unsubCrm();
     };
-  }, []);
+  }, [firebaseUserEmail]);
 
   // Cross-tab real-time sync via storage events
   useEffect(() => {
@@ -796,35 +871,18 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     })
       .then(() => refreshBackendState())
       .catch(() => {});
-    if (!db) return;
-    try {
-      await addDoc(collection(db, 'studio_gallery'), {
-        title: item.title,
-        category: item.category,
-        imageUrl: item.imageUrl,
-        description: item.description,
-        dateLabel: item.dateLabel,
-        tags: item.tags,
-        technicalSpec: item.technicalSpec || '',
-        serviceId: item.serviceId || '',
-        priceLabel: item.priceLabel || '',
-        likes: item.likes || 1,
-        featured: !!item.featured,
-        hidden: !!item.hidden,
-        hideBuyButton: !!item.hideBuyButton,
-        hidePrice: !!item.hidePrice,
-        hideSpec: !!item.hideSpec,
-        createdAt: serverTimestamp(),
-      });
-    } catch {
-      // Already saved in local state & backend
-    }
+    syncGalleryItemToFirestore(item).catch(() => {});
   };
 
   const updateGalleryItem = (id: string, partial: Partial<StudioGalleryItem>) => {
-    setGalleryItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, ...partial } : item))
-    );
+    setGalleryItems((prev) => {
+      const next = prev.map((item) => (item.id === id ? { ...item, ...partial } : item));
+      const updatedItem = next.find((item) => item.id === id);
+      if (updatedItem) {
+        syncGalleryItemToFirestore(updatedItem).catch(() => {});
+      }
+      return next;
+    });
     fetch(`/api/gallery/${encodeURIComponent(id)}`, {
       method: 'PATCH',
       headers: buildAuthHeaders(),
@@ -838,12 +896,7 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       method: 'DELETE',
       headers: buildAuthHeaders(),
     }).catch(() => {});
-    if (!db) return;
-    try {
-      await deleteDoc(doc(db, 'studio_gallery', id));
-    } catch {
-      // Handled locally
-    }
+    deleteGalleryItemFromFirestore(id).catch(() => {});
   };
 
   const toggleLikeGalleryItem = (id: string) => {
@@ -912,10 +965,13 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           error: data?.error || 'El horario seleccionado ya fue ocupado.',
         };
       }
+      const created = data.appointment || appointment;
+      syncAppointmentToFirestore(created).catch(() => {});
       if (data.metrics) setBackendMetrics(data.metrics);
       refreshBackendState();
-      return { ok: true, appointment: data.appointment || appointment };
+      return { ok: true, appointment: created };
     } catch {
+      syncAppointmentToFirestore(appointment).catch(() => {});
       return { ok: true, appointment };
     }
   };
@@ -943,16 +999,32 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           error: data?.error || 'No se pudo reprogramar el turno en ese horario.',
         };
       }
+      if (data.appointment) {
+        syncAppointmentToFirestore(data.appointment).catch(() => {});
+      }
       if (data.metrics) setBackendMetrics(data.metrics);
       refreshBackendState();
       return { ok: true, appointment: data.appointment };
     } catch {
+      const target = previous.find((a) => a.id === id);
+      if (target) {
+        syncAppointmentToFirestore({ ...target, date: newDate, startTime: newStartTime }).catch(
+          () => {}
+        );
+      }
       return { ok: true };
     }
   };
 
   const updateAppointmentStatus = (id: string, status: 'confirmed' | 'completed') => {
-    setAppointments((prev) => prev.map((a) => (a.id === id ? { ...a, status } : a)));
+    setAppointments((prev) => {
+      const next = prev.map((a) => (a.id === id ? { ...a, status } : a));
+      const updated = next.find((a) => a.id === id);
+      if (updated) {
+        syncAppointmentToFirestore(updated).catch(() => {});
+      }
+      return next;
+    });
     fetch(`/api/appointments/${encodeURIComponent(id)}`, {
       method: 'PATCH',
       headers: buildAuthHeaders(),
@@ -964,6 +1036,7 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const cancelAppointment = (id: string) => {
     setAppointments((prev) => prev.filter((a) => a.id !== id));
+    deleteAppointmentFromFirestore(id).catch(() => {});
     fetch(`/api/appointments/${encodeURIComponent(id)}`, {
       method: 'DELETE',
       headers: buildAuthHeaders(),
@@ -1003,14 +1076,17 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       if (idx >= 0) {
         const next = [...prev];
         next[idx] = { ...next[idx], ...note };
+        syncCrmNoteToFirestore(next[idx]).catch(() => {});
         return next;
       }
+      syncCrmNoteToFirestore(note).catch(() => {});
       return [note, ...prev];
     });
   };
 
   const deleteClientNote = (id: string) => {
     setClientNotes((prev) => prev.filter((n) => n.id !== id));
+    deleteCrmNoteFromFirestore(id).catch(() => {});
   };
 
   const toggleSelectService = (id: string) => {
@@ -1021,20 +1097,90 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const addTransformation = (item: TransformationCaseRecord) => {
     setTransformations((prev) => [item, ...prev]);
+    syncTransformationToFirestore(item).catch(() => {});
   };
 
   const updateTransformation = (id: string, partial: Partial<TransformationCaseRecord>) => {
-    setTransformations((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, ...partial } : item))
-    );
+    setTransformations((prev) => {
+      const next = prev.map((item) => (item.id === id ? { ...item, ...partial } : item));
+      const updated = next.find((item) => item.id === id);
+      if (updated) {
+        syncTransformationToFirestore(updated).catch(() => {});
+      }
+      return next;
+    });
   };
 
   const deleteTransformation = (id: string) => {
     setTransformations((prev) => prev.filter((item) => item.id !== id));
+    deleteTransformationFromFirestore(id).catch(() => {});
   };
 
   const resetTransformations = () => {
     setTransformations(INITIAL_TRANSFORMATION_CASES);
+    for (const item of INITIAL_TRANSFORMATION_CASES) {
+      syncTransformationToFirestore(item).catch(() => {});
+    }
+  };
+
+  const signInWithGoogleAdmin = async (): Promise<boolean> => {
+    try {
+      const { user, profile } = await signInStudioWithGoogle(config.studioTitle);
+      setFirebaseUserEmail(user.email || null);
+      setFirebaseUserDisplayName(user.displayName || user.email || null);
+      setFirebaseUserProfile(profile);
+      setIsAdminAuthenticated(true);
+      localStorage.setItem('vm_admin_auth', 'true');
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  const signOutGoogleAdmin = async (): Promise<void> => {
+    await signOutStudioUser();
+    setFirebaseUserEmail(null);
+    setFirebaseUserDisplayName(null);
+    setFirebaseUserProfile(null);
+  };
+
+  const syncAllToFirestoreCloud = async (): Promise<number> => {
+    let syncedCount = 0;
+    for (const appItem of appointments) {
+      try {
+        await syncAppointmentToFirestore(appItem);
+        syncedCount++;
+      } catch {
+        // continue
+      }
+    }
+    for (const trItem of transformations) {
+      try {
+        await syncTransformationToFirestore(trItem);
+        syncedCount++;
+      } catch {
+        // continue
+      }
+    }
+    for (const galItem of galleryItems) {
+      try {
+        await syncGalleryItemToFirestore(galItem);
+        syncedCount++;
+      } catch {
+        // continue
+      }
+    }
+    if (firebaseUserEmail) {
+      for (const noteItem of clientNotes) {
+        try {
+          await syncCrmNoteToFirestore(noteItem);
+          syncedCount++;
+        } catch {
+          // continue
+        }
+      }
+    }
+    return syncedCount;
   };
 
   return (
@@ -1097,6 +1243,13 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         preselectedSlot,
         setPreselectedSlot,
         backendConnected,
+        firestoreConnected,
+        firebaseUserEmail,
+        firebaseUserDisplayName,
+        firebaseUserProfile,
+        signInWithGoogleAdmin,
+        signOutGoogleAdmin,
+        syncAllToFirestoreCloud,
         backendMetrics,
         auditLogs,
         refreshBackendState,
