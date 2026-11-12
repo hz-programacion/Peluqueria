@@ -12,6 +12,12 @@ export type HomeSectionId =
 
 export type UrbanThemePreset = 'amber' | 'uv' | 'crimson' | 'volt';
 
+export type AtelierThemePalette =
+  | 'crimson'
+  | 'noir-gold'
+  | 'botanic-copper'
+  | 'navy-brass';
+
 export type SiteLayoutMode = 'landing' | 'tabs';
 
 export const DEFAULT_SECTION_ORDER: HomeSectionId[] = [
@@ -28,6 +34,9 @@ export interface StudioConfig {
   authorName: string;
   studioTitle: string;
   brandKicker: string;
+  brandMonogram?: string;
+  brandLogoUrl?: string;
+  themePalette?: AtelierThemePalette;
   tagline: string;
   heroSubtitle: string;
   bio: string;
@@ -42,6 +51,13 @@ export interface StudioConfig {
   facebook?: string;
   youtube?: string;
   transferAlias: string;
+  transferCbu?: string;
+  transferHolder?: string;
+  transferBank?: string;
+  mercadoPagoEnabled?: boolean;
+  mercadoPagoLink?: string;
+  mercadoPagoAlias?: string;
+  mercadoPagoNote?: string;
   spotifyPlaylistUrl: string;
   currentVibeTrack: string;
   googleMapsUrl: string;
@@ -90,6 +106,9 @@ export const INITIAL_STUDIO_CONFIG: StudioConfig = {
   authorName: STUDIO_INFO.authorName,
   studioTitle: STUDIO_INFO.studioTitle,
   brandKicker: STUDIO_INFO.brandKicker,
+  brandMonogram: 'RC',
+  brandLogoUrl: '',
+  themePalette: 'crimson',
   tagline: STUDIO_INFO.tagline,
   heroSubtitle:
     'Estudio privado de peluquería y barbería en Vuelta de Obligado 931, Venado Tuerto. Fades al detalle, cortes a tijera, perfilado de barba y coloración con atención personalizada uno a uno.',
@@ -105,6 +124,13 @@ export const INITIAL_STUDIO_CONFIG: StudioConfig = {
   facebook: 'rodrigocutsss.vt',
   youtube: '@rodrigocutsss',
   transferAlias: 'RODRIGO.CUTSSS',
+  transferCbu: '0000003100014022904812',
+  transferHolder: 'Rodrigo Cutsss',
+  transferBank: 'Banco Santander / Mercado Pago',
+  mercadoPagoEnabled: false,
+  mercadoPagoLink: '',
+  mercadoPagoAlias: 'RODRIGO.CUTSSS.MP',
+  mercadoPagoNote: 'Cobro de seña opcional con tarjeta de débito/crédito',
   spotifyPlaylistUrl: STUDIO_INFO.spotifyPlaylistUrl,
   currentVibeTrack: 'Rodrigo Cutsss · Vinyl & Atelier Session',
   googleMapsUrl: STUDIO_INFO.googleMapsUrl,

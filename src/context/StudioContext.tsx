@@ -28,10 +28,6 @@ import {
   StudioUserProfile,
   signInStudioWithGoogle,
   signOutStudioUser,
-  subscribeToAuthChanges,
-  syncAppointmentToFirestore,
-  deleteAppointmentFromFirestore,
-  subscribeToFirestoreAppointments,
   syncTransformationToFirestore,
   deleteTransformationFromFirestore,
   subscribeToFirestoreTransformations,
@@ -41,6 +37,19 @@ import {
   syncGalleryItemToFirestore,
   deleteGalleryItemFromFirestore,
 } from '../services/firebase';
+import {
+  signInWithEmail,
+  registerWithEmail,
+  initPersistentAuthSession,
+  logoutPersistentSession,
+} from '../services/auth';
+import {
+  addAppointmentToDb,
+  updateAppointmentInDb,
+  deleteAppointmentFromDb,
+  subscribeAppointmentsFromDb,
+} from '../services/db';
+import type { AppointmentStatus } from '../types/appointment';
 import {
   collection,
   onSnapshot,
@@ -84,7 +93,9 @@ export type AppPage =
   | 'experience'
   | 'booking'
   | 'location'
-  | 'admin';
+  | 'admin'
+  | 'voucher'
+  | 'chair';
 
 export interface CurtainTransitionState {
   id: number;
@@ -143,7 +154,7 @@ interface StudioContextType {
     newDate: string,
     newStartTime: string
   ) => Promise<{ ok: boolean; error?: string; appointment?: AppointmentRecord }>;
-  updateAppointmentStatus: (id: string, status: 'confirmed' | 'completed') => void;
+  updateAppointmentStatus: (id: string, status: AppointmentStatus) => void;
   cancelAppointment: (id: string) => void;
   blockedSlots: BlockedSlot[];
   addBlockedSlot: (slot: BlockedSlot) => void;
@@ -155,6 +166,8 @@ interface StudioContextType {
   loginAdmin: (pin: string) => boolean;
   logoutAdmin: () => void;
   currentPage: AppPage;
+  activeTicketId: string | null;
+  setActiveTicketId: (ticketId: string | null) => void;
   activeSeoSection: string | null;
   setActiveSeoSection: (sectionId: string | null) => void;
   navigateTo: (page: AppPage, sectionId?: string) => void;
@@ -175,6 +188,11 @@ interface StudioContextType {
   firebaseUserDisplayName: string | null;
   firebaseUserProfile: StudioUserProfile | null;
   signInWithGoogleAdmin: () => Promise<boolean>;
+  signInWithEmailAdmin: (
+    email: string,
+    password: string,
+    mode?: 'signin' | 'register'
+  ) => Promise<{ ok: boolean; error?: string }>;
   signOutGoogleAdmin: () => Promise<void>;
   syncAllToFirestoreCloud: () => Promise<number>;
   backendMetrics: BackendMetricsSummary | null;
@@ -187,10 +205,23 @@ const StudioContext = createContext<StudioContextType | undefined>(undefined);
 const DEFAULT_ADMIN_PIN = '1234';
 
 export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [activeTicketId, setActiveTicketId] = useState<string | null>(() => {
+    const rawHash = window.location.hash.replace('#/', '').replace('#', '');
+    if (rawHash.startsWith('turno/')) return rawHash.replace('turno/', '');
+    if (rawHash.startsWith('voucher/')) return rawHash.replace('voucher/', '');
+    return null;
+  });
+
   const [currentPage, setCurrentPage] = useState<AppPage>(() => {
     const hash = window.location.hash.replace('#/', '').replace('#', '');
+    if (hash.startsWith('turno/') || hash.startsWith('voucher/')) {
+      return 'voucher';
+    }
+    if (hash === 'silla' || hash === 'chair') {
+      return 'chair';
+    }
     if (
-      ['home', 'services', 'lookbook', 'experience', 'booking', 'location', 'admin'].includes(hash)
+      ['home', 'services', 'lookbook', 'experience', 'booking', 'location', 'admin', 'voucher', 'chair'].includes(hash)
     ) {
       return hash as AppPage;
     }
@@ -433,12 +464,12 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     refreshBackendState();
   }, [refreshBackendState]);
 
-  // Sync with Firebase Auth & Real-Time Firestore Collections (Gallery, Appointments, Transformations, CRM)
+  // Sync with Persistent Firebase Auth Session & Real-Time Firestore Collections
   useEffect(() => {
-    const unsubAuth = subscribeToAuthChanges((user) => {
-      if (user) {
-        setFirebaseUserEmail(user.email || null);
-        setFirebaseUserDisplayName(user.displayName || user.email || null);
+    const unsubAuth = initPersistentAuthSession((session) => {
+      if (session) {
+        setFirebaseUserEmail(session.email || null);
+        setFirebaseUserDisplayName(session.displayName || session.email || null);
         setFirestoreConnected(true);
       } else {
         setFirebaseUserEmail(null);
@@ -498,7 +529,7 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       // Offline / local fallback
     }
 
-    const unsubAppointments = subscribeToFirestoreAppointments((remoteAppointments) => {
+    const unsubAppointments = subscribeAppointmentsFromDb((remoteAppointments) => {
       setFirestoreConnected(true);
       if (remoteAppointments.length > 0) {
         setAppointments((prev) => {
@@ -661,6 +692,8 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         experience: 'Conocé al Barbero',
         location: 'Ubicación & Horarios',
         admin: 'Escritorio de Dirección',
+        voucher: 'Mi Turno · Boleto Oficial',
+        chair: 'Modo Silla · Panel de Sillón',
       };
       const sectionLabels: Record<string, string> = {
         turnero: 'Registro de Turnos',
@@ -677,7 +710,13 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       setCurrentPage(page);
       setActiveSeoSection(sectionId || null);
-      window.location.hash = sectionId && page === 'home' ? `#${sectionId}` : `#/${page}`;
+      if (page === 'voucher' && activeTicketId) {
+        window.location.hash = `#/turno/${activeTicketId}`;
+      } else if (page === 'chair') {
+        window.location.hash = '#/silla';
+      } else {
+        window.location.hash = sectionId && page === 'home' ? `#${sectionId}` : `#/${page}`;
+      }
       if (sectionId) {
         setTimeout(() => {
           const el = document.getElementById(sectionId);
@@ -689,7 +728,7 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     },
-    [config.studioTitle, config.address, triggerCurtainTransition]
+    [config.studioTitle, config.address, triggerCurtainTransition, activeTicketId]
   );
 
   // Discreet Keyboard Shortcut for Admin Access (Ctrl + Shift + A or Alt + A)
@@ -709,8 +748,18 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#/', '').replace('#', '');
+      if (hash.startsWith('turno/') || hash.startsWith('voucher/')) {
+        const id = hash.replace('turno/', '').replace('voucher/', '');
+        setActiveTicketId(id);
+        setCurrentPage('voucher');
+        return;
+      }
+      if (hash === 'silla' || hash === 'chair') {
+        setCurrentPage('chair');
+        return;
+      }
       if (
-        ['home', 'services', 'lookbook', 'experience', 'booking', 'location', 'admin'].includes(
+        ['home', 'services', 'lookbook', 'experience', 'booking', 'location', 'admin', 'voucher', 'chair'].includes(
           hash
         )
       ) {
@@ -966,12 +1015,12 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         };
       }
       const created = data.appointment || appointment;
-      syncAppointmentToFirestore(created).catch(() => {});
+      addAppointmentToDb(created).catch(() => {});
       if (data.metrics) setBackendMetrics(data.metrics);
       refreshBackendState();
       return { ok: true, appointment: created };
     } catch {
-      syncAppointmentToFirestore(appointment).catch(() => {});
+      addAppointmentToDb(appointment).catch(() => {});
       return { ok: true, appointment };
     }
   };
@@ -1000,31 +1049,23 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         };
       }
       if (data.appointment) {
-        syncAppointmentToFirestore(data.appointment).catch(() => {});
+        updateAppointmentInDb(id, { date: newDate, startTime: newStartTime }).catch(() => {});
       }
       if (data.metrics) setBackendMetrics(data.metrics);
       refreshBackendState();
       return { ok: true, appointment: data.appointment };
     } catch {
-      const target = previous.find((a) => a.id === id);
-      if (target) {
-        syncAppointmentToFirestore({ ...target, date: newDate, startTime: newStartTime }).catch(
-          () => {}
-        );
-      }
+      updateAppointmentInDb(id, { date: newDate, startTime: newStartTime }).catch(() => {});
       return { ok: true };
     }
   };
 
-  const updateAppointmentStatus = (id: string, status: 'confirmed' | 'completed') => {
+  const updateAppointmentStatus = (id: string, status: AppointmentStatus) => {
     setAppointments((prev) => {
       const next = prev.map((a) => (a.id === id ? { ...a, status } : a));
-      const updated = next.find((a) => a.id === id);
-      if (updated) {
-        syncAppointmentToFirestore(updated).catch(() => {});
-      }
       return next;
     });
+    updateAppointmentInDb(id, { status }).catch(() => {});
     fetch(`/api/appointments/${encodeURIComponent(id)}`, {
       method: 'PATCH',
       headers: buildAuthHeaders(),
@@ -1036,7 +1077,7 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const cancelAppointment = (id: string) => {
     setAppointments((prev) => prev.filter((a) => a.id !== id));
-    deleteAppointmentFromFirestore(id).catch(() => {});
+    deleteAppointmentFromDb(id).catch(() => {});
     fetch(`/api/appointments/${encodeURIComponent(id)}`, {
       method: 'DELETE',
       headers: buildAuthHeaders(),
@@ -1137,7 +1178,32 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   };
 
+  const signInWithEmailAdmin = async (
+    email: string,
+    password: string,
+    mode: 'signin' | 'register' = 'signin'
+  ): Promise<{ ok: boolean; error?: string }> => {
+    try {
+      const { user, profile } =
+        mode === 'register'
+          ? await registerWithEmail(email, password, config.authorName || 'Rodrigo', config.studioTitle)
+          : await signInWithEmail(email, password, config.studioTitle);
+      setFirebaseUserEmail(user.email || null);
+      setFirebaseUserDisplayName(user.displayName || user.email || null);
+      if (profile) setFirebaseUserProfile(profile);
+      setIsAdminAuthenticated(true);
+      localStorage.setItem('vm_admin_auth', 'true');
+      return { ok: true };
+    } catch (error) {
+      return {
+        ok: false,
+        error: error instanceof Error ? error.message : 'No se pudo autenticar con Email y Contraseña.',
+      };
+    }
+  };
+
   const signOutGoogleAdmin = async (): Promise<void> => {
+    await logoutPersistentSession();
     await signOutStudioUser();
     setFirebaseUserEmail(null);
     setFirebaseUserDisplayName(null);
@@ -1148,7 +1214,7 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     let syncedCount = 0;
     for (const appItem of appointments) {
       try {
-        await syncAppointmentToFirestore(appItem);
+        await addAppointmentToDb(appItem);
         syncedCount++;
       } catch {
         // continue
@@ -1228,6 +1294,8 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         loginAdmin,
         logoutAdmin,
         currentPage,
+        activeTicketId,
+        setActiveTicketId,
         activeSeoSection,
         setActiveSeoSection,
         navigateTo,
@@ -1248,6 +1316,7 @@ export const StudioProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         firebaseUserDisplayName,
         firebaseUserProfile,
         signInWithGoogleAdmin,
+        signInWithEmailAdmin,
         signOutGoogleAdmin,
         syncAllToFirestoreCloud,
         backendMetrics,

@@ -454,3 +454,91 @@ test('src/services/firebase.ts initializes Firestore and Auth with provisioned p
   assert.ok(auth !== null, 'Firebase Auth instance must be initialized');
   assert.equal(formatBytesLabel(153600), '150 KB');
 });
+
+test('src/types/appointment.ts, src/services/db.ts, and src/services/auth.ts normalize appointments, handle statuses (pending/confirmed/completed/cancelled), and free cancelled time slots', async () => {
+  const { normalizeAppointmentRecord } = await import('../types/appointment');
+  const {
+    addAppointmentToDb,
+    getAppointmentByIdFromDb,
+    getAppointmentsFromDb,
+    updateAppointmentInDb,
+    deleteAppointmentFromDb,
+  } = await import('../services/db');
+  const { getCachedAuthSession, signInWithEmail, initPersistentAuthSession } = await import(
+    '../services/auth'
+  );
+  const { getAvailableTimeSlots } = await import('../utils/bookingEngine');
+
+  // Verify exports
+  assert.equal(typeof addAppointmentToDb, 'function');
+  assert.equal(typeof getAppointmentByIdFromDb, 'function');
+  assert.equal(typeof getAppointmentsFromDb, 'function');
+  assert.equal(typeof updateAppointmentInDb, 'function');
+  assert.equal(typeof deleteAppointmentFromDb, 'function');
+  assert.equal(typeof signInWithEmail, 'function');
+  assert.equal(typeof initPersistentAuthSession, 'function');
+  assert.equal(getCachedAuthSession(), null);
+
+  // Normalize appointment with structured customer/timeSlot/serviceTypes
+  const normalized = normalizeAppointmentRecord({
+    id: 'RC-990011',
+    customer: {
+      name: 'Matías Córdoba',
+      whatsapp: '+54 9 3462 441122',
+    },
+    timeSlot: {
+      date: '2026-11-12',
+      startTime: '15:00',
+      serviceMinutes: 45,
+      bufferMinutes: 10,
+    },
+    serviceNames: ['Corte de Autor / Clásico'],
+    paymentOption: 'deposit',
+    status: 'cancelled',
+  });
+
+  assert.equal(normalized.id, 'RC-990011');
+  assert.equal(normalized.clientName, 'Matías Córdoba');
+  assert.equal(normalized.date, '2026-11-12');
+  assert.equal(normalized.startTime, '15:00');
+  assert.equal(normalized.status, 'cancelled');
+
+  // Cancelled appointment must NOT block the 15:00 time slot
+  const slotsWithCancelled = getAvailableTimeSlots(
+    '2026-11-12',
+    55,
+    [normalized],
+    11,
+    21,
+    [],
+    [1, 2, 3, 4, 5, 6]
+  );
+  const slot1500 = slotsWithCancelled.find((s) => s.time === '15:00');
+  assert.ok(slot1500);
+  assert.equal(slot1500.available, true, 'Cancelled appointment must free up its time slot');
+});
+
+test('Whitelabel Branding & Theme Palette: default monogram, palette presets, and CBU bank configuration', () => {
+  assert.equal(INITIAL_STUDIO_CONFIG.brandMonogram, 'RC');
+  assert.equal(INITIAL_STUDIO_CONFIG.themePalette, 'crimson');
+  assert.ok(INITIAL_STUDIO_CONFIG.transferCbu && INITIAL_STUDIO_CONFIG.transferCbu.length >= 10);
+  assert.equal(INITIAL_STUDIO_CONFIG.mercadoPagoEnabled, false);
+});
+
+test('buildAutomatedWhatsAppMessages includes direct self-service 1-click manage URL', async () => {
+  const { buildAutomatedWhatsAppMessages } = await import('../utils/bookingEngine');
+  const msgs = buildAutomatedWhatsAppMessages({
+    clientFirstName: 'Joaquín',
+    date: '2026-11-14',
+    time: '16:00',
+    endTime: '17:00',
+    serviceNames: ['Corte de Autor / Clásico'],
+    reviewShortlink: 'https://g.page/r/rodrigocutsss',
+    ticketId: 'RC-781920',
+  });
+
+  assert.ok(msgs.instantConfirmation.includes('Joaquín'));
+  assert.ok(msgs.instantConfirmation.includes('16:00 hs'));
+  assert.ok(msgs.instantConfirmation.includes('/#/turno/RC-781920'));
+});
+

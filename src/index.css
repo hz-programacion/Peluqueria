@@ -110,8 +110,29 @@
     radial-gradient(circle at 82% 85%, rgba(184, 145, 70, 0.055), transparent 55%);
 }
 
-[data-urban-theme="crimson"] {
+[data-urban-theme="crimson"],
+[data-atelier-theme="crimson"] {
   --river-red: #9E2A2B;
+  --river-crimson: #822021;
+  --river-gold: #B89146;
+}
+
+[data-atelier-theme="noir-gold"] {
+  --river-red: #D4AF37;
+  --river-crimson: #AA820A;
+  --river-gold: #E5C158;
+}
+
+[data-atelier-theme="botanic-copper"] {
+  --river-red: #2D5A3A;
+  --river-crimson: #1F4028;
+  --river-gold: #C67D5A;
+}
+
+[data-atelier-theme="navy-brass"] {
+  --river-red: #243B5C;
+  --river-crimson: #17273D;
+  --river-gold: #C5A059;
 }
 
 [data-urban-theme="amber"] {

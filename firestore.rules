@@ -78,7 +78,7 @@ service cloud.firestore {
         data.serviceNames is list && data.serviceNames.size() >= 1 && data.serviceNames.size() <= 6 &&
         data.serviceNames[0] is string && data.serviceNames[0].size() >= 2 && data.serviceNames[0].size() <= 120 &&
         data.paymentOption in ['deposit', 'full', 'studio', 'commitment'] &&
-        data.status in ['confirmed', 'completed'] &&
+        data.status in ['pending', 'confirmed', 'completed', 'cancelled'] &&
         (!('reviewLoopScheduledAt' in data) || (data.reviewLoopScheduledAt is string && data.reviewLoopScheduledAt.size() <= 32));
     }
 
@@ -187,7 +187,7 @@ service cloud.firestore {
       allow create: if isValidId(appointmentId) &&
         isValidAppointment(incoming()) &&
         incoming().id == appointmentId &&
-        incoming().status == 'confirmed';
+        incoming().status in ['pending', 'confirmed'];
       allow update: if isValidId(appointmentId) &&
         isValidAppointment(incoming()) &&
         incoming().id == existing().id &&

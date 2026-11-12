@@ -257,7 +257,9 @@ export async function syncAppointmentToFirestore(appointment: AppointmentRecord)
     paymentOption: ['deposit', 'full', 'studio', 'commitment'].includes(appointment.paymentOption)
       ? appointment.paymentOption
       : 'deposit',
-    status: appointment.status === 'completed' ? 'completed' : 'confirmed',
+    status: ['pending', 'confirmed', 'completed', 'cancelled'].includes(appointment.status)
+      ? appointment.status
+      : 'confirmed',
     ...(appointment.reviewLoopScheduledAt
       ? { reviewLoopScheduledAt: String(appointment.reviewLoopScheduledAt).slice(0, 32) }
       : {}),

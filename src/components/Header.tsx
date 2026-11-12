@@ -221,7 +221,11 @@ export const Header: React.FC = () => {
             title="Inicio · Rodrigo Cutsss"
             className="group inline-flex items-center gap-2 sm:gap-3 text-left min-w-0 cursor-pointer select-none"
           >
-            <RetroRiverCrestBadge size="sm" />
+            <RetroRiverCrestBadge
+              size="sm"
+              monogram={config.brandMonogram}
+              logoUrl={config.brandLogoUrl}
+            />
 
             <div className="flex flex-col min-w-0">
               <span className="font-display text-base sm:text-2xl font-bold tracking-tight text-[#181512] group-hover:text-[#9E2A2B] transition-colors leading-none truncate">

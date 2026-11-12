@@ -78,8 +78,8 @@ export interface AppointmentRecord {
   clientName: string;
   whatsapp: string;
   serviceNames: string[];
-  paymentOption: 'deposit' | 'commitment';
-  status: 'confirmed' | 'completed';
+  paymentOption: 'deposit' | 'full' | 'studio' | 'commitment';
+  status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
   reviewLoopScheduledAt: string;
 }
 

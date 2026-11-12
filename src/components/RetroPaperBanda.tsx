@@ -85,8 +85,10 @@ export const RetroPaperTextureOverlay: React.FC = () => {
  */
 export const RetroRiverCrestBadge: React.FC<{
   size?: 'sm' | 'md' | 'lg';
+  monogram?: string;
+  logoUrl?: string;
   className?: string;
-}> = ({ size = 'md', className = '' }) => {
+}> = ({ size = 'md', monogram = 'RC', logoUrl, className = '' }) => {
   const dimensions =
     size === 'sm'
       ? 'w-9 h-10'
@@ -138,7 +140,7 @@ export const RetroRiverCrestBadge: React.FC<{
           {/* The Iconic Diagonal Red Sash ("La Banda") from top-left to bottom-right */}
           <polygon
             points="-6,12 12,-6 70,52 52,70"
-            fill="#9E2A2B"
+            fill="var(--river-red, #9E2A2B)"
           />
 
           {/* Fine Sartorial Cream & Brass Edges along the Sash */}
@@ -165,18 +167,26 @@ export const RetroRiverCrestBadge: React.FC<{
         {/* Inner Antique Brass Shield Rim */}
         <path
           d="M8.5 8.5 H55.5 V35.5 C55.5 50.5 43.5 60.8 32 66.5 C20.5 60.8 8.5 50.5 8.5 35.5 Z"
-          stroke="#B89146"
+          stroke="var(--river-gold, #B89146)"
           strokeWidth="1.2"
           strokeOpacity="0.85"
         />
       </svg>
 
-      {/* Center Monogram Medallion */}
-      <span
-        className={`relative z-10 font-editorial italic font-bold tracking-tight text-[#181512] bg-[#FAF6EE] px-1 py-0.2 rounded-xs border border-[#181512]/80 shadow-[0_1px_2px_rgba(24,21,18,0.18)] leading-none ${fontSize}`}
-      >
-        RC
-      </span>
+      {/* Center Monogram Medallion or Custom Logo */}
+      {logoUrl ? (
+        <img
+          src={logoUrl}
+          alt={monogram}
+          className="relative z-10 w-5 h-5 rounded-full object-cover border border-[#181512]"
+        />
+      ) : (
+        <span
+          className={`relative z-10 font-editorial italic font-bold tracking-tight text-[#181512] bg-[#FAF6EE] px-1 py-0.2 rounded-xs border border-[#181512]/80 shadow-[0_1px_2px_rgba(24,21,18,0.18)] leading-none ${fontSize}`}
+        >
+          {monogram || 'RC'}
+        </span>
+      )}
     </span>
   );
 };

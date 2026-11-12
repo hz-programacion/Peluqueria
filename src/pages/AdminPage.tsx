@@ -34,6 +34,10 @@ import {
   Globe,
   SplitSquareVertical,
   HelpCircle,
+  Scissors,
+  Smartphone,
+  CreditCard,
+  ExternalLink,
 } from 'lucide-react';
 import {
   StudioService,
@@ -43,6 +47,7 @@ import {
 import {
   HomeSectionId,
   UrbanThemePreset,
+  AtelierThemePalette,
   DEFAULT_SECTION_ORDER,
 } from '../data/studioStore';
 import {
@@ -54,6 +59,8 @@ import {
   resolveWhatsAppInfo,
 } from '../utils/bookingEngine';
 import { buildViewSeoMetadata, SeoViewKey } from '../utils/seoEngine';
+import { downloadThermalTicketPNG } from '../utils/ticketExport';
+import type { AppointmentStatus } from '../types/appointment';
 import {
   RetroCornerBandaBookmark,
   RetroRiverCrestBadge,
@@ -151,6 +158,7 @@ const WEEKDAYS_LIST = [
 
 type AdminTabId =
   | 'sections_profile'
+  | 'whitelabel_brand'
   | 'appointments'
   | 'clients_crm'
   | 'finance_box'
@@ -194,6 +202,7 @@ export const AdminPage: React.FC = () => {
     firestoreConnected,
     firebaseUserEmail,
     signInWithGoogleAdmin,
+    signInWithEmailAdmin,
     signOutGoogleAdmin,
     syncAllToFirestoreCloud,
     navigateTo,
@@ -201,8 +210,15 @@ export const AdminPage: React.FC = () => {
 
   const [pinInput, setPinInput] = useState('');
   const [pinError, setPinError] = useState('');
+  const [loginMethod, setLoginMethod] = useState<'pin' | 'email'>('pin');
+  const [adminEmailInput, setAdminEmailInput] = useState('');
+  const [adminPasswordInput, setAdminPasswordInput] = useState('');
+  const [emailAuthMode, setEmailAuthMode] = useState<'signin' | 'register'>('signin');
+  const [isAuthenticatingEmail, setIsAuthenticatingEmail] = useState(false);
   const [activeTab, setActiveTab] = useState<AdminTabId>('sections_profile');
-  const [appointmentFilter, setAppointmentFilter] = useState<'all' | 'today'>('today');
+  const [appointmentFilter, setAppointmentFilter] = useState<
+    'today' | 'all' | 'pending' | 'confirmed' | 'completed' | 'cancelled'
+  >('today');
   const [appointmentSearch, setAppointmentSearch] = useState('');
   const [saveToast, setSaveToast] = useState('');
 
@@ -694,7 +710,7 @@ export const AdminPage: React.FC = () => {
   const waInfo = resolveWhatsAppInfo(config.phoneDisplay, config.whatsappRaw);
   const normalizedOrder = normalizeSectionOrder(config.sectionOrder);
 
-  // If not authenticated, render Aged-Paper & Retro Carmine PIN Gate
+  // If not authenticated, render Aged-Paper & Retro Carmine Executive Gate (PIN + Email/Password + Google Cloud)
   if (!isAdminAuthenticated) {
     return (
       <div className="py-14 md:py-24 px-4 flex items-center justify-center min-h-[75vh] bg-[#F3ECE0] text-[#181512]">
@@ -713,44 +729,167 @@ export const AdminPage: React.FC = () => {
             </div>
           </div>
 
-          <p className="text-xs sm:text-sm text-[#4F463B] leading-relaxed mb-6">
-            Sector reservado de {config.studioTitle}. Ingresá tu PIN para gestionar turnos en
-            tiempo real, fichas técnicas de clientes, caja diaria, precios y secciones.
+          <p className="text-xs sm:text-sm text-[#4F463B] leading-relaxed mb-5">
+            Sector ejecutivo de {config.studioTitle}. Ingresá con tu PIN rápido o con tu cuenta
+            administradora de Firebase Cloud (Email/Contraseña o Google) con sesión persistente.
           </p>
 
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <label
-                htmlFor="admin-pin"
-                className="block text-xs font-mono uppercase tracking-wider text-[#4F463B] mb-1.5 font-semibold"
-              >
-                PIN de Seguridad
-              </label>
-              <input
-                id="admin-pin"
-                type="password"
-                maxLength={8}
-                value={pinInput}
-                onChange={(e) => {
-                  setPinInput(e.target.value);
-                  setPinError('');
-                }}
-                placeholder="1234"
-                className="w-full h-12 px-4 rounded-lg text-center tracking-[0.4em] text-xl font-mono font-bold border border-[#C8BBA4] bg-[#F3ECE0] text-[#181512] focus:border-[#9E2A2B] focus:outline-none"
-                autoFocus
-              />
-              {pinError && (
-                <p className="text-xs text-[#9E2A2B] mt-2 font-mono font-bold">{pinError}</p>
-              )}
-            </div>
-
+          {/* Login Method Selector Tabs */}
+          <div className="grid grid-cols-2 gap-1.5 p-1 rounded-lg bg-[#EAE0CE] border border-[#C8BBA4] mb-5">
             <button
-              type="submit"
-              className="w-full h-12 rounded-lg uppercase font-mono font-semibold text-xs tracking-[0.16em] bg-[#9E2A2B] text-[#FAF6EE] hover:bg-[#822021] border border-[#781D1E] shadow-[0_3px_0_#5E1516] transition-all cursor-pointer"
+              type="button"
+              onClick={() => {
+                setLoginMethod('pin');
+                setPinError('');
+              }}
+              className={`py-2 rounded-md text-[11px] font-mono font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                loginMethod === 'pin'
+                  ? 'bg-[#9E2A2B] text-[#FAF6EE] shadow-2xs'
+                  : 'text-[#4F463B] hover:text-[#181512]'
+              }`}
             >
-              Ingresar al Panel de {config.studioTitle}
+              PIN Rápido
             </button>
+            <button
+              type="button"
+              onClick={() => {
+                setLoginMethod('email');
+                setPinError('');
+              }}
+              className={`py-2 rounded-md text-[11px] font-mono font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                loginMethod === 'email'
+                  ? 'bg-[#9E2A2B] text-[#FAF6EE] shadow-2xs'
+                  : 'text-[#4F463B] hover:text-[#181512]'
+              }`}
+            >
+              Email &amp; Cloud
+            </button>
+          </div>
 
+          {loginMethod === 'pin' ? (
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div>
+                <label
+                  htmlFor="admin-pin"
+                  className="block text-xs font-mono uppercase tracking-wider text-[#4F463B] mb-1.5 font-semibold"
+                >
+                  PIN de Seguridad
+                </label>
+                <input
+                  id="admin-pin"
+                  type="password"
+                  maxLength={8}
+                  value={pinInput}
+                  onChange={(e) => {
+                    setPinInput(e.target.value);
+                    setPinError('');
+                  }}
+                  placeholder="1234"
+                  className="w-full h-12 px-4 rounded-lg text-center tracking-[0.4em] text-xl font-mono font-bold border border-[#C8BBA4] bg-[#F3ECE0] text-[#181512] focus:border-[#9E2A2B] focus:outline-none"
+                  autoFocus
+                />
+                {pinError && (
+                  <p className="text-xs text-[#9E2A2B] mt-2 font-mono font-bold">{pinError}</p>
+                )}
+              </div>
+
+              <button
+                type="submit"
+                className="w-full h-12 rounded-lg uppercase font-mono font-semibold text-xs tracking-[0.16em] bg-[#9E2A2B] text-[#FAF6EE] hover:bg-[#822021] border border-[#781D1E] shadow-[0_3px_0_#5E1516] transition-all cursor-pointer"
+              >
+                Ingresar al Panel de {config.studioTitle}
+              </button>
+            </form>
+          ) : (
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                setPinError('');
+                setIsAuthenticatingEmail(true);
+                const res = await signInWithEmailAdmin(
+                  adminEmailInput,
+                  adminPasswordInput,
+                  emailAuthMode
+                );
+                setIsAuthenticatingEmail(false);
+                if (!res.ok) {
+                  setPinError(
+                    res.error || 'No se pudo iniciar sesión. Verificá tu correo y contraseña.'
+                  );
+                } else {
+                  triggerToast('Sesión iniciada con Firebase Auth persistente');
+                }
+              }}
+              className="space-y-3.5"
+            >
+              <div>
+                <label className="block text-[11px] font-mono uppercase tracking-wider text-[#4F463B] mb-1 font-semibold">
+                  Correo Electrónico Administrador
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={adminEmailInput}
+                  onChange={(e) => {
+                    setAdminEmailInput(e.target.value);
+                    setPinError('');
+                  }}
+                  placeholder="rodrigo@rodrigocutsss.com.ar"
+                  className="w-full h-11 px-3.5 rounded-lg text-xs font-mono border border-[#C8BBA4] bg-[#F3ECE0] text-[#181512] focus:border-[#9E2A2B] focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-mono uppercase tracking-wider text-[#4F463B] mb-1 font-semibold">
+                  Contraseña (mín. 6 caracteres)
+                </label>
+                <input
+                  type="password"
+                  required
+                  minLength={6}
+                  value={adminPasswordInput}
+                  onChange={(e) => {
+                    setAdminPasswordInput(e.target.value);
+                    setPinError('');
+                  }}
+                  placeholder="••••••••"
+                  className="w-full h-11 px-3.5 rounded-lg text-xs font-mono border border-[#C8BBA4] bg-[#F3ECE0] text-[#181512] focus:border-[#9E2A2B] focus:outline-none"
+                />
+              </div>
+
+              {pinError && (
+                <p className="text-xs text-[#9E2A2B] font-mono font-bold">{pinError}</p>
+              )}
+
+              <button
+                type="submit"
+                disabled={isAuthenticatingEmail}
+                className="w-full h-12 rounded-lg uppercase font-mono font-semibold text-xs tracking-[0.15em] bg-[#9E2A2B] text-[#FAF6EE] hover:bg-[#822021] border border-[#781D1E] shadow-[0_3px_0_#5E1516] transition-all cursor-pointer disabled:opacity-50"
+              >
+                {isAuthenticatingEmail
+                  ? 'Autenticando en Firebase...'
+                  : emailAuthMode === 'signin'
+                  ? 'Iniciar Sesión con Email'
+                  : 'Crear Cuenta Admin en Cloud'}
+              </button>
+
+              <div className="flex items-center justify-between text-[11px] font-mono pt-1">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setEmailAuthMode((m) => (m === 'signin' ? 'register' : 'signin'))
+                  }
+                  className="text-[#9E2A2B] hover:underline cursor-pointer font-semibold"
+                >
+                  {emailAuthMode === 'signin'
+                    ? '¿Primera vez? Registrar correo admin'
+                    : 'Ya tengo cuenta · Iniciar sesión'}
+                </button>
+              </div>
+            </form>
+          )}
+
+          <div className="mt-3.5">
             <button
               type="button"
               onClick={async () => {
@@ -766,7 +905,7 @@ export const AdminPage: React.FC = () => {
               <Globe className="w-3.5 h-3.5 text-[#9E2A2B]" />
               <span>Vincular Cuenta Google &amp; Firebase Cloud</span>
             </button>
-          </form>
+          </div>
 
           <div className="mt-6 pt-5 border-t border-dashed border-[#C8BBA4] text-center space-y-2">
             <p className="text-xs font-mono text-[#1F6E43] font-semibold">
@@ -797,13 +936,18 @@ export const AdminPage: React.FC = () => {
   }
 
   const displayedAppointments = appointments
-    .filter((a) => (appointmentFilter === 'today' ? a.date === todayStr : true))
+    .filter((a) => {
+      if (appointmentFilter === 'today') return a.date === todayStr;
+      if (appointmentFilter === 'all') return true;
+      return a.status === appointmentFilter;
+    })
     .filter((a) => {
       if (!appointmentSearch.trim()) return true;
       const q = appointmentSearch.toLowerCase();
       return (
         a.clientName.toLowerCase().includes(q) ||
         a.whatsapp.toLowerCase().includes(q) ||
+        a.id.toLowerCase().includes(q) ||
         a.serviceNames.join(' ').toLowerCase().includes(q)
       );
     });
@@ -825,6 +969,12 @@ export const AdminPage: React.FC = () => {
       shortLabel: 'Estructura & Textos',
       badge: `${visibleSectionsCount}/8`,
       icon: Sliders,
+    },
+    {
+      id: 'whitelabel_brand',
+      label: 'Marca Blanca, Logo & Paletas',
+      shortLabel: 'Marca Blanca',
+      icon: Palette,
     },
     {
       id: 'appointments',
@@ -906,7 +1056,7 @@ export const AdminPage: React.FC = () => {
               'linear-gradient(125deg, transparent 62%, #9E2A2B 62%, #9E2A2B 70%, transparent 70%)',
           }}
         />
-        <div className="max-w-7xl mx-auto px-4 sm:px-8 py-6 relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 py-6 relative z-10 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
           <div className="flex items-start sm:items-center gap-4">
             <RetroRiverCrestBadge size="md" />
             <div>
@@ -932,7 +1082,7 @@ export const AdminPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+          <div className="flex flex-wrap items-center gap-2">
             <div className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-[#1F6E43]/60 bg-[#1F6E43]/20 text-[11px] font-mono text-[#A7F3D0]">
               <span className="w-2 h-2 rounded-full bg-[#34D399]" />
               <span>
@@ -1002,6 +1152,16 @@ export const AdminPage: React.FC = () => {
             >
               <Download className="w-3.5 h-3.5 text-[#E06D6E]" />
               <span>Backup JSON</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => navigateTo('chair')}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-lg text-xs font-mono font-bold uppercase tracking-wider bg-[#D4AF37] hover:bg-[#B89146] text-[#181512] transition-colors cursor-pointer shadow-xs"
+              title="Abrir Modo Silla para el celular junto al sillón"
+            >
+              <Smartphone className="w-3.5 h-3.5 text-[#181512]" />
+              <span>Modo Silla</span>
             </button>
 
             <button
@@ -1803,11 +1963,11 @@ export const AdminPage: React.FC = () => {
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div>
                     <h2 className="font-display text-3xl font-bold text-[#181512]">
-                      Agenda de Turnos &amp; Mensajes Rápidos WhatsApp
+                      Libro de Turnos, Estados &amp; Boleto Digital
                     </h2>
                     <p className="text-xs font-mono text-[#4F463B]">
-                      Enviá recordatorios o confirmaciones en 1 clic. Si liberás un turno, el
-                      horario vuelve a estar disponible al instante.
+                      Sincronizado con Firebase Firestore (`src/services/db.ts`). Cambiá el estado,
+                      descargá el boleto PNG o enviá recordatorios por WhatsApp en 1 clic.
                     </p>
                   </div>
 
@@ -1818,33 +1978,46 @@ export const AdminPage: React.FC = () => {
                         type="text"
                         value={appointmentSearch}
                         onChange={(e) => setAppointmentSearch(e.target.value)}
-                        placeholder="Buscar cliente o WhatsApp..."
+                        placeholder="Buscar cliente, WA o código..."
                         className="h-9 pl-8 pr-3 rounded-lg border border-[#C8BBA4] bg-[#FAF6EE] text-xs font-mono text-[#181512] focus:border-[#9E2A2B] focus:outline-none"
                       />
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() => setAppointmentFilter('today')}
-                      className={`px-3.5 py-1.5 rounded-lg text-xs font-mono font-semibold border transition-colors cursor-pointer ${
-                        appointmentFilter === 'today'
-                          ? 'border-[#9E2A2B] bg-[#9E2A2B] text-[#FAF6EE]'
-                          : 'border-[#C8BBA4] bg-[#FAF6EE] text-[#4F463B]'
-                      }`}
-                    >
-                      Hoy {todayStr} ({todayAppointments.length})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setAppointmentFilter('all')}
-                      className={`px-3.5 py-1.5 rounded-lg text-xs font-mono font-semibold border transition-colors cursor-pointer ${
-                        appointmentFilter === 'all'
-                          ? 'border-[#9E2A2B] bg-[#9E2A2B] text-[#FAF6EE]'
-                          : 'border-[#C8BBA4] bg-[#FAF6EE] text-[#4F463B]'
-                      }`}
-                    >
-                      Todos ({appointments.length})
-                    </button>
+                    {(
+                      [
+                        { id: 'today', label: `Hoy (${todayAppointments.length})` },
+                        { id: 'all', label: `Todos (${appointments.length})` },
+                        {
+                          id: 'confirmed',
+                          label: `Confirmados (${appointments.filter((a) => a.status === 'confirmed').length})`,
+                        },
+                        {
+                          id: 'pending',
+                          label: `Pendientes (${appointments.filter((a) => a.status === 'pending').length})`,
+                        },
+                        {
+                          id: 'completed',
+                          label: `Completados (${appointments.filter((a) => a.status === 'completed').length})`,
+                        },
+                        {
+                          id: 'cancelled',
+                          label: `Cancelados (${appointments.filter((a) => a.status === 'cancelled').length})`,
+                        },
+                      ] as const
+                    ).map((f) => (
+                      <button
+                        key={f.id}
+                        type="button"
+                        onClick={() => setAppointmentFilter(f.id)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-mono font-semibold border transition-colors cursor-pointer ${
+                          appointmentFilter === f.id
+                            ? 'border-[#9E2A2B] bg-[#9E2A2B] text-[#FAF6EE]'
+                            : 'border-[#C8BBA4] bg-[#FAF6EE] text-[#4F463B] hover:border-[#9E2A2B]'
+                        }`}
+                      >
+                        {f.label}
+                      </button>
+                    ))}
                   </div>
                 </div>
 
@@ -1863,15 +2036,40 @@ export const AdminPage: React.FC = () => {
                       const startMin = timeToMinutes(app.startTime);
                       const endMin = startMin + app.serviceMinutes + app.bufferMinutes;
                       const isFinished = app.status === 'completed';
+                      const isCancelled = app.status === 'cancelled';
                       const cleanDigits = app.whatsapp.replace(/\D/g, '');
                       const firstName = app.clientName.split(' ')[0];
+
+                      const statusBadgeMeta: Record<
+                        AppointmentStatus,
+                        { label: string; classes: string }
+                      > = {
+                        pending: {
+                          label: 'PENDIENTE DE SEÑA',
+                          classes: 'bg-[#9A7B38]/15 text-[#7A5E24] border-[#9A7B38]/40',
+                        },
+                        confirmed: {
+                          label: 'CONFIRMADO',
+                          classes: 'bg-[#1F6E43]/15 text-[#1F6E43] border-[#1F6E43]/40',
+                        },
+                        completed: {
+                          label: 'COMPLETADO EN SILLÓN',
+                          classes: 'bg-[#181512] text-[#FAF6EE] border-[#181512]',
+                        },
+                        cancelled: {
+                          label: 'CANCELADO (HORARIO LIBRE)',
+                          classes: 'bg-[#9E2A2B]/15 text-[#9E2A2B] border-[#9E2A2B]/40',
+                        },
+                      };
+                      const currentBadge =
+                        statusBadgeMeta[app.status] || statusBadgeMeta.confirmed;
 
                       return (
                         <div
                           key={app.id}
                           className={`p-5 md:p-6 rounded-xl border transition-colors flex flex-col lg:flex-row lg:items-center justify-between gap-6 ${
-                            isFinished
-                              ? 'border-[#D5C9B4] bg-[#F3ECE0]/70 opacity-75'
+                            isFinished || isCancelled
+                              ? 'border-[#D5C9B4] bg-[#F3ECE0]/75 opacity-80'
                               : 'border-[#C8BBA4] bg-[#FAF6EE] shadow-2xs'
                           }`}
                         >
@@ -1883,10 +2081,13 @@ export const AdminPage: React.FC = () => {
                               <span className="font-bold text-[#181512] tabular-nums">
                                 {app.startTime} a {minutesToTime(endMin)} hs
                               </span>
-                              <span className="text-[#6E6355]">·</span>
-                              <span className="text-[#4F463B] tabular-nums">
-                                {app.serviceMinutes}m + {app.bufferMinutes}m pausa
+                              <span
+                                className={`px-2 py-0.5 rounded border text-[10px] font-bold uppercase tracking-wider ${currentBadge.classes}`}
+                              >
+                                {currentBadge.label}
                               </span>
+                              <span className="text-[#6E6355]">·</span>
+                              <span className="text-[#4F463B] tabular-nums">#{app.id}</span>
                               <span className="text-[#6E6355]">·</span>
                               <span
                                 className={
@@ -1916,15 +2117,62 @@ export const AdminPage: React.FC = () => {
                               </span>
                             </p>
 
-                            <div className="flex items-center gap-4 text-xs font-mono text-[#6E6355] pt-1">
+                            <div className="flex flex-wrap items-center gap-3 text-xs font-mono text-[#6E6355] pt-1">
                               <span>WhatsApp: {app.whatsapp}</span>
+                              <span>·</span>
+                              <div className="inline-flex items-center gap-1">
+                                <span>Estado:</span>
+                                <select
+                                  aria-label={`Estado del turno ${app.id}`}
+                                  value={app.status}
+                                  onChange={(e) => {
+                                    const nextStatus = e.target.value as AppointmentStatus;
+                                    updateAppointmentStatus(app.id, nextStatus);
+                                    triggerToast(
+                                      `Turno #${app.id} actualizado a ${nextStatus.toUpperCase()}`
+                                    );
+                                  }}
+                                  className="px-2 py-0.5 rounded border border-[#C8BBA4] bg-[#F3ECE0] text-[#181512] font-bold text-xs cursor-pointer"
+                                >
+                                  <option value="pending">Pendiente</option>
+                                  <option value="confirmed">Confirmado</option>
+                                  <option value="completed">Completado</option>
+                                  <option value="cancelled">Cancelado</option>
+                                </select>
+                              </div>
                             </div>
                           </div>
 
                           <div className="flex flex-wrap items-center gap-2 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                downloadThermalTicketPNG({
+                                  id: app.id,
+                                  clientName: app.clientName,
+                                  whatsapp: app.whatsapp,
+                                  date: app.date,
+                                  time: app.startTime,
+                                  services: app.serviceNames,
+                                  totalMinutes: app.serviceMinutes + app.bufferMinutes,
+                                  totalPrice: estimateAppPrice(app.serviceNames),
+                                  paymentOption: app.paymentOption,
+                                  studioTitle: config.studioTitle,
+                                  address: config.address,
+                                  neighborhood: config.neighborhood,
+                                  transferAlias: config.transferAlias,
+                                });
+                                triggerToast(`Boleto PNG #${app.id} descargado`);
+                              }}
+                              className="px-3 py-2 rounded-lg border border-[#C8BBA4] bg-[#F3ECE0] hover:border-[#9E2A2B] text-[#181512] text-xs font-mono font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <Download className="w-3.5 h-3.5 text-[#9E2A2B]" />
+                              <span>Boleto PNG</span>
+                            </button>
+
                             <a
                               href={`https://wa.me/${cleanDigits}?text=${encodeURIComponent(
-                                `Hola ${firstName}! Te escribimos de ${config.studioTitle} para recordarte tu turno del ${app.date} a las ${app.startTime} hs (${app.serviceNames.join(' + ')}) en ${config.address}. ¡Te esperamos!`
+                                `Hola ${firstName}! Te escribimos de ${config.studioTitle} para recordarte tu turno (#${app.id}) del ${app.date} a las ${app.startTime} hs (${app.serviceNames.join(' + ')}) en ${config.address}. ¡Te esperamos!`
                               )}`}
                               target="_blank"
                               rel="noopener noreferrer"
@@ -1955,7 +2203,7 @@ export const AdminPage: React.FC = () => {
                                 );
                                 triggerToast(
                                   isFinished
-                                    ? 'Turno marcado como pendiente'
+                                    ? 'Turno marcado como confirmado'
                                     : 'Turno marcado como completado'
                                 );
                               }}
@@ -1969,13 +2217,13 @@ export const AdminPage: React.FC = () => {
                               onClick={() => {
                                 cancelAppointment(app.id);
                                 triggerToast(
-                                  `Turno de ${app.clientName} (${app.startTime} hs) cancelado y horario liberado`
+                                  `Turno de ${app.clientName} (${app.startTime} hs) eliminado y horario liberado`
                                 );
                               }}
                               className="px-3.5 py-2 rounded-lg text-xs font-mono font-semibold text-[#9E2A2B] hover:text-[#FAF6EE] border border-[#9E2A2B]/40 hover:bg-[#9E2A2B] transition-colors flex items-center gap-1.5 cursor-pointer"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
-                              <span>Liberar</span>
+                              <span>Eliminar</span>
                             </button>
                           </div>
                         </div>
@@ -3381,6 +3629,421 @@ export const AdminPage: React.FC = () => {
                 </div>
               </div>
             )}
+            {/* =========================================================================== */}
+            {/* TAB: MARCA BLANCA, LOGO, PALETAS Y MERCADO PAGO                             */}
+            {/* =========================================================================== */}
+            {activeTab === 'whitelabel_brand' && (
+              <div className="space-y-8">
+                <div>
+                  <h2 className="font-display text-3xl font-bold text-[#181512] mb-1">
+                    Personalización de Marca Blanca &amp; Identidad Visual
+                  </h2>
+                  <p className="text-xs font-mono text-[#5C5346]">
+                    Adaptá el salón en 1 clic: cambiá la paleta de colores, el monograma, el logo,
+                    las cuentas bancarias y configurá el cobro de seña opcional con Mercado Pago.
+                  </p>
+                </div>
+
+                {/* Theme Palette Switcher */}
+                <div className="p-6 sm:p-7 rounded-xl border border-[#C8BBA4] bg-[#FAF6EE] shadow-xs space-y-6">
+                  <div className="border-b border-[#D5C9B4] pb-3">
+                    <span className="text-[11px] font-mono uppercase tracking-widest text-[#9E2A2B] font-bold block mb-1">
+                      1. PALETA DE COLORES EN 1 CLIC
+                    </span>
+                    <h3 className="font-editorial text-xl font-bold text-[#181512]">
+                      Elegí la atmósfera y el estilo cromático del salón
+                    </h3>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Carmín Monumental */}
+                    <div
+                      onClick={() => {
+                        updateConfig({ themePalette: 'crimson', urbanTheme: 'crimson' });
+                        triggerToast('Paleta cambiada a: Carmín Monumental (River Plate)');
+                      }}
+                      className={`p-5 rounded-xl border-2 transition-all cursor-pointer relative ${
+                        (config.themePalette || 'crimson') === 'crimson'
+                          ? 'border-[#9E2A2B] bg-[#FAF6EE] shadow-md ring-2 ring-[#9E2A2B]/20'
+                          : 'border-[#C8BBA4] bg-[#F5EFE4] hover:border-[#9E2A2B]'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <span className="w-5 h-5 rounded-full bg-[#9E2A2B] border border-[#181512] shadow-xs" />
+                          <span className="w-5 h-5 rounded-full bg-[#FAF6EE] border border-[#C8BBA4] shadow-xs" />
+                          <span className="w-5 h-5 rounded-full bg-[#B89146] border border-[#181512] shadow-xs" />
+                        </div>
+                        {(config.themePalette || 'crimson') === 'crimson' && (
+                          <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase bg-[#9E2A2B] text-[#FAF6EE]">
+                            Activo
+                          </span>
+                        )}
+                      </div>
+                      <h4 className="font-display font-bold text-base text-[#181512]">
+                        Carmín Monumental (River Plate)
+                      </h4>
+                      <p className="text-xs text-[#5C5346] mt-1 leading-relaxed">
+                        Sastrería capilar con banda diagonal carmín, latón vintage y papel envejecido
+                        artesanal.
+                      </p>
+                    </div>
+
+                    {/* Noir & Gold Vintage */}
+                    <div
+                      onClick={() => {
+                        updateConfig({ themePalette: 'noir-gold' });
+                        triggerToast('Paleta cambiada a: Noir & Gold Vintage');
+                      }}
+                      className={`p-5 rounded-xl border-2 transition-all cursor-pointer relative ${
+                        config.themePalette === 'noir-gold'
+                          ? 'border-[#D4AF37] bg-[#FAF6EE] shadow-md ring-2 ring-[#D4AF37]/20'
+                          : 'border-[#C8BBA4] bg-[#F5EFE4] hover:border-[#D4AF37]'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <span className="w-5 h-5 rounded-full bg-[#141416] border border-[#FAF6EE] shadow-xs" />
+                          <span className="w-5 h-5 rounded-full bg-[#D4AF37] border border-[#141416] shadow-xs" />
+                          <span className="w-5 h-5 rounded-full bg-[#F7F5F0] border border-[#C8BBA4] shadow-xs" />
+                        </div>
+                        {config.themePalette === 'noir-gold' && (
+                          <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase bg-[#D4AF37] text-[#141416]">
+                            Activo
+                          </span>
+                        )}
+                      </div>
+                      <h4 className="font-display font-bold text-base text-[#181512]">
+                        Noir &amp; Gold Vintage
+                      </h4>
+                      <p className="text-xs text-[#5C5346] mt-1 leading-relaxed">
+                        Atmósfera nocturna de élite con detalles dorados, metales envejecidos y fondo
+                        carbón.
+                      </p>
+                    </div>
+
+                    {/* Verde Botánico & Cobre */}
+                    <div
+                      onClick={() => {
+                        updateConfig({ themePalette: 'botanic-copper' });
+                        triggerToast('Paleta cambiada a: Verde Botánico & Cobre');
+                      }}
+                      className={`p-5 rounded-xl border-2 transition-all cursor-pointer relative ${
+                        config.themePalette === 'botanic-copper'
+                          ? 'border-[#2D5A3A] bg-[#FAF6EE] shadow-md ring-2 ring-[#2D5A3A]/20'
+                          : 'border-[#C8BBA4] bg-[#F5EFE4] hover:border-[#2D5A3A]'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <span className="w-5 h-5 rounded-full bg-[#2D5A3A] border border-[#181512] shadow-xs" />
+                          <span className="w-5 h-5 rounded-full bg-[#C67D5A] border border-[#181512] shadow-xs" />
+                          <span className="w-5 h-5 rounded-full bg-[#FAF7F0] border border-[#C8BBA4] shadow-xs" />
+                        </div>
+                        {config.themePalette === 'botanic-copper' && (
+                          <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase bg-[#2D5A3A] text-[#FAF6EE]">
+                            Activo
+                          </span>
+                        )}
+                      </div>
+                      <h4 className="font-display font-bold text-base text-[#181512]">
+                        Verde Botánico &amp; Cobre
+                      </h4>
+                      <p className="text-xs text-[#5C5346] mt-1 leading-relaxed">
+                        Barbería clásica orgánica con tonos bosque, remaches cobrizos y pergamino
+                        natural.
+                      </p>
+                    </div>
+
+                    {/* Azul Marino Clásico & Latón */}
+                    <div
+                      onClick={() => {
+                        updateConfig({ themePalette: 'navy-brass' });
+                        triggerToast('Paleta cambiada a: Azul Marino Clásico & Latón');
+                      }}
+                      className={`p-5 rounded-xl border-2 transition-all cursor-pointer relative ${
+                        config.themePalette === 'navy-brass'
+                          ? 'border-[#243B5C] bg-[#FAF6EE] shadow-md ring-2 ring-[#243B5C]/20'
+                          : 'border-[#C8BBA4] bg-[#F5EFE4] hover:border-[#243B5C]'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <span className="w-5 h-5 rounded-full bg-[#243B5C] border border-[#181512] shadow-xs" />
+                          <span className="w-5 h-5 rounded-full bg-[#C5A059] border border-[#181512] shadow-xs" />
+                          <span className="w-5 h-5 rounded-full bg-[#F2EFE9] border border-[#C8BBA4] shadow-xs" />
+                        </div>
+                        {config.themePalette === 'navy-brass' && (
+                          <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase bg-[#243B5C] text-[#FAF6EE]">
+                            Activo
+                          </span>
+                        )}
+                      </div>
+                      <h4 className="font-display font-bold text-base text-[#181512]">
+                        Azul Marino Clásico &amp; Latón
+                      </h4>
+                      <p className="text-xs text-[#5C5346] mt-1 leading-relaxed">
+                        Herencia barbershop británica, pulcritud náutica, latón lustrado y tipografía
+                        editorial.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Identity, Monogram & Logo Form */}
+                <div className="p-6 sm:p-7 rounded-xl border border-[#C8BBA4] bg-[#FAF6EE] shadow-xs space-y-6">
+                  <div className="border-b border-[#D5C9B4] pb-3 flex items-center justify-between">
+                    <div>
+                      <span className="text-[11px] font-mono uppercase tracking-widest text-[#9E2A2B] font-bold block mb-1">
+                        2. IDENTIDAD DE MARCA &amp; LOGO
+                      </span>
+                      <h3 className="font-editorial text-xl font-bold text-[#181512]">
+                        Nombre del Salón, Barbero y Monograma
+                      </h3>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <span className="text-[10px] font-mono uppercase text-[#786D5E]">
+                        Vista Previa:
+                      </span>
+                      <RetroRiverCrestBadge
+                        size="md"
+                        monogram={config.brandMonogram}
+                        logoUrl={config.brandLogoUrl}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-mono">
+                    <div>
+                      <label className="block text-[#4F463B] font-bold uppercase mb-1">
+                        Nombre del Salón / Estudio
+                      </label>
+                      <input
+                        type="text"
+                        value={config.studioTitle || ''}
+                        onChange={(e) => updateConfig({ studioTitle: e.target.value })}
+                        placeholder="Ej.: Rodrigo Cutsss"
+                        className="w-full h-10 px-3 rounded-lg border border-[#C8BBA4] bg-[#F3ECE0] text-[#181512] font-semibold"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[#4F463B] font-bold uppercase mb-1">
+                        Nombre del Barbero Titular
+                      </label>
+                      <input
+                        type="text"
+                        value={config.authorName || ''}
+                        onChange={(e) => updateConfig({ authorName: e.target.value })}
+                        placeholder="Ej.: Rodrigo"
+                        className="w-full h-10 px-3 rounded-lg border border-[#C8BBA4] bg-[#F3ECE0] text-[#181512] font-semibold"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[#4F463B] font-bold uppercase mb-1">
+                        Monograma en el Escudo (1 o 2 letras)
+                      </label>
+                      <input
+                        type="text"
+                        maxLength={3}
+                        value={config.brandMonogram || ''}
+                        onChange={(e) =>
+                          updateConfig({ brandMonogram: e.target.value.toUpperCase() })
+                        }
+                        placeholder="RC"
+                        className="w-full h-10 px-3 rounded-lg border border-[#C8BBA4] bg-[#F3ECE0] text-[#181512] font-bold uppercase"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[#4F463B] font-bold uppercase mb-1">
+                        URL de Logo Personalizado (Opcional)
+                      </label>
+                      <input
+                        type="url"
+                        value={config.brandLogoUrl || ''}
+                        onChange={(e) => updateConfig({ brandLogoUrl: e.target.value })}
+                        placeholder="https://.../logo.png"
+                        className="w-full h-10 px-3 rounded-lg border border-[#C8BBA4] bg-[#F3ECE0] text-[#181512]"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bank Accounts & Alias (0% Commission) */}
+                <div className="p-6 sm:p-7 rounded-xl border border-[#C8BBA4] bg-[#FAF6EE] shadow-xs space-y-6">
+                  <div className="border-b border-[#D5C9B4] pb-3">
+                    <span className="text-[11px] font-mono uppercase tracking-widest text-[#1F6E43] font-bold block mb-1">
+                      3. TRANSFERENCIA BANCARIA (0% COMISIÓN)
+                    </span>
+                    <h3 className="font-editorial text-xl font-bold text-[#181512]">
+                      Datos Bancarios para cobro de señas y servicios
+                    </h3>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-mono">
+                    <div>
+                      <label className="block text-[#4F463B] font-bold uppercase mb-1">
+                        Alias Bancario
+                      </label>
+                      <input
+                        type="text"
+                        value={config.transferAlias || ''}
+                        onChange={(e) => updateConfig({ transferAlias: e.target.value })}
+                        placeholder="RODRIGO.CUTSSS"
+                        className="w-full h-10 px-3 rounded-lg border border-[#C8BBA4] bg-[#F3ECE0] text-[#181512] font-bold"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[#4F463B] font-bold uppercase mb-1">
+                        CBU / CVU Bancario
+                      </label>
+                      <input
+                        type="text"
+                        value={config.transferCbu || ''}
+                        onChange={(e) => updateConfig({ transferCbu: e.target.value })}
+                        placeholder="0000003100014022904812"
+                        className="w-full h-10 px-3 rounded-lg border border-[#C8BBA4] bg-[#F3ECE0] text-[#181512] font-semibold"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[#4F463B] font-bold uppercase mb-1">
+                        Titular de la Cuenta
+                      </label>
+                      <input
+                        type="text"
+                        value={config.transferHolder || ''}
+                        onChange={(e) => updateConfig({ transferHolder: e.target.value })}
+                        placeholder="Rodrigo Cutsss"
+                        className="w-full h-10 px-3 rounded-lg border border-[#C8BBA4] bg-[#F3ECE0] text-[#181512]"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[#4F463B] font-bold uppercase mb-1">
+                        Banco o Billetera
+                      </label>
+                      <input
+                        type="text"
+                        value={config.transferBank || ''}
+                        onChange={(e) => updateConfig({ transferBank: e.target.value })}
+                        placeholder="Banco Santander / Mercado Pago"
+                        className="w-full h-10 px-3 rounded-lg border border-[#C8BBA4] bg-[#F3ECE0] text-[#181512]"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Mercado Pago Optional Integration */}
+                <div className="p-6 sm:p-7 rounded-xl border border-[#009EE3]/40 bg-[#FAF6EE] shadow-xs space-y-6">
+                  <div className="border-b border-[#D5C9B4] pb-3 flex items-start justify-between gap-4">
+                    <div>
+                      <span className="text-[11px] font-mono uppercase tracking-widest text-[#0081BA] font-bold block mb-1">
+                        4. INTEGRACIÓN OPCIONAL CON MERCADO PAGO
+                      </span>
+                      <h3 className="font-editorial text-xl font-bold text-[#181512]">
+                        Cobro de señas con Tarjetas de Débito y Crédito
+                      </h3>
+                    </div>
+
+                    <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                      <input
+                        type="checkbox"
+                        checked={!!config.mercadoPagoEnabled}
+                        onChange={(e) =>
+                          updateConfig({ mercadoPagoEnabled: e.target.checked })
+                        }
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-[#C8BBA4] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#009EE3]" />
+                      <span className="ml-2 text-xs font-mono font-bold text-[#181512]">
+                        {config.mercadoPagoEnabled ? 'Habilitado' : 'Deshabilitado'}
+                      </span>
+                    </label>
+                  </div>
+
+                  {/* Informative explanation of fees */}
+                  <div className="p-4 rounded-xl bg-[#009EE3]/10 border border-[#009EE3]/25 text-xs text-[#181512] leading-relaxed space-y-2">
+                    <p className="font-bold text-[#0081BA]">
+                      ¿Cómo funciona y qué costo tiene Mercado Pago?
+                    </p>
+                    <p>
+                      <strong>Cero costo de mantenimiento mensual:</strong> No tenés que pagar ningún abono fijo.
+                      Mercado Pago solo cobra una comisión porcentual cuando un cliente efectivamente
+                      paga la seña con tarjeta de débito (~3.15% + IVA) o crédito (~6.29% + IVA con
+                      acreditación inmediata).
+                    </p>
+                    <p className="text-[#5C5346]">
+                      Por eso, la opción de <strong>Transferencia Bancaria (Alias / CBU)</strong> sigue
+                      estando siempre disponible con <strong>0% de comisión bancaria</strong> para que el
+                      100% de la seña vaya directo a tu bolsillo.
+                    </p>
+                  </div>
+
+                  {config.mercadoPagoEnabled && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-mono">
+                      <div>
+                        <label className="block text-[#4F463B] font-bold uppercase mb-1">
+                          Link de Pago de Mercado Pago (URL)
+                        </label>
+                        <input
+                          type="url"
+                          value={config.mercadoPagoLink || ''}
+                          onChange={(e) => updateConfig({ mercadoPagoLink: e.target.value })}
+                          placeholder="https://mpago.la/..."
+                          className="w-full h-10 px-3 rounded-lg border border-[#C8BBA4] bg-[#F3ECE0] text-[#181512]"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[#4F463B] font-bold uppercase mb-1">
+                          Alias de Mercado Pago
+                        </label>
+                        <input
+                          type="text"
+                          value={config.mercadoPagoAlias || ''}
+                          onChange={(e) => updateConfig({ mercadoPagoAlias: e.target.value })}
+                          placeholder="RODRIGO.CUTSSS.MP"
+                          className="w-full h-10 px-3 rounded-lg border border-[#C8BBA4] bg-[#F3ECE0] text-[#181512]"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Chair Mode Shortcut Card */}
+                <div className="p-6 rounded-xl border border-[#D4AF37]/50 bg-[#1C1C20] text-[#FAF6EE] shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div>
+                    <span className="text-[10px] font-mono uppercase tracking-widest text-[#D4AF37] font-bold block mb-1">
+                      DISPOSITIVO DE ATENCIÓN EN EL SALÓN
+                    </span>
+                    <h3 className="font-editorial text-2xl font-bold text-[#FAF6EE]">
+                      Modo Silla para el Celular de Rodrigo
+                    </h3>
+                    <p className="text-xs text-[#C5BBAA] mt-1 max-w-lg">
+                      Poné tu celular en el soporte del sillón para ver el cronómetro de la sesión en
+                      curso, consultar la fórmula técnica del corte y avisar al próximo cliente con 1
+                      toque.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => navigateTo('chair')}
+                    className="px-6 py-3 rounded-xl bg-[#D4AF37] hover:bg-[#B89146] text-[#141416] text-xs font-mono font-bold uppercase tracking-wider transition-colors whitespace-nowrap cursor-pointer shadow-lg"
+                  >
+                    📱 Abrir Modo Silla (/#/silla) →
+                  </button>
+                </div>
+              </div>
+            )}
+            {/* =========================================================================== */}
+            {/* END TAB WHITELABEL                                                          */}
+            {/* =========================================================================== */}
           </motion.div>
         </AnimatePresence>
 

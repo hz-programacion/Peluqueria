@@ -1045,109 +1045,7 @@ export const HomePage: React.FC = () => {
         </section>
       )}
 
-      {/* INTERACTIVE VIEW NAVIGATION BAR (Allows switching between Continuous Scroll & App Curtain Tabs) */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-8 pt-2 pb-4 relative z-20">
-        <div className="p-3 sm:p-4 rounded-xl bg-[#FAF6EE] border border-[#C8BBA4] shadow-[0_8px_24px_rgba(24,21,18,0.05)] flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-          <div
-            role="tablist"
-            aria-label="Secciones del estudio"
-            className="flex flex-wrap items-center gap-1.5"
-          >
-            {enabledSections.map((secId, idx) => {
-              const isSelected =
-                config.layoutMode === 'tabs'
-                  ? activeTabSection === secId
-                  : false;
-              const anchorMap: Record<HomeSectionId, string> = {
-                booking: 'turnero',
-                services: 'servicios',
-                beforeAfter: 'transformaciones',
-                gallery: 'obras',
-                reviews: 'opiniones',
-                barber: 'estudio',
-                location: 'ubicacion',
-              };
-              return (
-                <button
-                  key={secId}
-                  type="button"
-                  role="tab"
-                  aria-selected={isSelected}
-                  onClick={() => {
-                    const label = SECTION_TAB_LABELS[secId];
-                    triggerCurtainTransition(
-                      label,
-                      `${config.studioTitle} · ${config.address}`
-                    );
-                    setActiveTabSection(secId);
-                    setActiveSeoSection(anchorMap[secId]);
-                    if (config.layoutMode !== 'tabs') {
-                      setTimeout(() => {
-                        const el = document.getElementById(anchorMap[secId]);
-                        if (el) {
-                          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        }
-                      }, 110);
-                    }
-                  }}
-                  className={`relative px-3.5 py-2 rounded-lg text-[11px] font-mono font-semibold uppercase tracking-[0.12em] border transition-all cursor-pointer whitespace-nowrap shrink-0 ${
-                    isSelected
-                      ? 'bg-[#9E2A2B] text-[#FAF6EE] border-[#9E2A2B] shadow-xs'
-                      : 'bg-[#F3ECE0] text-[#4F463B] border-[#C8BBA4] hover:border-[#9E2A2B] hover:text-[#181512]'
-                  }`}
-                >
-                  <span className="opacity-65 mr-1">0{idx + 1}.</span>
-                  <span>{SECTION_TAB_LABELS[secId]}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Quick View Mode Toggle: Scroll Continuo vs. Modo App por Vistas */}
-          <div className="flex items-center gap-1.5 self-start lg:self-auto shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-[#D5C9B4] w-full lg:w-auto justify-end">
-            <span className="text-[10px] font-mono uppercase tracking-wider text-[#6E6355] mr-1">
-              Navegación:
-            </span>
-            <button
-              type="button"
-              onClick={() => {
-                triggerCurtainTransition(
-                  'Flujo Continuo Editorial',
-                  `${config.studioTitle} · Vista Completa`
-                );
-                updateConfig({ layoutMode: 'landing' });
-              }}
-              className={`px-3 py-1.5 rounded text-[11px] font-mono font-semibold uppercase tracking-wider border transition-colors cursor-pointer whitespace-nowrap ${
-                (config.layoutMode || 'landing') === 'landing'
-                  ? 'bg-[#181512] text-[#FAF6EE] border-[#181512]'
-                  : 'bg-[#F3ECE0] text-[#4F463B] border-[#C8BBA4] hover:text-[#181512]'
-              }`}
-            >
-              Continua
-            </button>
-            <button
-              type="button"
-              data-testid="toggle-app-tabs-mode"
-              onClick={() => {
-                triggerCurtainTransition(
-                  SECTION_TAB_LABELS[activeTabSection],
-                  `${config.studioTitle} · Modo App por Vistas`
-                );
-                updateConfig({ layoutMode: 'tabs' });
-              }}
-              className={`px-3 py-1.5 rounded text-[11px] font-mono font-semibold uppercase tracking-wider border transition-colors cursor-pointer whitespace-nowrap ${
-                config.layoutMode === 'tabs'
-                  ? 'bg-[#9E2A2B] text-[#FAF6EE] border-[#9E2A2B]'
-                  : 'bg-[#F3ECE0] text-[#4F463B] border-[#C8BBA4] hover:text-[#181512]'
-              }`}
-            >
-              Por Vistas (Telón)
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* LAYOUT MODE SWITCH: LANDING SCROLL VS ANIMATED CURTAIN TABS */}
+      {/* MAIN SECTIONS FLOW */}
       {config.layoutMode === 'tabs' ? (
         <div className="max-w-7xl mx-auto px-4 sm:px-8 pb-16">
           <motion.div
@@ -1162,7 +1060,6 @@ export const HomePage: React.FC = () => {
       ) : (
         <>{enabledSections.map((secId) => renderSectionById(secId))}</>
       )}
-
     </div>
   );
 };

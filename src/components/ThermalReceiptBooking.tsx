@@ -677,114 +677,171 @@ export const ThermalReceiptBooking: React.FC = () => {
               )}
             </motion.div>
           ) : confirmedTicket ? (
-            /* CONFIRMED BOOKING VOUCHER VIEW */
+            /* BESPOKE PERFORATED BOLETO OFICIAL DE SASTRERÍA CAPILAR */
             <motion.div
               key="confirmed-voucher"
-              initial={{ opacity: 0, scale: 0.98, y: 10 }}
+              initial={{ opacity: 0, scale: 0.98, y: 12 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.28 }}
-              className="relative max-w-2xl mx-auto bg-[#EAE0CE] border-2 border-[#9E2A2B]/60 rounded-2xl p-8 sm:p-10 space-y-6 shadow-2xl overflow-hidden"
+              transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+              className="relative max-w-2xl mx-auto bg-[#FAF6EE] border-2 border-[#9E2A2B] rounded-2xl p-6 sm:p-10 space-y-6 shadow-[0_24px_60px_rgba(24,21,18,0.16)] overflow-hidden"
             >
+              {/* Subtle Diagonal River Plate Heritage Sash */}
+              <div
+                aria-hidden="true"
+                className="absolute top-0 right-0 w-36 h-36 pointer-events-none overflow-hidden"
+              >
+                <div className="w-52 h-4 bg-[#9E2A2B] rotate-45 translate-x-6 translate-y-4 shadow-xs" />
+                <div className="w-52 h-1.5 bg-[#B89146] rotate-45 translate-x-6 translate-y-6 opacity-80" />
+              </div>
+
+              {/* Left & Right Ticket Perforation Cutouts */}
+              <div
+                aria-hidden="true"
+                className="hidden sm:block absolute -left-4 top-[58%] w-8 h-8 rounded-full bg-[#EFE7D6] border-r-2 border-[#9E2A2B]"
+              />
+              <div
+                aria-hidden="true"
+                className="hidden sm:block absolute -right-4 top-[58%] w-8 h-8 rounded-full bg-[#EFE7D6] border-l-2 border-[#9E2A2B]"
+              />
+
+              {/* Official Wax/Ink Stamp Emblem */}
               <motion.div
-                initial={{ opacity: 0, scale: 1.5, rotate: -22 }}
-                animate={{ opacity: 1, scale: 1, rotate: -10 }}
+                initial={{ opacity: 0, scale: 1.4, rotate: -18 }}
+                animate={{ opacity: 1, scale: 1, rotate: -8 }}
                 transition={{
                   type: 'spring',
                   stiffness: 200,
                   damping: 16,
-                  delay: 0.15,
+                  delay: 0.12,
                 }}
                 aria-hidden="true"
-                className="hidden sm:flex absolute top-6 right-6 w-24 h-24 rounded-full border-2 border-[#9E2A2B] text-[#9E2A2B] flex-col items-center justify-center text-center p-2 pointer-events-none select-none bg-[#FAF6EE]/90"
+                className="hidden sm:flex absolute top-7 right-7 w-24 h-24 rounded-full border-2 border-[#9E2A2B] text-[#9E2A2B] flex-col items-center justify-center text-center p-2 pointer-events-none select-none bg-[#FAF6EE]/95 shadow-sm"
               >
-                <span className="text-[8px] font-mono uppercase tracking-widest leading-tight">
+                <span className="text-[8px] font-mono uppercase tracking-widest leading-tight font-bold">
                   Rodrigo Cutsss
                 </span>
                 <span className="font-display font-black uppercase text-xs text-[#181512] my-0.5">
                   Confirmado
                 </span>
                 <span className="text-[7px] font-mono uppercase tracking-wider text-[#5C5346]">
-                  Venado Tuerto
+                  1 a 1 · Venado Tuerto
                 </span>
               </motion.div>
 
-              <div className="text-center space-y-2 pb-6 border-b border-[#D5C9B4]">
-                <div className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-[#10B981] font-bold">
-                  <CheckCircle2 className="w-4 h-4" />
-                  <span>Turno Confirmado · {config.studioTitle}</span>
+              {/* Ticket Header */}
+              <div className="text-center space-y-2.5 pb-6 border-b border-[#C8BBA4] sm:px-20">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#1F6E43]/12 border border-[#1F6E43]/35 text-[11px] font-mono uppercase tracking-widest text-[#1F6E43] font-bold">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>Boleto Oficial Confirmado · Atención 1 a 1</span>
                 </div>
-                <h3 className="font-display text-3xl sm:text-4xl font-black uppercase text-[#181512]">
-                  Te esperamos, {confirmedTicket.clientName}
+                <h3 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-[#181512] leading-tight">
+                  Te esperamos,{' '}
+                  <span className="font-editorial italic font-normal text-[#9E2A2B]">
+                    {confirmedTicket.clientName}
+                  </span>
                 </h3>
-                <p className="text-xs text-[#5C5346] font-mono">
-                  {confirmedTicket.address} · {confirmedTicket.neighborhood} · Ticket #
-                  {confirmedTicket.id}
-                </p>
+                <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-[#4F463B] font-mono">
+                  <span className="px-2.5 py-0.5 rounded bg-[#EAE0CE] border border-[#C8BBA4] font-bold text-[#181512]">
+                    COMPROBANTE #{confirmedTicket.id}
+                  </span>
+                  <span>·</span>
+                  <span>
+                    {confirmedTicket.address}, {confirmedTicket.neighborhood}
+                  </span>
+                </div>
               </div>
 
-              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm py-2 border-b border-[#D5C9B4] pb-6">
+              {/* Highlighted Date & Time Banner */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 sm:p-5 rounded-xl bg-[#F3ECE0] border border-[#C8BBA4]">
                 <div>
-                  <dt className="text-xs text-[#5C5346] uppercase tracking-wider font-mono">
-                    Fecha y Hora
-                  </dt>
-                  <dd className="font-mono font-bold text-base text-[#181512] mt-0.5 tabular-nums">
-                    {confirmedTicket.date} · {confirmedTicket.time} hs
-                  </dd>
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-[#6E6355] font-bold block">
+                    Fecha Reservada
+                  </span>
+                  <span className="font-mono font-bold text-xl text-[#181512] mt-0.5 block tabular-nums">
+                    {confirmedTicket.date}
+                  </span>
                 </div>
-                <div>
-                  <dt className="text-xs text-[#5C5346] uppercase tracking-wider font-mono">
-                    Duración Estimada
-                  </dt>
-                  <dd className="font-mono font-bold text-base text-[#181512] mt-0.5 tabular-nums">
-                    {confirmedTicket.totalMinutes} minutos
-                  </dd>
+                <div className="sm:text-right">
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-[#6E6355] font-bold block">
+                    Horario Exclusivo
+                  </span>
+                  <span className="font-mono font-black text-2xl text-[#9E2A2B] mt-0.5 block tabular-nums">
+                    {confirmedTicket.time} hs
+                  </span>
                 </div>
-                <div className="sm:col-span-2">
-                  <dt className="text-xs text-[#5C5346] uppercase tracking-wider font-mono">
-                    Servicios Seleccionados
+              </div>
+
+              {/* Ticket Body Ledger */}
+              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm py-1">
+                <div className="sm:col-span-2 p-4 rounded-xl bg-[#EAE0CE]/60 border border-[#D5C9B4]">
+                  <dt className="text-[11px] text-[#5C5346] uppercase tracking-wider font-mono font-bold">
+                    Servicios Seleccionados ({confirmedTicket.totalMinutes} min dedicados)
                   </dt>
-                  <dd className="font-bold text-[#181512] mt-0.5">
+                  <dd className="font-display font-bold text-lg text-[#181512] mt-1">
                     {confirmedTicket.services.join(' + ')}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-[#5C5346] uppercase tracking-wider font-mono">
-                    Modalidad
+                  <dt className="text-[11px] text-[#5C5346] uppercase tracking-wider font-mono font-bold">
+                    Modalidad de Reserva
                   </dt>
-                  <dd className="text-[#181512] font-semibold mt-0.5">
+                  <dd className="text-[#181512] font-semibold mt-1 text-xs font-mono">
                     {confirmedTicket.paymentOption === 'deposit'
-                      ? `Seña 30% (Alias: ${confirmedTicket.transferAlias})`
+                      ? `Seña ${config.depositPercentage}% (Alias: ${confirmedTicket.transferAlias})`
                       : 'Abono en el estudio al finalizar'}
                   </dd>
                 </div>
-                <div>
-                  <dt className="text-xs text-[#5C5346] uppercase tracking-wider font-mono">
-                    Valor Total
+                <div className="sm:text-right">
+                  <dt className="text-[11px] text-[#5C5346] uppercase tracking-wider font-mono font-bold">
+                    Valor Total Estimado
                   </dt>
-                  <dd className="font-mono font-bold text-lg text-[#9E2A2B] mt-0.5 tabular-nums">
-                    {formatPriceARS(confirmedTicket.totalPrice || summary.totalPrice)}
+                  <dd className="font-mono font-black text-2xl text-[#9E2A2B] mt-0.5 tabular-nums">
+                    {formatPriceARS(confirmedTicket.totalPrice || summary.totalPrice)} ARS
                   </dd>
                 </div>
               </dl>
 
+              {/* Perforated Tear Line & Barcode Strip */}
+              <div className="pt-4 border-t-2 border-dashed border-[#C8BBA4] space-y-3">
+                <div className="flex flex-col items-center justify-center gap-1 py-2 bg-[#F3ECE0] rounded-lg border border-[#D5C9B4]">
+                  <div
+                    aria-hidden="true"
+                    className="flex items-center justify-center gap-[3px] h-7 px-4 overflow-hidden"
+                  >
+                    {Array.from({ length: 38 }).map((_, idx) => (
+                      <span
+                        key={idx}
+                        className={`inline-block h-full bg-[#181512] ${
+                          idx % 4 === 0 ? 'w-[3px]' : idx % 2 === 0 ? 'w-[2px]' : 'w-[1px]'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-[10px] font-mono tracking-[0.25em] text-[#4F463B] font-bold uppercase">
+                    * {confirmedTicket.id} · {config.studioTitle} *
+                  </span>
+                </div>
+              </div>
+
               {downloadedFeedback && (
-                <div className="p-3 rounded-lg bg-[#10B981]/15 border border-[#10B981] text-[#181512] text-xs text-center font-mono">
+                <div className="p-3 rounded-lg bg-[#1F6E43]/15 border border-[#1F6E43] text-[#181512] text-xs text-center font-mono font-semibold">
                   {downloadedFeedback}
                 </div>
               )}
 
+              {/* Primary Voucher Export Actions */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <button
                   type="button"
                   onClick={() => {
                     downloadThermalTicketPNG(confirmedTicket);
-                    setDownloadedFeedback('Comprobante descargado como imagen PNG.');
+                    setDownloadedFeedback('Boleto oficial descargado como imagen PNG.');
                   }}
-                  className="py-3 px-4 rounded-xl bg-[#9E2A2B] hover:bg-[#822021] text-[#FAF6EE] text-xs font-mono font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                  className="py-3.5 px-4 rounded-xl bg-[#9E2A2B] hover:bg-[#822021] text-[#FAF6EE] text-xs font-mono font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors shadow-[0_3px_0_#5E1516] cursor-pointer"
                 >
                   <Download className="w-4 h-4" />
-                  <span>Guardar Comprobante (PNG)</span>
+                  <span>Descargar Boleto PNG</span>
                 </button>
 
                 <button
@@ -793,7 +850,7 @@ export const ThermalReceiptBooking: React.FC = () => {
                     downloadAppointmentICS(confirmedTicket);
                     setDownloadedFeedback('Archivo de calendario (.ics) descargado.');
                   }}
-                  className="py-3 px-4 rounded-xl border border-[#C8BBA4] hover:border-white text-[#181512] text-xs font-mono font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                  className="py-3.5 px-4 rounded-xl border border-[#C8BBA4] bg-[#F3ECE0] hover:border-[#9E2A2B] text-[#181512] text-xs font-mono font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors cursor-pointer"
                 >
                   <CalendarPlus className="w-4 h-4 text-[#9E2A2B]" />
                   <span>Agendar en Calendario (.ics)</span>
@@ -802,21 +859,19 @@ export const ThermalReceiptBooking: React.FC = () => {
 
               <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
                 <a
-                  href={generateGoogleCalendarUrl(confirmedTicket)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-[#5C5346] hover:text-[#181512] underline font-mono"
+                  href={`/#/turno/${confirmedTicket.id}`}
+                  className="text-xs text-[#9E2A2B] hover:text-[#822021] underline font-mono font-bold flex items-center gap-1.5"
                 >
-                  Abrir directamente en Google Calendar
+                  <span>Portal de Autogestión (Reprogramar / Cancelar en 1 Clic) →</span>
                 </a>
 
                 <a
                   href={`${waInfo.url}?text=${encodeURIComponent(
-                    `Hola ${config.authorName}! Reservé mi turno (#${confirmedTicket.id}) para el ${confirmedTicket.date} a las ${confirmedTicket.time} hs (${confirmedTicket.services.join(' + ')}) a nombre de ${confirmedTicket.clientName}.`
+                    `Hola ${config.authorName}! Reservé mi turno (#${confirmedTicket.id}) para el ${confirmedTicket.date} a las ${confirmedTicket.time} hs (${confirmedTicket.services.join(' + ')}) a nombre de ${confirmedTicket.clientName}.\n\nComprobante y autogestión en 1 clic: ${typeof window !== 'undefined' ? window.location.origin : ''}/#/turno/${confirmedTicket.id}`
                   )}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#10B981] hover:bg-[#059669] text-zinc-950 text-xs font-mono font-bold uppercase tracking-wider transition-colors"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#1F6E43] hover:bg-[#175634] text-[#FAF6EE] text-xs font-mono font-bold uppercase tracking-wider transition-colors shadow-xs"
                 >
                   <MessageCircle className="w-4 h-4" />
                   <span>Enviar confirmación por WhatsApp</span>
@@ -831,7 +886,7 @@ export const ThermalReceiptBooking: React.FC = () => {
                     setSelectedTime('');
                     setCurrentStep(1);
                   }}
-                  className="text-xs text-[#5C5346] hover:text-[#181512] underline cursor-pointer font-mono"
+                  className="text-xs text-[#5C5346] hover:text-[#9E2A2B] underline cursor-pointer font-mono font-semibold"
                 >
                   Realizar otra reserva
                 </button>
@@ -1234,19 +1289,42 @@ export const ThermalReceiptBooking: React.FC = () => {
                           </div>
 
                           {paymentOption === 'deposit' && (
-                            <div className="p-3 rounded-xl bg-[#FAF6EE] border border-[#D5C9B4] flex items-center justify-between text-xs font-mono">
-                              <span className="text-[#4F463B]">
-                                Alias de transferencia:{' '}
-                                <strong className="text-[#181512]">{config.transferAlias}</strong>
-                              </span>
-                              <button
-                                type="button"
-                                onClick={handleCopyAlias}
-                                className="inline-flex items-center gap-1 text-[#9E2A2B] hover:text-[#181512] font-bold cursor-pointer"
-                              >
-                                <Copy className="w-3.5 h-3.5" />
-                                <span>{copiedAlias ? 'Copiado ✓' : 'Copiar alias'}</span>
-                              </button>
+                            <div className="space-y-2">
+                              <div className="p-3 rounded-xl bg-[#FAF6EE] border border-[#D5C9B4] flex items-center justify-between text-xs font-mono">
+                                <span className="text-[#4F463B]">
+                                  Alias de transferencia (0% comisión):{' '}
+                                  <strong className="text-[#181512]">{config.transferAlias}</strong>
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={handleCopyAlias}
+                                  className="inline-flex items-center gap-1 text-[#9E2A2B] hover:text-[#181512] font-bold cursor-pointer"
+                                >
+                                  <Copy className="w-3.5 h-3.5" />
+                                  <span>{copiedAlias ? 'Copiado ✓' : 'Copiar alias'}</span>
+                                </button>
+                              </div>
+
+                              {config.mercadoPagoEnabled && config.mercadoPagoLink && (
+                                <div className="p-3 rounded-xl bg-[#009EE3]/10 border border-[#009EE3]/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs">
+                                  <div>
+                                    <span className="font-bold text-[#0081BA] block">
+                                      ¿Preferís tarjeta de débito o crédito?
+                                    </span>
+                                    <span className="text-[#4F463B] text-[11px]">
+                                      Aboná la seña de {formatPriceARS(summary.depositAmount)} mediante Mercado Pago.
+                                    </span>
+                                  </div>
+                                  <a
+                                    href={config.mercadoPagoLink}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="px-3.5 py-1.5 rounded-lg bg-[#009EE3] hover:bg-[#0081BA] text-[#FAF6EE] text-[11px] font-mono font-bold uppercase tracking-wider transition-colors shrink-0"
+                                  >
+                                    Pagar con MP →
+                                  </a>
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>
@@ -1284,50 +1362,87 @@ export const ThermalReceiptBooking: React.FC = () => {
                 </AnimatePresence>
               </div>
 
-              {/* Right 4 Cols: Live Summary Ticket */}
-              <aside className="lg:col-span-4 bg-[#EAE0CE] border-2 border-[#C8BBA4] rounded-2xl p-6 sm:p-7 space-y-5 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-16 h-16 pointer-events-none opacity-80">
-                  <div className="w-24 h-3 bg-[#9E2A2B] rotate-45 translate-x-4 translate-y-2" />
+              {/* Right 4 Cols: Perforated Boleto de Reserva en Vivo */}
+              <aside className="lg:col-span-4 bg-[#FAF6EE] border-2 border-[#C8BBA4] rounded-2xl p-6 sm:p-7 space-y-5 relative overflow-hidden shadow-[0_14px_34px_rgba(24,21,18,0.08)]">
+                {/* Subtle River Plate Diagonal Corner Sash */}
+                <div className="absolute top-0 right-0 w-20 h-20 pointer-events-none overflow-hidden">
+                  <div className="w-28 h-3.5 bg-[#9E2A2B] rotate-45 translate-x-4 translate-y-2" />
+                  <div className="w-28 h-1 bg-[#B89146] rotate-45 translate-x-4 translate-y-4 opacity-80" />
                 </div>
 
-                <div className="pb-4 border-b border-[#D5C9B4]">
-                  <span className="text-[11px] font-mono uppercase tracking-widest text-[#9E2A2B] font-bold block">
-                    Ticket de Reserva en Vivo
-                  </span>
-                  <h4 className="font-display text-2xl font-black uppercase text-[#181512] mt-0.5">
-                    {config.studioTitle}
-                  </h4>
-                  <p className="text-xs text-[#5C5346] flex items-center gap-1.5 mt-1 font-mono">
-                    <MapPin className="w-3.5 h-3.5 text-[#9E2A2B]" />
-                    <span>
-                      {config.address}, {config.neighborhood}
+                {/* Circular Perforated Cutouts on Left & Right Edges */}
+                <div
+                  aria-hidden="true"
+                  className="hidden sm:block absolute -left-3.5 top-[64%] w-7 h-7 rounded-full bg-[#FAF6EE] border-r-2 border-[#C8BBA4]"
+                />
+                <div
+                  aria-hidden="true"
+                  className="hidden sm:block absolute -right-3.5 top-[64%] w-7 h-7 rounded-full bg-[#FAF6EE] border-l-2 border-[#C8BBA4]"
+                />
+
+                {/* Crest + Studio Header */}
+                <div className="pb-4 border-b border-[#D5C9B4] flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-full bg-[#181512] border-2 border-[#B89146] text-[#FAF6EE] flex items-center justify-center font-display font-bold text-sm shrink-0 shadow-2xs">
+                    RC
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#9E2A2B] font-bold block">
+                      Boleto de Reserva en Vivo
                     </span>
-                  </p>
+                    <h4 className="font-display text-2xl font-bold tracking-tight text-[#181512] leading-tight">
+                      {config.studioTitle}
+                    </h4>
+                    <p className="text-[11px] text-[#5C5346] flex items-center gap-1 mt-0.5 font-mono">
+                      <MapPin className="w-3 h-3 text-[#9E2A2B] shrink-0" />
+                      <span>
+                        {config.address}, {config.neighborhood}
+                      </span>
+                    </p>
+                  </div>
                 </div>
 
+                {/* Itemized Services & Schedule Stub */}
                 <dl className="space-y-3 text-xs font-mono">
-                  <div className="flex items-start justify-between gap-4">
-                    <dt className="text-[#5C5346]">Servicio(s):</dt>
-                    <dd className="text-right font-bold text-[#181512]">
-                      {summary.selectedServices.length > 0
-                        ? summary.selectedServices.map((s) => s.name).join(' + ')
-                        : 'Sin seleccionar'}
-                    </dd>
+                  <div className="p-3 rounded-xl bg-[#F3ECE0] border border-[#D5C9B4] space-y-1.5">
+                    <dt className="text-[10px] uppercase tracking-wider text-[#6E6355] font-bold">
+                      Servicios en tu Boleto ({summary.selectedServices.length})
+                    </dt>
+                    {summary.selectedServices.length > 0 ? (
+                      <dd className="space-y-1">
+                        {summary.selectedServices.map((s) => (
+                          <div
+                            key={s.id}
+                            className="flex items-center justify-between gap-2 text-[#181512] font-bold"
+                          >
+                            <span className="truncate">{s.name}</span>
+                            <span className="text-[#9E2A2B] shrink-0 tabular-nums">
+                              {formatPriceARS(s.price)}
+                            </span>
+                          </div>
+                        ))}
+                      </dd>
+                    ) : (
+                      <dd className="text-[#6E6355] italic">Elegí al menos un servicio</dd>
+                    )}
                   </div>
-                  <div className="flex items-center justify-between">
+
+                  <div className="flex items-center justify-between pt-1">
                     <dt className="text-[#5C5346]">Fecha elegida:</dt>
-                    <dd className="text-[#181512] tabular-nums">{selectedDate}</dd>
+                    <dd className="font-bold text-[#181512] tabular-nums">{selectedDate}</dd>
                   </div>
                   <div className="flex items-center justify-between">
-                    <dt className="text-[#5C5346]">Horario:</dt>
+                    <dt className="text-[#5C5346]">Horario exacto:</dt>
                     <dd className="font-bold text-[#9E2A2B] tabular-nums">
-                      {selectedTime ? `${selectedTime} hs` : 'Por definir en Paso 02'}
+                      {selectedTime ? `${selectedTime} hs` : 'Elegir en Paso 02'}
                     </dd>
                   </div>
                   <div className="flex items-center justify-between">
-                    <dt className="text-[#5C5346]">Tiempo dedicado:</dt>
-                    <dd className="text-[#181512] tabular-nums">{summary.serviceMinutes} min</dd>
+                    <dt className="text-[#5C5346]">Bloque exclusivo:</dt>
+                    <dd className="text-[#181512] tabular-nums">
+                      {summary.serviceMinutes} min (+{summary.bufferMinutes}m preparación)
+                    </dd>
                   </div>
+
                   {summary.discountAmount > 0 && (
                     <div className="p-2.5 rounded-lg bg-[#9E2A2B]/10 border border-[#9E2A2B]/30 flex items-center justify-between gap-2 text-[11px]">
                       <span className="text-[#9E2A2B] font-bold flex items-center gap-1">
@@ -1341,26 +1456,34 @@ export const ThermalReceiptBooking: React.FC = () => {
                   )}
                 </dl>
 
-                <div className="pt-4 border-t border-[#D5C9B4] flex items-baseline justify-between">
-                  <span className="text-xs font-mono uppercase tracking-wider text-[#5C5346] font-bold">
-                    Valor Total
-                  </span>
-                  <div className="text-right">
-                    {summary.discountAmount > 0 && (
-                      <span className="text-xs font-mono text-[#6E6355] line-through mr-2 tabular-nums">
-                        {formatPriceARS(summary.subtotalPrice)}
+                {/* Perforated Divider & Total Box */}
+                <div className="pt-4 border-t-2 border-dashed border-[#C8BBA4] space-y-3">
+                  <div className="p-3.5 rounded-xl bg-[#181512] text-[#FAF6EE] flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] font-mono uppercase tracking-widest text-[#C8BBA4] block">
+                        Valor Total
                       </span>
-                    )}
-                    <span className="font-mono text-2xl font-black text-[#181512] tabular-nums">
-                      {formatPriceARS(summary.totalPrice)}
-                    </span>
+                      <span className="text-[11px] font-mono text-[#E06D6E]">
+                        Seña 30%: {formatPriceARS(summary.depositAmount)}
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      {summary.discountAmount > 0 && (
+                        <span className="text-xs font-mono text-[#9C8F7A] line-through block tabular-nums">
+                          {formatPriceARS(summary.subtotalPrice)}
+                        </span>
+                      )}
+                      <span className="font-mono text-2xl font-black text-[#FAF6EE] tabular-nums">
+                        {formatPriceARS(summary.totalPrice)}
+                      </span>
+                    </div>
                   </div>
-                </div>
 
-                <p className="text-[11px] text-[#5C5346] leading-relaxed pt-2 border-t border-[#D5C9B4]">
-                  Atención individual uno a uno sin esperas. Al confirmar recibís tu ticket digital
-                  PNG y el recordatorio para tu calendario.
-                </p>
+                  <p className="text-[11px] text-[#5C5346] leading-relaxed font-mono text-center">
+                    Atención individual 1 a 1. Al confirmar descargás tu boleto oficial PNG y el
+                    evento para tu calendario.
+                  </p>
+                </div>
               </aside>
             </div>
           )}

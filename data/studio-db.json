@@ -1,10 +1,13 @@
 {
   "version": 8,
-  "updatedAt": "2026-11-09T09:43:28.226Z",
+  "updatedAt": "2026-11-12T04:19:41.753Z",
   "config": {
     "authorName": "Rodrigo",
     "studioTitle": "Rodrigo Cutsss",
     "brandKicker": "Peluquería & Barbería de Autor · Venado Tuerto",
+    "brandMonogram": "RC",
+    "brandLogoUrl": "",
+    "themePalette": "crimson",
     "tagline": "Fades limpios, textura real y tu mejor versión en cada corte.",
     "heroSubtitle": "Estudio privado de peluquería y barbería en Vuelta de Obligado 931, Venado Tuerto. Fades al detalle, cortes a tijera, perfilado de barba y coloración con atención personalizada uno a uno.",
     "bio": "En Rodrigo Cutsss trabajamos cada turno uno a uno en Vuelta de Obligado 931, Venado Tuerto, Santa Fe. Combinamos técnica de precisión con máquina y tijera, buen ambiente y dedicación total para que tu corte mantenga su estructura perfecta durante semanas.",
@@ -19,6 +22,13 @@
     "facebook": "rodrigocutsss.vt",
     "youtube": "@rodrigocutsss",
     "transferAlias": "RODRIGO.CUTSSS",
+    "transferCbu": "0000003100014022904812",
+    "transferHolder": "Rodrigo Cutsss",
+    "transferBank": "Banco Santander / Mercado Pago",
+    "mercadoPagoEnabled": false,
+    "mercadoPagoLink": "",
+    "mercadoPagoAlias": "RODRIGO.CUTSSS.MP",
+    "mercadoPagoNote": "Cobro de seña opcional con tarjeta de débito/crédito",
     "spotifyPlaylistUrl": "https://open.spotify.com",
     "currentVibeTrack": "Rodrigo Cutsss · Vinyl & Atelier Session",
     "googleMapsUrl": "https://www.google.com/maps/search/?api=1&query=Vuelta+de+Obligado+931+Venado+Tuerto+Santa+Fe",
@@ -191,8 +201,8 @@
   "appointments": [
     {
       "id": "TK-841920",
-      "date": "2026-11-09",
-      "startTime": "13:00",
+      "date": "2026-11-12",
+      "startTime": "15:00",
       "serviceMinutes": 45,
       "bufferMinutes": 10,
       "clientName": "Ignacio Varela",
@@ -206,7 +216,7 @@
     },
     {
       "id": "TK-904312",
-      "date": "2026-11-09",
+      "date": "2026-11-12",
       "startTime": "17:00",
       "serviceMinutes": 60,
       "bufferMinutes": 10,
@@ -221,7 +231,7 @@
     },
     {
       "id": "TK-773105",
-      "date": "2026-11-10",
+      "date": "2026-11-13",
       "startTime": "12:00",
       "serviceMinutes": 60,
       "bufferMinutes": 10,
@@ -238,14 +248,14 @@
   "blockedSlots": [
     {
       "id": "block-1",
-      "date": "2026-11-09",
+      "date": "2026-11-12",
       "startTime": "14:30",
       "durationMinutes": 30,
       "reason": "Pausa de mediodía y acondicionamiento del estudio"
     },
     {
       "id": "block-2",
-      "date": "2026-11-10",
+      "date": "2026-11-13",
       "startTime": "19:00",
       "durationMinutes": 60,
       "reason": "Sesión fotográfica de archivo editorial"
@@ -366,7 +376,7 @@
       "city": "Venado Tuerto",
       "verified": true,
       "comment": "Una experiencia completamente distinta en Venado Tuerto. Sin ruidos ni gente esperando encima tuyo: llegás a tu hora en Vuelta de Obligado 931, te reciben con un café y Rodrigo se toma todo el tiempo para lograr exactamente el corte que buscás.",
-      "createdAtISO": "2026-11-06T09:41:20.393Z"
+      "createdAtISO": "2026-11-09T04:17:52.395Z"
     },
     {
       "id": "rev-seed-2",
@@ -378,7 +388,7 @@
       "city": "Venado Tuerto",
       "verified": true,
       "comment": "La precisión con la tijera y el cuidado en el perfilado de barba con toalla tibia son de otro nivel. El corte crece prolijo durante semanas sin perder la forma.",
-      "createdAtISO": "2026-11-04T09:41:20.393Z"
+      "createdAtISO": "2026-11-07T04:17:52.395Z"
     },
     {
       "id": "rev-seed-3",
@@ -390,7 +400,7 @@
       "city": "Venado Tuerto",
       "verified": true,
       "comment": "Buscaba unos reflejos muy sutiles que no dañaran el pelo y el resultado superó lo que imaginaba. Ambiente tranquilo, trato personalizado y productos de primera línea.",
-      "createdAtISO": "2026-11-02T09:41:20.393Z"
+      "createdAtISO": "2026-11-05T04:17:52.395Z"
     },
     {
       "id": "rev-seed-4",
@@ -402,27 +412,27 @@
       "city": "Venado Tuerto",
       "verified": true,
       "comment": "Reservar desde el celular es comodísimo y la puntualidad es total. El lavado nutritivo con masaje capilar al final del corte hace que salgas renovado.",
-      "createdAtISO": "2026-10-26T09:41:20.393Z"
+      "createdAtISO": "2026-10-29T04:17:52.395Z"
     }
   ],
   "auditLogs": [
     {
-      "id": "audit-1794217408226",
-      "timestamp": "2026-11-09T09:43:28.226Z",
+      "id": "audit-1794457181753",
+      "timestamp": "2026-11-12T04:19:41.753Z",
       "action": "ADMIN_LOGIN_SUCCESS",
       "actor": "admin",
       "details": "Sesión administrativa iniciada correctamente."
     },
     {
-      "id": "audit-1794217295426",
-      "timestamp": "2026-11-09T09:41:35.426Z",
-      "action": "ADMIN_LOGIN_SUCCESS",
-      "actor": "admin",
-      "details": "Sesión administrativa iniciada correctamente."
+      "id": "audit-1794457144842",
+      "timestamp": "2026-11-12T04:19:04.842Z",
+      "action": "APPOINTMENT_RESCHEDULED",
+      "actor": "client",
+      "details": "Turno TK-841920 (Ignacio Varela) reprogramado al 2026-11-12 15:00 hs."
     },
     {
       "id": "audit-init",
-      "timestamp": "2026-11-09T09:41:20.395Z",
+      "timestamp": "2026-11-12T04:17:52.397Z",
       "action": "SYSTEM_BOOT",
       "actor": "system",
       "details": "Motor backend de Rodrigo Cutsss inicializado y sincronizado."

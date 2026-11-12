@@ -196,7 +196,9 @@ export function getAvailableTimeSlots(
 
   const openMin = openHour * 60;
   const closeMin = closeHour * 60;
-  const dayAppointments = appointments.filter((app) => app.date === dateStr);
+  const dayAppointments = appointments.filter(
+    (app) => app.date === dateStr && app.status !== 'cancelled'
+  );
   const dayBlocked = blockedSlots.filter((b) => b.date === dateStr);
   const slots: TimeSlot[] = [];
 
@@ -532,11 +534,23 @@ export function buildAutomatedWhatsAppMessages(params: {
   endTime: string;
   serviceNames: string[];
   reviewShortlink: string;
+  ticketId?: string;
+  manageUrl?: string;
+  studioName?: string;
 }) {
   const servicesList = params.serviceNames.join(' + ');
-  const instantConfirmation = `Hola ${params.clientFirstName}, tu turno 1 a 1 en Rodrigo Cutsss quedó confirmado para el ${params.date} a las ${params.time} hs (${servicesList}). Dirección: Vuelta de Obligado 931, Venado Tuerto, Santa Fe. Recordá que contamos con 10 min de tolerancia.`;
-  const reminder2HoursBefore = `Hola ${params.clientFirstName}, te recordamos que hoy a las ${params.time} hs te esperamos en Rodrigo Cutsss para tu ${servicesList}. Vuelta de Obligado 931, Venado Tuerto.`;
-  const reviewRequest2HoursAfter = `¡Hola ${params.clientFirstName}! Gracias por pasar hoy por Rodrigo Cutsss. ¿Cómo quedó ese corte? Si tenés 20 segundos, me ayuda muchísimo tu opinión acá: ${params.reviewShortlink}`;
+  const studio = params.studioName || 'Rodrigo Cutsss';
+  const manageLink =
+    params.manageUrl ||
+    (params.ticketId ? `${typeof window !== 'undefined' ? window.location.origin : ''}/#/turno/${params.ticketId}` : '');
+
+  const manageNotice = manageLink
+    ? `\n\nAccedé a tu comprobante o reprogramá/cancelá en 1 clic acá: ${manageLink}`
+    : '';
+
+  const instantConfirmation = `Hola ${params.clientFirstName}, tu turno 1 a 1 en ${studio} quedó confirmado para el ${params.date} a las ${params.time} hs (${servicesList}). Dirección: Vuelta de Obligado 931, Venado Tuerto, Santa Fe. Recordá que contamos con 10 min de tolerancia.${manageNotice}`;
+  const reminder2HoursBefore = `Hola ${params.clientFirstName}, te recordamos que hoy a las ${params.time} hs te esperamos en ${studio} para tu ${servicesList}. Vuelta de Obligado 931, Venado Tuerto.${manageNotice}`;
+  const reviewRequest2HoursAfter = `¡Hola ${params.clientFirstName}! Gracias por pasar hoy por ${studio}. ¿Cómo quedó ese corte? Si tenés 20 segundos, me ayuda muchísimo tu opinión acá: ${params.reviewShortlink}`;
 
   return {
     instantConfirmation,

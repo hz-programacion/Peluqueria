@@ -16,6 +16,8 @@ import { ExperiencePage } from './pages/ExperiencePage';
 import { BookingPage } from './pages/BookingPage';
 import { LocationPage } from './pages/LocationPage';
 import { AdminPage } from './pages/AdminPage';
+import { ClientVoucherPage } from './pages/ClientVoucherPage';
+import { ChairModePage } from './pages/ChairModePage';
 
 const AppShell: React.FC = () => {
   const { currentPage, config } = useStudio();
@@ -36,26 +38,32 @@ const AppShell: React.FC = () => {
         return <LocationPage />;
       case 'admin':
         return <AdminPage />;
+      case 'voucher':
+        return <ClientVoucherPage />;
+      case 'chair':
+        return <ChairModePage />;
       default:
         return <HomePage />;
     }
   };
 
+  const isChairMode = currentPage === 'chair';
+
   return (
     <div
-      data-atelier-theme={config.urbanTheme || 'crimson'}
+      data-atelier-theme={config.themePalette || config.urbanTheme || 'crimson'}
       className="min-h-screen flex flex-col bg-[#F3ECE0] text-[#181512] selection:bg-[#9E2A2B] selection:text-[#FAF6EE] relative overflow-x-hidden transition-colors duration-300"
     >
       {/* Dynamic SEO & OpenGraph Meta Synchronizer */}
       <DynamicSeoManager />
 
       {/* Global Aged-Paper Fiber & Vintage Vignette Texture */}
-      <RetroPaperTextureOverlay />
+      {!isChairMode && <RetroPaperTextureOverlay />}
 
       {/* Multi-Layer Framer Motion Curtain Transition ("Telón La Banda") */}
       <PageTransitionCurtain />
 
-      <Header />
+      {!isChairMode && <Header />}
 
       <main className="flex-grow relative z-10">
         <PageViewTransitionWrapper pageKey={currentPage}>
@@ -63,7 +71,7 @@ const AppShell: React.FC = () => {
         </PageViewTransitionWrapper>
       </main>
 
-      <Footer />
+      {!isChairMode && <Footer />}
 
       {/* Non-intrusive PWA Offline Connectivity Indicator */}
       <OfflineIndicator />
